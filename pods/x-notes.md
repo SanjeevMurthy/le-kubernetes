@@ -1,3 +1,20 @@
+## Port forwarding
+`kubectl port-forward pod/nginx-pod 8080:80` forwards your local machine’s port 8080 to port 80 on the nginx-pod pod running in your Kubernetes cluster.
+This lets you access the pod’s web server (Nginx) at http://localhost:8080 from your browser, even though the pod is not exposed outside the cluster.
+
+## Minikube Port forwarding
+Sometimes, Minikube needs a tunnel for NodePort/LoadBalancer services. 
+`minikube tunnel`
+`minikube service nginx-service`
+
+## Pods details
+`kubectl get all`
+`kubectl get pods -o wide`
+`kubectl describe pods -n <namespace>`
+`kubectl delete pod webapp`
+`kubectl apply -f pod.yaml`
+
+
 ## Commands 
 Create an NGINX Pod
 `kubectl run nginx --image=nginx`
@@ -46,7 +63,9 @@ Or
 `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml`
 
 (This will not use the pods labels as selectors)
-Both the above commands have their own challenges. While one of it cannot accept a selector the other cannot accept a node port. I would recommend going with the kubectl expose command. If you need to specify a node port, generate a definition file using the same command and manually input the nodeport before creating the service.
+Both the above commands have their own challenges. While one of it cannot accept a selector the other cannot accept a node port. I
+
+ would recommend going with the kubectl expose command. If you need to specify a node port, generate a definition file using the same command and manually input the nodeport before creating the service.
 
 
 
