@@ -4,6 +4,7 @@
 ### 1\. `nodeName`
 
 Forces a pod to schedule on a specific node, bypassing the scheduler entirely.
+nodeName bypasses the scheduler to force a pod onto a specific node. This is a rigid approach, and if the target node is unavailable or lacks resources, the pod will get stuck in a Pending state indefinitely.
 
 ```yaml
 # pod-nodename.yaml
@@ -22,6 +23,7 @@ spec:
 ### 2\. `nodeSelector`
 
 Constrains the scheduler to only consider nodes that have a specific label.
+nodeSelector guides the scheduler by providing a simple key-value pair. First, a label is applied to a node (e.g., disktype=ssd). Then, the pod's spec includes a nodeSelector field that matches the label. This constrains the scheduler to only place the pod on nodes with that specific label.
 
 ```yaml
 # First, you would label a node like this:
@@ -45,6 +47,7 @@ spec:
 ### 3\. `nodeAffinity`
 
 Provides a powerful way to express complex scheduling rules, attracting pods to nodes based on labels with both "hard" (`required`) and "soft" (`preferred`) rules.
+nodeAffinity provides a powerful way to express complex scheduling rules, attracting pods to nodes based on labels with both "hard" (required) and "soft" (preferred) rules
 
 ```yaml
 # pod-nodeaffinity.yaml
@@ -80,6 +83,8 @@ spec:
 ### 4\. `Taints` and `Tolerations`
 
 Repels pods from a node. Only pods with a matching toleration are allowed to be scheduled on the tainted node, making it useful for dedicated nodes.
+Taints and Tolerations work together to ensure nodes are dedicated to specific workloads. A Taint is applied to a node to repel all pods. Pods can only be scheduled on that node if they have a matching Toleration, which acts like a permission slip. This is the preferred method for creating exclusive-use nodes.
+
 
 ```yaml
 # First, you would taint a node with an effect (NoSchedule, PreferNoSchedule, NoExecute)
