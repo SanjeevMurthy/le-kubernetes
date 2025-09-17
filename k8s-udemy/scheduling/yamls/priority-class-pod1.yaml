@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: low-prio-pod
+  namespace: default
+spec:
+  containers:
+  - name: low-prio-pod
+    image: nginx
+  priorityClassName: low-priority
