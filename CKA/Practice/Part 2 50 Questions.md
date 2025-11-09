@@ -52,8 +52,26 @@ While having the lowest weight, storage questions test specific and sometimes no
 **Core Task 2**: Default StorageClass Configuration. This is a subtle administrative task that can easily trip up candidates unfamiliar with annotations. The scenario presents a cluster with multiple StorageClass objects, none of which is designated as the default. The task is to make one of them the default for all future dynamic provisioning requests that do not specify a storageClassName. This cannot be achieved by simply editing the object's spec. The correct method is to use kubectl patch to set the annotation storageclass.kubernetes.io/is-default-class to "true" on the desired StorageClass. It is also best practice to ensure this annotation is set to "false" or is absent on all other StorageClasses.
 
 
+
+
 # The CKA 2025 Practice Question Bank.
-## This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
+This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
+
+
+## 📘 Table of Contents – CKA 2025 Practice Question Bank  
+
+| Domain | Description | Link |
+|:--|:--|:--|
+| **Domain I:** Core Concepts | Cluster fundamentals, components, and architecture. | [Go to Domain I: Core Concepts](#domain-i-core-concepts-10---the-foundation-domain) |
+| **Domain II:** Cluster Architecture, Installation & Configuration | Covers Helm, CRDs, and RBAC configurations. | [Go to Domain II: Cluster Architecture, Installation & Configuration](#domain-ii-cluster-architecture-installation--configuration-25---the-modern-tooling-domain) |
+| **Domain III:** Services & Networking | Focus on Gateway API, Network Policies, and Services. | [Go to Domain III: Services & Networking](#domain-iii-services--networking-20---the-connectivity-domain) |
+| **Domain IV:** Workloads & Scheduling | Application lifecycle, resource management, and autoscaling. | [Go to Domain IV: Workloads & Scheduling](#domain-iv-workloads--scheduling-15---the-resource-management-domain) |
+| **Domain V:** Storage | Persistent volumes, PVC binding, and StorageClasses. | [Go to Domain V: Storage](#domain-v-storage-10---the-persistence-domain) |
+| **Domain VI:** Security | Pod security, secrets, and certificate management. | [Go to Domain VI: Security](#domain-vi-security-10---the-protection-domain) |
+| **Domain VII:** Logging & Monitoring | Cluster observability and troubleshooting tools. | [Go to Domain VII: Logging & Monitoring](#domain-vii-logging--monitoring-10---the-visibility-domain) |
+| **Domain VIII:** Troubleshooting | Diagnosing control plane, node, and network issues. | [Go to Domain VIII: Troubleshooting](#domain-viii-troubleshooting-10---the-diagnostics-domain) |
+| **Domain IX:** Upgrades & Maintenance | Cluster lifecycle operations and upgrades. | [Go to Domain IX: Upgrades & Maintenance](#domain-ix-upgrades--maintenance-10---the-sustainability-domain) |
+| **Domain X:** Advanced Topics | Gateway API, Kustomize, and multi-cluster management. | [Go to Domain X: Advanced Topics](#domain-x-advanced-topics-10---the-innovation-domain) |
 
 ## Domain: Troubleshooting
 
