@@ -60,12 +60,12 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 
 
 ## Domains with 10 questions each
-[Domain: Troubleshooting (10 Questions)](#domain-troubleshooting-10-questions)
-[Domain: Workloads & Scheduling (10 Questions)](#domain-workloads--scheduling-10-questions)  
-[Domain: Cluster Maintenance (10 Questions)](#domain-cluster-maintenance-10-questions)  
-[Domain: Networking (10 Questions)](#domain-networking-10-questions)  
-[Domain: Security (10 Questions)](#domain-security-10-questions)  
-[Domain: Storage (10 Questions)](#domain-storage-10-questions)
+
+- [Domain: Troubleshooting (10 Questions)](#domain-troubleshooting-10-questions)  
+- [Domain: Cluster Architecture, Installation & Configuration (10 Questions)](#domain-cluster-architecture-installation--configuration-10-questions)  
+- [Domain: Services & Networking (10 Questions)](#domain-services--networking-10-questions)  
+- [Domain: Workloads & Scheduling (10 Questions)](#domain-workloads--scheduling-10-questions)  
+- [Domain: Storage (10 Questions)](#domain-storage-10-questions)
 
 ## Domain: Troubleshooting (10 Questions)
 
