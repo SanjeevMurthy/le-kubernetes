@@ -228,304 +228,276 @@ This domain focuses on the lifecycle of applications running on the cluster and 
 
 ## Domain: Services & Networking (10 Questions)
 
-Question 21: Expose a Deployment with a NodePort Service
+## Question 21: Expose a Deployment with a NodePort Service
 
-Scenario: A deployment named webapp is running in the app-space namespace, and it needs to be accessible from outside the cluster for testing purposes.
+- **Scenario:** A deployment named `webapp` is running in the `app-space` namespace, and it needs to be accessible from outside the cluster for testing purposes.  
+- **Initial State:** A Deployment `webapp` with 2 replicas is running in the `app-space` namespace. The pods expose port `8080`.  
+- **Task:** Create a Service named `webapp-svc` of type `NodePort` in the `app-space` namespace. The service should expose port `80` on the service itself, target port `8080` on the pods, and expose node port `30080` on the cluster nodes.  
+- **Validation:** Run `curl <node-ip>:30080` from the base node. It should return a response from the `webapp`.  
 
-Initial State: A Deployment webapp with 2 replicas is running in the app-space namespace. The pods expose port 8080.
+---
 
-Task: Create a Service named webapp-svc of type NodePort in the app-space namespace. The service should expose port 80 on the service itself, target port 8080 on the pods, and expose node port 30080 on the cluster nodes.
+## Question 22: Create an Ingress Resource
 
-Validation: Run curl <node-ip>:30080 from the base node. It should return a response from the webapp.
+- **Scenario:** An application, served by `app-svc`, needs to be exposed externally via HTTP routing at the path `/app`.  
+- **Initial State:** An Ingress controller is running. A service `app-svc` exists in the `default` namespace and exposes port `80`.  
+- **Task:** Create an Ingress resource named `app-ingress`. It should route traffic for the path `/app` to the `app-svc` service on port `80`.  
+- **Validation:** Find the external IP of the Ingress controller and run `curl http://<ingress-ip>/app`. It should connect to the `app-svc`.  
 
-Question 22: Create an Ingress Resource
+---
 
-Scenario: An application, served by app-svc, needs to be exposed externally via HTTP routing at the path /app.
+## Question 23: Ingress to Gateway API Migration
 
-Initial State: An Ingress controller is running. A service app-svc exists in the default namespace and exposes port 80.
+- **Scenario:** The organization is standardizing on the Gateway API. An existing application exposed via Ingress must be migrated.  
+- **Initial State:** An Ingress resource `legacy-ingress` routes traffic for `app.example.com` to `app-svc`. A `GatewayClass` named `gw-class` exists. A TLS secret `app-tls` exists.  
+- **Task:** Create a `Gateway` resource named `main-gateway` that uses the `gw-class` and listens on port `443` for HTTPS traffic from `app.example.com`, using the `app-tls` secret. Create an `HTTPRoute` named `app-route` that attaches to this gateway and routes requests for `app.example.com` to the `app-svc` service. After verifying the route works, delete the `legacy-ingress`.  
+- **Validation:** Test connectivity to `https://app.example.com` (using `curl --resolve`). After confirming it works, verify that `kubectl get ingress legacy-ingress` returns “not found.”  
 
-Task: Create an Ingress resource named app-ingress. It should route traffic for the path /app to the app-svc service on port 80.
+---
 
-Validation: Find the external IP of the Ingress controller and run curl http://<ingress-ip>/app. It should connect to the app-svc.
+## Question 24: Restrict Ingress Traffic with a Network Policy
 
-Question 23: Ingress to Gateway API Migration
+- **Scenario:** A database in the `db` namespace should only accept connections from the application frontend in the `frontend` namespace.  
+- **Initial State:** Pods in the `frontend` namespace (with label `app=frontend`) need to connect to pods in the `db` namespace (with label `app=db`) on port `5432`.  
+- **Task:** Create a Network Policy named `db-allow-frontend` in the `db` namespace. This policy should apply to pods with the label `app=db`. It should define an ingress rule that allows traffic on TCP port `5432` only from pods in a namespace that has the label `name=frontend`.  
+- **Validation:** Exec into a pod in the `frontend` namespace and confirm it can connect to the DB service. Exec into a pod in another namespace (e.g., `default`) and confirm the connection is blocked.  
 
-Scenario: The organization is standardizing on the Gateway API. An existing application exposed via Ingress must be migrated.
+---
 
-Initial State: An Ingress resource legacy-ingress routes traffic for app.example.com to app-svc. A GatewayClass gw-class exists. A TLS secret app-tls exists.
+## Question 25: Allow Egress Traffic with a Network Policy
 
-Task: Create a Gateway resource named main-gateway that uses the gw-class and listens on port 443 for HTTPS traffic from app.example.com, using the app-tls secret. Create an HTTPRoute named app-route that attaches to this gateway and routes requests for app.example.com to the app-svc service. After verifying the route works, delete the legacy-ingress.
+- **Scenario:** An application pod needs to make API calls to an external service at `192.0.2.10/32`, but all other outbound traffic should be blocked.  
+- **Initial State:** A pod with label `app=api-client` in the `default` namespace. A default-deny egress policy is in effect for the namespace.  
+- **Task:** Create a Network Policy named `allow-external-api` that applies to pods with `app=api-client`. The policy should define an egress rule that allows traffic to the IP block `192.0.2.10/32` on TCP port `443`.  
+- **Validation:** Exec into the `api-client` pod. Confirm that `curl https://192.0.2.10` works, but `curl https://google.com` times out.  
 
-Validation: Test connectivity to https://app.example.com (using curl with --resolve). After confirming it works, verify that kubectl get ingress legacy-ingress returns "not found".
+---
 
-Question 24: Restrict Ingress Traffic with a Network Policy
+## Question 26: Create a Headless Service
 
-Scenario: A database in the db namespace should only accept connections from the application frontend in the frontend namespace.
+- **Scenario:** A StatefulSet of database replicas requires a headless service for direct pod discovery.  
+- **Initial State:** A StatefulSet named `db-statefulset` with 3 replicas exists. The pods have the label `app=db`.  
+- **Task:** Create a headless Service named `db-svc-headless`. It should target pods with the label `app=db`. To make it headless, set the `clusterIP` field to `None`.  
+- **Validation:** Run `nslookup db-svc-headless`. It should return the individual IP addresses of the three database pods.  
 
-Initial State: Pods in the frontend namespace (with label app=frontend) need to connect to pods in the db namespace (with label app=db) on port 5432.
+---
 
-Task: Create a Network Policy named db-allow-frontend in the db namespace. This policy should apply to pods with the label app=db. It should define an ingress rule that allows traffic on TCP port 5432 only from pods in a namespace that has the label name=frontend.
+## Question 27: Select the Correct Network Policy Manifest
 
-Validation: Exec into a pod in the frontend namespace and confirm it can connect to the DB service. Exec into a pod in another namespace (e.g., default) and confirm the connection is blocked.
+- **Scenario:** You are given three manifest files: `/opt/np-1.yaml`, `/opt/np-2.yaml`, and `/opt/np-3.yaml`. You must apply the one that implements a specific security rule.  
+- **Initial State:** Three YAML files containing Network Policy definitions.  
+- **Task:** Analyze the files to determine which one correctly implements the following rule: “In the backend namespace, allow ingress traffic on port 8000 to pods with label `role=api` only from pods that have the label `role=frontend`.” Apply the correct manifest file.  
+- **Validation:** Test connectivity from a `frontend` pod to an `api` pod (should succeed) and from another pod (should fail).  
 
-Question 25: Allow Egress Traffic with a Network Policy
+---
 
-Scenario: An application pod needs to make API calls to an external service at 192.0.2.10/32, but all other outbound traffic should be blocked.
+## Question 28: Configure Pod DNS Policy
 
-Initial State: A pod with label app=api-client in the default namespace. A default-deny egress policy is in effect for the namespace.
+- **Scenario:** A legacy application pod needs to use a specific external DNS server instead of the cluster’s CoreDNS.  
+- **Initial State:** A pod manifest `/opt/legacy-pod.yaml` exists.  
+- **Task:** Edit the pod manifest `/opt/legacy-pod.yaml`. Set the `dnsPolicy` to `None`. Add a `dnsConfig` section that specifies `8.8.4.4` in the `nameservers` list. Create the pod.  
+- **Validation:** Exec into the created pod and inspect the contents of `/etc/resolv.conf`. It should show `nameserver 8.8.4.4`.  
 
-Task: Create a Network Policy named allow-external-api that applies to pods with app=api-client. The policy should define an egress rule that allows traffic to the IP block 192.0.2.10/32 on TCP port 443.
+---
 
-Validation: Exec into the api-client pod. Confirm that curl https://192.0.2.10 works, but curl https://google.com times out.
+## Question 29: Use a LoadBalancer Service
 
-Question 26: Create a Headless Service
+- **Scenario:** An application needs to be exposed to the internet using a cloud provider’s load balancer.  
+- **Initial State:** A Deployment `public-api` is running. The environment is a simulated cloud environment.  
+- **Task:** Create a Service named `api-lb` of type `LoadBalancer`. It should target the `public-api` pods on port `8080`.  
+- **Validation:** Run `kubectl get service api-lb`. After a moment, an `EXTERNAL-IP` should be assigned by the simulated cloud provider.  
 
-Scenario: A StatefulSet of database replicas requires a headless service for direct pod discovery.
+---
 
-Initial State: A StatefulSet named db-statefulset with 3 replicas exists. The pods have the label app=db.
+## Question 30: Modify CoreDNS for Custom Domains
 
-Task: Create a headless Service named db-svc-headless. It should target pods with the label app=db. To make it headless, set the clusterIP field to None.
+- **Scenario:** You need CoreDNS to resolve a custom domain `internal.corp` to a specific IP address.  
+- **Initial State:** CoreDNS is running.  
+- **Task:** Edit the `coredns` ConfigMap in the `kube-system` namespace. Add a `hosts` block to the Corefile configuration that maps `service.internal.corp` to the IP `10.0.5.20`. Restart the CoreDNS pods.  
+- **Validation:** Exec into a test pod and run `nslookup service.internal.corp`. It should resolve to `10.0.5.20`.  
 
-Validation: Run nslookup db-svc-headless. It should return the individual IP addresses of the three database pods.
+---
 
-Question 27: Select the Correct Network Policy Manifest
 
-Scenario: You are given three manifest files: /opt/np-1.yaml, /opt/np-2.yaml, and /opt/np-3.yaml. You must apply the one that implements a specific security rule.
+## Domain: Workloads & Scheduling (10 Questions)
 
-Initial State: Three YAML files containing Network Policy definitions.
+## Question 31: Configure a Horizontal Pod Autoscaler
 
-Task: Analyze the files to determine which one correctly implements the following rule: "In the backend namespace, allow ingress traffic on port 8000 to pods with label role=api only from pods that have the label role=frontend." Apply the correct manifest file.
+- **Scenario:** A CPU-intensive workload needs to scale automatically based on load.  
+- **Initial State:** A Deployment named `processor` is running. The pods in the deployment have CPU resource requests set.  
+- **Task:** Create a HorizontalPodAutoscaler named `processor-hpa`. It should target the `processor` Deployment, maintain a minimum of 2 and a maximum of 6 replicas, and scale up when the average CPU utilization across pods exceeds 60%.  
+- **Validation:** Run `kubectl describe hpa processor-hpa` to verify its configuration.  
 
-Validation: Test connectivity from a frontend pod to an api pod (should succeed) and from another pod (should fail).
+---
 
-Question 28: Configure Pod DNS Policy
+## Question 32: Calculate and Set Resource Limits
 
-Scenario: A legacy application pod needs to use a specific external DNS server instead of the cluster's CoreDNS.
+- **Scenario:** A Deployment is causing instability by consuming too many resources on a node. You need to constrain it based on available node capacity.  
+- **Initial State:** A node `worker-1` has 2000m of allocatable CPU and 4Gi of allocatable memory. A Deployment `resource-hog` with 2 replicas is running on it.  
+- **Task:** Calculate resource limits for the `resource-hog` pods. Each pod should be limited to `400m` CPU and `512Mi` of memory. Edit the `resource-hog` Deployment and set these values in the `resources.limits` section of the container spec.  
+- **Validation:** Describe one of the `resource-hog` pods and verify that the CPU and memory limits are correctly set.  
 
-Initial State: A pod manifest /opt/legacy-pod.yaml exists.
+---
 
-Task: Edit the pod manifest /opt/legacy-pod.yaml. Set the dnsPolicy to None. Add a dnsConfig section that specifies 8.8.4.4 in the nameservers list. Create the pod.
+## Question 33: Use a PriorityClass for a Critical Pod
 
-Validation: Exec into the created pod and inspect the contents of /etc/resolv.conf. It should show nameserver 8.8.4.4.
+- **Scenario:** A critical monitoring agent must be scheduled even if the cluster is under high load.  
+- **Initial State:** A pod manifest `/opt/agent.yaml` exists.  
+- **Task:** Create a `PriorityClass` named `high-priority` with a value of `1000000`. Edit the pod manifest `/opt/agent.yaml` to use this priority class by setting the `priorityClassName` field to `high-priority`. Create the pod.  
+- **Validation:** Describe the created pod and verify that the **Priority Class** field is set to `high-priority`.  
 
-Question 29: Use a LoadBalancer Service
+---
 
-Scenario: An application needs to be exposed to the internet using a cloud provider's load balancer.
+## Question 34: Add a Sidecar Container
 
-Initial State: A Deployment public-api is running. The environment is a simulated cloud environment.
+- **Scenario:** An existing application pod needs a sidecar container to stream its logs to a central service.  
+- **Initial State:** A Deployment `main-app` is running. The application writes logs to `/var/log/app.log` inside a volume.  
+- **Task:** Edit the `main-app` Deployment. Add a new container to the pod spec named `log-streamer` using the `busybox` image. The new container should run the command `tail -f /var/log/app.log`. Mount the same log volume that the main application uses into this new sidecar container.  
+- **Validation:** Describe one of the pods from the `main-app` Deployment. It should show two containers: the main app container and the `log-streamer`.  
 
-Task: Create a Service named api-lb of type LoadBalancer. It should target the public-api pods on port 8080.
+---
 
-Validation: Run kubectl get service api-lb. After a moment, an EXTERNAL-IP should be assigned by the simulated cloud provider.
+## Question 35: Perform a Rolling Update and Rollback
 
-Question 30: Modify CoreDNS for Custom Domains
+- **Scenario:** You need to update an application to a new version and then roll it back due to a reported bug.  
+- **Initial State:** A Deployment `frontend` is running version `1.0` of an application image.  
+- **Task:** Update the `frontend` Deployment to use image version `1.1`. After the update completes, perform a rollback to the previous version.  
+- **Validation:** Run `kubectl rollout history deployment frontend` to see the revision history. After the rollback, describe the deployment and verify that it is using image version `1.0` again.  
 
-Scenario: You need CoreDNS to resolve a custom domain internal.corp to a specific IP address.
+---
 
-Initial State: CoreDNS is running.
+## Question 36: Use a ConfigMap to Configure an Application
 
-Task: Edit the coredns ConfigMap in the kube-system namespace. Add a hosts block to the Corefile configuration that maps service.internal.corp to the IP 10.0.5.20. Restart the CoreDNS pods.
+- **Scenario:** An NGINX pod needs to be configured with a custom `nginx.conf` file.  
+- **Initial State:** A file `/opt/nginx.conf` exists with custom settings.  
+- **Task:** Create a ConfigMap named `nginx-config` from the file `/opt/nginx.conf`. Then, create a pod that runs the `nginx` image. Mount the `nginx-config` ConfigMap as a volume into the pod at the path `/etc/nginx/nginx.conf`, overwriting the default configuration file.  
+- **Validation:** Exec into the pod and run `cat /etc/nginx/nginx.conf`. The content should match the custom file from `/opt/nginx.conf`.  
 
-Validation: Exec into a test pod and run nslookup service.internal.corp. It should resolve to 10.0.5.20.
+---
 
-Domain: Workloads & Scheduling (10 Questions)
-Question 31: Configure a Horizontal Pod Autoscaler
+## Question 37: Use a Secret for Environment Variables
 
-Scenario: A CPU-intensive workload needs to scale automatically based on load.
+- **Scenario:** An application requires a database password, which must be supplied securely as an environment variable.  
+- **Initial State:** A pod manifest `/opt/app-pod.yaml` exists.  
+- **Task:** Create a generic Secret named `db-secret` with a key `DB_PASSWORD` and a value of `s3cr3tP@ssw0rd`. Edit the pod manifest `/opt/app-pod.yaml` to expose the `DB_PASSWORD` key from the `db-secret` as an environment variable named `DATABASE_PASSWORD` in the container. Create the pod.  
+- **Validation:** Exec into the pod and run `env | grep DATABASE_PASSWORD`. It should show `DATABASE_PASSWORD=s3cr3tP@ssw0rd`.  
 
-Initial State: A Deployment named processor is running. The pods in the deployment have CPU resource requests set.
+---
 
-Task: Create a HorizontalPodAutoscaler named processor-hpa. It should target the processor Deployment, maintain a minimum of 2 and a maximum of 6 replicas, and scale up when the average CPU utilization across pods exceeds 60%.
+## Question 38: Configure Node Affinity
 
-Validation: Run kubectl describe hpa processor-hpa to verify its configuration.
+- **Scenario:** A specific workload must only run on nodes that have high-performance SSD storage.  
+- **Initial State:** Some worker nodes have the label `disktype=ssd`. A Deployment manifest `/opt/workload.yaml` exists.  
+- **Task:** Edit the Deployment manifest `/opt/workload.yaml`. Add a `nodeAffinity` rule under `spec.template.spec.affinity`. The rule should be a `requiredDuringSchedulingIgnoredDuringExecution` type that requires nodes to have the label `disktype` with the value `ssd`. Apply the manifest.  
+- **Validation:** Check which nodes the deployment’s pods are running on using `kubectl get pods -o wide`. All pods should be on nodes with the `disktype=ssd` label.  
 
-Question 32: Calculate and Set Resource Limits
+---
 
-Scenario: A Deployment is causing instability by consuming too many resources on a node. You need to constrain it based on available node capacity.
+## Question 39: Configure Taints and Tolerations
 
-Initial State: A node worker-1 has 2000m of allocatable CPU and 4Gi of allocatable memory. A Deployment resource-hog with 2 replicas is running on it.
+- **Scenario:** A specific node is reserved for GPU workloads and should not accept normal pods.  
+- **Initial State:** A node `gpu-node-1` exists. A pod manifest `/opt/gpu-pod.yaml` exists.  
+- **Task:** Add a taint to the `gpu-node-1` node with the key `gpu`, value `true`, and effect `NoSchedule`. Then, edit the pod manifest `/opt/gpu-pod.yaml` to add a toleration for this taint (`key: "gpu"`, `operator: "Exists"`, `effect: "NoSchedule"`). Create the pod.  
+- **Validation:** The `gpu-pod` should be successfully scheduled on `gpu-node-1`. A normal pod without the toleration should not be scheduled on that node.  
 
-Task: Calculate resource limits for the resource-hog pods. Each pod should be limited to 400m CPU and 512Mi of memory. Edit the resource-hog Deployment and set these values in the resources.limits section of the container spec.
+---
 
-Validation: Describe one of the resource-hog pods and verify that the CPU and memory limits are correctly set.
+## Question 40: Create a StatefulSet
 
-Question 33: Use a PriorityClass for a Critical Pod
+- **Scenario:** Deploy a stateful application that requires stable network identifiers and persistent storage.  
+- **Initial State:** A headless service `app-headless` and a StorageClass `fast-storage` exist.  
+- **Task:** Create a StatefulSet named `data-app` with 2 replicas. It should use the `app-headless` service for its `serviceName`. The pod template should use the `nginx` image. Define a `volumeClaimTemplate` that creates a 1Gi PVC for each replica using the `fast-storage` StorageClass.  
+- **Validation:** Verify that two pods, `data-app-0` and `data-app-1`, are created and running. Verify that two corresponding PVCs have also been created and bound.  
 
-Scenario: A critical monitoring agent must be scheduled even if the cluster is under high load.
+---
 
-Initial State: A pod manifest /opt/agent.yaml exists.
+## Domain: Storage (10 Questions)
 
-Task: Create a PriorityClass named high-priority with a value of 1000000. Edit the pod manifest /opt/agent.yaml to use this priority class by setting the priorityClassName field to high-priority. Create the pod.
+## Question 41: Create a PVC and Mount it in a Pod
 
-Validation: Describe the created pod and verify that the Priority Class field is set to high-priority.
+- **Scenario:** An application needs a persistent volume to store its data.  
+- **Initial State:** A default StorageClass is configured in the cluster.  
+- **Task:** Create a PersistentVolumeClaim named `my-pvc` that requests `1Gi` of storage with the `ReadWriteOnce` access mode. Then, create a pod named `storage-pod` that mounts this PVC at the path `/data`.  
+- **Validation:** Exec into the `storage-pod` and create a file in the `/data` directory. Delete the pod. Recreate the pod. Exec into the new pod and verify that the file still exists in `/data`.  
 
-Question 34: Add a Sidecar Container
+---
 
-Scenario: An existing application pod needs a sidecar container to stream its logs to a central service.
+## Question 42: Patch a StorageClass to be the Default
 
-Initial State: A Deployment main-app is running. The application writes logs to /var/log/app.log inside a volume.
+- **Scenario:** The cluster has two StorageClasses, `slow` and `fast`, but neither is the default. You need to make `fast` the default for all new PVCs.  
+- **Initial State:** Two StorageClasses, `slow` and `fast`, exist.  
+- **Task:** Use the `kubectl patch` command to add the annotation `storageclass.kubernetes.io/is-default-class="true"` to the `fast` StorageClass. Ensure the `slow` StorageClass does not have this annotation.  
+- **Validation:** Create a new PVC without specifying a `storageClassName`. Describe the PVC and verify that it was provisioned using the `fast` StorageClass.  
 
-Task: Edit the main-app Deployment. Add a new container to the pod spec named log-streamer using the busybox image. The new container should run the command tail -f /var/log/app.log. Mount the same log volume that the main application uses into this new sidecar container.
+---
 
-Validation: Describe one of the pods from the main-app Deployment. It should show two containers: the main app container and the log-streamer.
+## Question 43: Create a PVC to Bind to a Specific PV
 
-Question 35: Perform a Rolling Update and Rollback
+- **Scenario:** A PersistentVolume named `pv-data-001` was created manually, and you need to create a claim that specifically binds to it.  
+- **Initial State:** A PV named `pv-data-001` exists with a capacity of `2Gi`, access mode `ReadWriteOnce`, and `storageClassName` of `manual`.  
+- **Task:** Create a PersistentVolumeClaim named `claim-for-pv-data` that exactly matches the specifications of `pv-data-001` (requests 2Gi storage, ReadWriteOnce access mode, and `storageClassName: manual`) to ensure it binds to that specific PV.  
+- **Validation:** Run `kubectl get pvc claim-for-pv-data`. Its status should be `Bound`, and describing it should show it is bound to the `pv-data-001` volume.  
 
-Scenario: You need to update an application to a new version and then roll it back due to a reported bug.
+---
 
-Initial State: A Deployment frontend is running version 1.0 of an application image.
+## Question 44: Configure Volume Reclaim Policy
 
-Task: Update the frontend Deployment to use image version 1.1. After the update completes, perform a rollback to the previous version.
+- **Scenario:** You are creating a PersistentVolume for temporary data and want the underlying storage to be deleted when the claim is released.  
+- **Initial State:** A manifest for a PV is at `/opt/pv.yaml`.  
+- **Task:** Edit the PV manifest at `/opt/pv.yaml`. Set the `persistentVolumeReclaimPolicy` field to `Delete`. Create the PV.  
+- **Validation:** Create a PVC that binds to this PV. Then, delete the PVC. The PV's status should change to `Terminating` and it should eventually be deleted.  
 
-Validation: Run kubectl rollout history deployment frontend to see the revision history. After the rollback, describe the deployment and verify that it is using image version 1.0 again.
+---
 
-Question 36: Use a ConfigMap to Configure an Application
+## Question 45: Expand a Persistent Volume Claim
 
-Scenario: An NGINX pod needs to be configured with a custom nginx.conf file.
+- **Scenario:** An application's database is running out of space, and the underlying storage volume needs to be expanded.  
+- **Initial State:** A StorageClass `expandable-sc` with `allowVolumeExpansion: true` exists. A PVC `db-pvc` created with this class is currently `10Gi`.  
+- **Task:** Edit the `db-pvc` PersistentVolumeClaim and change the `spec.resources.requests.storage` value from `10Gi` to `20Gi`.  
+- **Validation:** Run `kubectl describe pvc db-pvc`. Check the events to see a successful resize operation. The capacity of the PVC should now show `20Gi`.  
 
-Initial State: A file /opt/nginx.conf exists with custom settings.
+---
 
-Task: Create a ConfigMap named nginx-config from the file /opt/nginx.conf. Then, create a pod that runs the nginx image. Mount the nginx-config ConfigMap as a volume into the pod at the path /etc/nginx/nginx.conf, overwriting the default configuration file.
+## Question 46: Use a HostPath Volume
 
-Validation: Exec into the pod and run cat /etc/nginx/nginx.conf. The content should match the custom file from /opt/nginx.conf.
+- **Scenario:** A pod needs to access logs stored directly on the node's filesystem for debugging.  
+- **Initial State:** A log file exists at `/var/log/node-app.log` on a worker node.  
+- **Task:** Create a pod that uses a `hostPath` volume to mount the `/var/log` directory from the host node into the pod at the path `/node-logs`. The pod should be scheduled to the specific worker node where the log file exists.  
+- **Validation:** Exec into the pod and run `cat /node-logs/node-app.log`. It should display the contents of the log file from the host node.  
 
-Question 37: Use a Secret for Environment Variables
+---
 
-Scenario: An application requires a database password, which must be supplied securely as an environment variable.
+## Question 47: Use an emptyDir Volume for Temporary Data
 
-Initial State: A pod manifest /opt/app-pod.yaml exists.
+- **Scenario:** Two containers in a pod need to share temporary files.  
+- **Initial State:** A pod manifest `/opt/multi-container-pod.yaml` defines two containers.  
+- **Task:** Edit the pod manifest. Define an `emptyDir` volume named `shared-data`. Mount this volume into both containers at the path `/shared`. Create the pod.  
+- **Validation:** Exec into the first container and create a file in `/shared`. Then, exec into the second container and verify that the file is visible and accessible at `/shared`.  
 
-Task: Create a generic Secret named db-secret with a key DB_PASSWORD and a value of s3cr3tP@ssw0rd. Edit the pod manifest /opt/app-pod.yaml to expose the DB_PASSWORD key from the db-secret as an environment variable named DATABASE_PASSWORD in the container. Create the pod.
+---
 
-Validation: Exec into the pod and run env | grep DATABASE_PASSWORD. It should show DATABASE_PASSWORD=s3cr3tP@ssw0rd.
+## Question 48: Create a Read-Only Volume Mount
 
-Question 38: Configure Node Affinity
+- **Scenario:** A pod needs to read configuration data from a ConfigMap, but it must be prevented from modifying the data.  
+- **Initial State:** A ConfigMap `app-config` exists.  
+- **Task:** Create a pod. Mount the `app-config` ConfigMap as a volume. In the `volumeMounts` section for the container, set the `readOnly` field to `true`.  
+- **Validation:** Exec into the pod and attempt to write a file to the mounted config directory (e.g., `touch /path/to/config/new-file`). The command should fail with a "Read-only file system" error.  
 
-Scenario: A specific workload must only run on nodes that have high-performance SSD storage.
+---
 
-Initial State: Some worker nodes have the label disktype=ssd. A Deployment manifest /opt/workload.yaml exists.
+## Question 49: Manually Create a PersistentVolume
 
-Task: Edit the Deployment manifest /opt/workload.yaml. Add a nodeAffinity rule under spec.template.spec.affinity. The rule should be a requiredDuringSchedulingIgnoredDuringExecution type that requires nodes to have the label disktype with the value ssd. Apply the manifest.
+- **Scenario:** You have an existing NFS share and need to make it available as a volume in the cluster.  
+- **Initial State:** An NFS server is running at `192.168.1.100` with an exported path `/data/shared`.  
+- **Task:** Create a PersistentVolume manifest. The PV should have a capacity of `5Gi`, access mode `ReadWriteMany`, and a `reclaimPolicy` of `Retain`. The volume source should be `nfs`, with the server set to `192.168.1.100` and the path to `/data/shared`. Apply the manifest.  
+- **Validation:** Run `kubectl get pv`. The new PV should be listed with the status `Available`.  
 
-Validation: Check which nodes the deployment's pods are running on using kubectl get pods -o wide. All pods should be on nodes with the disktype=ssd label.
+---
 
-Question 39: Configure Taints and Tolerations
+## Question 50: Clone a Persistent Volume Claim
 
-Scenario: A specific node is reserved for GPU workloads and should not accept normal pods.
+- **Scenario:** You need to create a pre-populated volume for a new testing environment by cloning an existing PVC.  
+- **Initial State:** A PVC `source-pvc` exists and is bound. The underlying CSI driver supports volume cloning.  
+- **Task:** Create a new PVC manifest for a PVC named `cloned-pvc`. In the `spec`, add a `dataSource` block that specifies `name: source-pvc` and `kind: PersistentVolumeClaim`. Apply the manifest.  
+- **Validation:** Run `kubectl get pvc cloned-pvc`. It should become `Bound`. Create a pod that mounts `cloned-pvc`, and verify that it contains the same data as the `source-pvc`.  
 
-Initial State: A node gpu-node-1 exists. A pod manifest /opt/gpu-pod.yaml exists.
-
-Task: Add a taint to the gpu-node-1 node with the key gpu, value true, and effect NoSchedule. Then, edit the pod manifest /opt/gpu-pod.yaml to add a toleration for this taint (key: "gpu", operator: "Exists", effect: "NoSchedule"). Create the pod.
-
-Validation: The gpu-pod should be successfully scheduled on gpu-node-1. A normal pod without the toleration should not be scheduled on that node.
-
-Question 40: Create a StatefulSet
-
-Scenario: Deploy a stateful application that requires stable network identifiers and persistent storage.
-
-Initial State: A headless service app-headless and a StorageClass fast-storage exist.
-
-Task: Create a StatefulSet named data-app with 2 replicas. It should use the app-headless service for its serviceName. The pod template should use the nginx image. Define a volumeClaimTemplate that creates a 1Gi PVC for each replica using the fast-storage StorageClass.
-
-Validation: Verify that two pods, data-app-0 and data-app-1, are created and running. Verify that two corresponding PVCs have also been created and bound.
-
-Domain: Storage (10 Questions)
-Question 41: Create a PVC and Mount it in a Pod
-
-Scenario: An application needs a persistent volume to store its data.
-
-Initial State: A default StorageClass is configured in the cluster.
-
-Task: Create a PersistentVolumeClaim named my-pvc that requests 1Gi of storage with the ReadWriteOnce access mode. Then, create a pod named storage-pod that mounts this PVC at the path /data.
-
-Validation: Exec into the storage-pod and create a file in the /data directory. Delete the pod. Recreate the pod. Exec into the new pod and verify that the file still exists in /data.
-
-Question 42: Patch a StorageClass to be the Default
-
-Scenario: The cluster has two StorageClasses, slow and fast, but neither is the default. You need to make fast the default for all new PVCs.
-
-Initial State: Two StorageClasses, slow and fast, exist.
-
-Task: Use the kubectl patch command to add the annotation storageclass.kubernetes.io/is-default-class="true" to the fast StorageClass. Ensure the slow StorageClass does not have this annotation.
-
-Validation: Create a new PVC without specifying a storageClassName. Describe the PVC and verify that it was provisioned using the fast StorageClass.
-
-Question 43: Create a PVC to Bind to a Specific PV
-
-Scenario: A PersistentVolume named pv-data-001 was created manually, and you need to create a claim that specifically binds to it.
-
-Initial State: A PV named pv-data-001 exists with a capacity of 2Gi, access mode ReadWriteOnce, and storageClassName of manual.
-
-Task: Create a PersistentVolumeClaim named claim-for-pv-data that exactly matches the specifications of pv-data-001 (requests 2Gi storage, ReadWriteOnce access mode, and storageClassName: manual) to ensure it binds to that specific PV.
-
-Validation: Run kubectl get pvc claim-for-pv-data. Its status should be Bound, and describing it should show it is bound to the pv-data-001 volume.
-
-Question 44: Configure Volume Reclaim Policy
-
-Scenario: You are creating a PersistentVolume for temporary data and want the underlying storage to be deleted when the claim is released.
-
-Initial State: A manifest for a PV is at /opt/pv.yaml.
-
-Task: Edit the PV manifest at /opt/pv.yaml. Set the persistentVolumeReclaimPolicy field to Delete. Create the PV.
-
-Validation: Create a PVC that binds to this PV. Then, delete the PVC. The PV's status should change to Terminating and it should eventually be deleted.
-
-Question 45: Expand a Persistent Volume Claim
-
-Scenario: An application's database is running out of space, and the underlying storage volume needs to be expanded.
-
-Initial State: A StorageClass expandable-sc with allowVolumeExpansion: true exists. A PVC db-pvc created with this class is currently 10Gi.
-
-Task: Edit the db-pvc PersistentVolumeClaim and change the spec.resources.requests.storage value from 10Gi to 20Gi.
-
-Validation: Run kubectl describe pvc db-pvc. Check the events to see a successful resize operation. The capacity of the PVC should now show 20Gi.
-
-Question 46: Use a HostPath Volume
-
-Scenario: A pod needs to access logs stored directly on the node's filesystem for debugging.
-
-Initial State: A log file exists at /var/log/node-app.log on a worker node.
-
-Task: Create a pod that uses a hostPath volume to mount the /var/log directory from the host node into the pod at the path /node-logs. The pod should be scheduled to the specific worker node where the log file exists.
-
-Validation: Exec into the pod and run cat /node-logs/node-app.log. It should display the contents of the log file from the host node.
-
-Question 47: Use an emptyDir Volume for Temporary Data
-
-Scenario: Two containers in a pod need to share temporary files.
-
-Initial State: A pod manifest /opt/multi-container-pod.yaml defines two containers.
-
-Task: Edit the pod manifest. Define an emptyDir volume named shared-data. Mount this volume into both containers at the path /shared. Create the pod.
-
-Validation: Exec into the first container and create a file in /shared. Then, exec into the second container and verify that the file is visible and accessible at /shared.
-
-Question 48: Create a Read-Only Volume Mount
-
-Scenario: A pod needs to read configuration data from a ConfigMap, but it must be prevented from modifying the data.
-
-Initial State: A ConfigMap app-config exists.
-
-Task: Create a pod. Mount the app-config ConfigMap as a volume. In the volumeMounts section for the container, set the readOnly field to true.
-
-Validation: Exec into the pod and attempt to write a file to the mounted config directory (e.g., touch /path/to/config/new-file). The command should fail with a "Read-only file system" error.
-
-Question 49: Manually Create a PersistentVolume
-
-Scenario: You have an existing NFS share and need to make it available as a volume in the cluster.
-
-Initial State: An NFS server is running at 192.168.1.100 with an exported path /data/shared.
-
-Task: Create a PersistentVolume manifest. The PV should have a capacity of 5Gi, access mode ReadWriteMany, and a reclaimPolicy of Retain. The volume source should be nfs, with the server set to 192.168.1.100 and the path to /data/shared. Apply the manifest.
-
-Validation: Run kubectl get pv. The new PV should be listed with the status Available.
-
-Question 50: Clone a Persistent Volume Claim
-
-Scenario: You need to create a pre-populated volume for a new testing environment by cloning an existing PVC.
-
-Initial State: A PVC source-pvc exists and is bound. The underlying CSI driver supports volume cloning.
-
-Task: Create a new PVC manifest for a PVC named cloned-pvc. In the spec, add a dataSource block that specifies name: source-pvc and kind: PersistentVolumeClaim. Apply the manifest.
-
-Validation: Run kubectl get pvc cloned-pvc. It should become Bound. Create a pod that mounts cloned-pvc, and verify that it contains the same data as the source-pvc.
