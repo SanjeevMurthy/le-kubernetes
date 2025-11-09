@@ -1,3 +1,8 @@
+- [Domain I: Troubleshooting (30%) - The High-Stakes Domain](#domain-i-troubleshooting-30---the-high-stakes-domain)  
+- [Domain II: Cluster Architecture, Installation & Configuration (25%) - The Modern Tooling Domain](#domain-ii-cluster-architecture-installation--configuration-25---the-modern-tooling-domain)  
+- [Domain III: Services & Networking (20%) - The Connectivity Domain](#domain-iii-services--networking-20---the-connectivity-domain)  
+- [Domain IV: Workloads & Scheduling (15%) - The Resource Management Domain](#domain-iv-workloads--scheduling-15---the-resource-management-domain)
+
 # Domain I: Troubleshooting (30%) - The High-Stakes Domain
 
 As the most heavily weighted domain, Troubleshooting presents the most complex and challenging scenarios. Success in this area is paramount to passing the exam.
@@ -38,6 +43,12 @@ This domain focuses on the lifecycle of applications running on the cluster and 
 
 **Core Task 3:** Default StorageClass Configuration. This is a subtle administrative task that can easily trip up candidates unfamiliar with annotations. The scenario presents a cluster with multiple StorageClass objects, none of which is designated as the default. The task is to make one of them the default for all future dynamic provisioning requests that do not specify a storageClassName. This cannot be achieved by simply editing the object's spec. The correct method is to use kubectl patch to set the annotation storageclass.kubernetes.io/is-default-class to "true" on the desired StorageClass. It is also best practice to ensure this annotation is set to "false" or is absent on all other StorageClasses.
 
+# Domain V: Storage (10%) - The Persistence Domain
+While having the lowest weight, storage questions test specific and sometimes non-obvious administrative knowledge.
+
+**Core Task 1**: Binding to an Existing Persistent Volume (PV). This task moves beyond simple dynamic provisioning and tests a deeper understanding of the PV/PVC binding lifecycle. The environment contains a pre-created PV with specific characteristics (e.g., a capacity of 1Gi, an access mode of ReadWriteOnce, and a particular storageClassName). The candidate must create a new PersistentVolumeClaim (PVC) whose specification (access mode, storage request, and storage class) precisely matches the existing PV, which will cause the control plane to bind them together. The final step is to create a pod that mounts this PVC.   
+
+**Core Task 2**: Default StorageClass Configuration. This is a subtle administrative task that can easily trip up candidates unfamiliar with annotations. The scenario presents a cluster with multiple StorageClass objects, none of which is designated as the default. The task is to make one of them the default for all future dynamic provisioning requests that do not specify a storageClassName. This cannot be achieved by simply editing the object's spec. The correct method is to use kubectl patch to set the annotation storageclass.kubernetes.io/is-default-class to "true" on the desired StorageClass. It is also best practice to ensure this annotation is set to "false" or is absent on all other StorageClasses.
 
 
 # The CKA 2025 Practice Question Bank.
