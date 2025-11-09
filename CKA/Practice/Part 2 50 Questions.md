@@ -2,7 +2,7 @@
 - [Domain II: Cluster Architecture, Installation & Configuration (25%) - The Modern Tooling Domain](#domain-ii-cluster-architecture-installation--configuration-25---the-modern-tooling-domain)  
 - [Domain III: Services & Networking (20%) - The Connectivity Domain](#domain-iii-services--networking-20---the-connectivity-domain)  
 - [Domain IV: Workloads & Scheduling (15%) - The Resource Management Domain](#domain-iv-workloads--scheduling-15---the-resource-management-domain)
-- [Domain V: Storage (10%) - The Persistence Domain]((#domain-v-storage-10---the-persistence-domain))
+- [Domain V: Storage (10%) - The Persistence Domain](#domain-v-storage-10---the-persistence-domain)
 
 # Domain I: Troubleshooting (30%) - The High-Stakes Domain
 
