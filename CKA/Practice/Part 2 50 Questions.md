@@ -43,7 +43,7 @@ This domain focuses on the lifecycle of applications running on the cluster and 
 # The CKA 2025 Practice Question Bank.
 ## This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
 
-# Domain: Troubleshooting
+## Domain: Troubleshooting
 
 ## Question 1: Control Plane Component Failure
 
@@ -134,108 +134,100 @@ This domain focuses on the lifecycle of applications running on the cluster and 
 - **Validation:** Create a new NGINX pod. It should be scheduled and transition to the Running state.  
 
 
-Domain: Cluster Architecture, Installation & Configuration (10 Questions)
-Question 11: Install a Component with Helm
+## Domain: Cluster Architecture, Installation & Configuration (10 Questions)
+## Question 11: Install a Component with Helm
 
-Scenario: The monitoring team requires Prometheus to be installed in the cluster to collect metrics.
+- **Scenario:** The monitoring team requires Prometheus to be installed in the cluster to collect metrics.  
+- **Initial State:** A namespace `monitoring` exists. Helm is installed.  
+- **Task:** Add the `prometheus-community` Helm repository. Install the Prometheus chart from this repository into the `monitoring` namespace, giving it the release name `prom-stack`.  
+- **Validation:** Run `helm list -n monitoring`. It should show the `prom-stack` release in a deployed status.  
 
-Initial State: A namespace monitoring exists. Helm is installed.
+---
 
-Task: Add the prometheus-community Helm repository. Install the prometheus chart from this repository into the monitoring namespace, giving it the release name prom-stack.
+## Question 12: Helm Install with Custom Values
 
-Validation: Run helm list -n monitoring. It should show the prom-stack release in a deployed status.
+- **Scenario:** An existing Helm installation of cert-manager needs to be configured to not install its CRDs, as they will be managed manually.  
+- **Initial State:** The `jetstack` Helm repository has been added.  
+- **Task:** Install the `cert-manager` chart from the `jetstack` repository into the `cert-manager` namespace. During installation, use the `--set` flag to set the `installCRDs` value to `false`.  
+- **Validation:** Run `kubectl get crds | grep cert-manager`. No CRDs related to cert-manager should be present.  
 
-Question 12: Helm Install with Custom Values
+---
 
-Scenario: An existing Helm installation of cert-manager needs to be configured to not install its CRDs, as they will be managed manually.
+## Question 13: List and Explain a CRD
 
-Initial State: The jetstack Helm repository has been added.
+- **Scenario:** An operator for Vault has been installed, and you need to document one of its custom resources.  
+- **Initial State:** The cluster contains several CRDs, including `vaultsecrets.secrets.hashicorp.com`.  
+- **Task:** List all CRDs in the cluster and save the list to a file named `/opt/crds.txt`. Then, use `kubectl explain` to find the documentation for the `spec.vault.address` field of the `VaultSecret` CRD and save this documentation to `/opt/crd_field.txt`.  
+- **Validation:** Check the contents of the two files, `/opt/crds.txt` and `/opt/crd_field.txt`, to ensure they contain the correct information.  
 
-Task: Install the cert-manager chart from the jetstack repository into the cert-manager namespace. During installation, use the --set flag to set the installCRDs value to false.
+---
 
-Validation: Run kubectl get crds | grep cert-manager. No CRDs related to cert-manager should be present.
+## Question 14: Create a Specific RBAC Role
 
-Question 13: List and Explain a CRD
+- **Scenario:** A new developer, `david`, needs read-only access to pods and services in the `dev` namespace.  
+- **Initial State:** The `dev` namespace exists. A user `david` is present in the cluster's authentication system.  
+- **Task:** Create a Role named `pod-service-reader` in the `dev` namespace that grants `get`, `list`, and `watch` permissions on pods and services. Then, create a RoleBinding named `david-reader-binding` to bind the `david` user to this new role.  
+- **Validation:** Run `kubectl auth can-i get pods --as david -n dev`. The result should be `yes`. Run `kubectl auth can-i delete pods --as david -n dev`. The result should be `no`.  
 
-Scenario: An operator for Vault has been installed, and you need to document one of its custom resources.
+---
 
-Initial State: The cluster contains several CRDs, including vaultsecrets.secrets.hashicorp.com.
+## Question 15: Create a Cluster-Wide RBAC Role
 
-Task: List all CRDs in the cluster and save the list to a file named /opt/crds.txt. Then, use kubectl explain to find the documentation for the spec.vault.address field of the VaultSecret CRD and save this documentation to /opt/crd_field.txt.
+- **Scenario:** A cluster-wide auditing tool needs permission to view all nodes and persistent volumes in the cluster.  
+- **Initial State:** A `ServiceAccount` named `auditor` exists in the `kube-system` namespace.  
+- **Task:** Create a `ClusterRole` named `node-pv-viewer` that grants `get` and `list` permissions on nodes and persistent volumes. Create a `ClusterRoleBinding` named `auditor-global-binding` to grant the `auditor` ServiceAccount this ClusterRole.  
+- **Validation:** Run `kubectl auth can-i list nodes --as=system:serviceaccount:kube-system:auditor`. The result should be `yes`.  
 
-Validation: Check the contents of the two files, /opt/crds.txt and /opt/crd_field.txt, to ensure they contain the correct information.
+---
 
-Question 14: Create a Specific RBAC Role
+## Question 16: Upgrade a kubeadm Cluster
 
-Scenario: A new developer, david, needs read-only access to pods and services in the dev namespace.
+- **Scenario:** The cluster is running Kubernetes version `1.28.1` and needs to be upgraded to the latest patch release of `1.28`.  
+- **Initial State:** A single-node kubeadm cluster is running version `1.28.1`.  
+- **Task:** On the control plane node, update the package manager and install the target version of `kubeadm`. Run `kubeadm upgrade plan` to verify the upgrade path. Then, apply the upgrade using `kubeadm upgrade apply v1.28.x` (where `x` is the latest patch). After the control plane is upgraded, drain the node, upgrade `kubelet` and `kubectl`, and then uncordon the node.  
+- **Validation:** Run `kubectl get nodes`. The version column should reflect the new Kubernetes version.  
 
-Initial State: The dev namespace exists. A user david is present in the cluster's authentication system.
+---
 
-Task: Create a Role named pod-service-reader in the dev namespace that grants get, list, and watch permissions on pods and services. Then, create a RoleBinding named david-reader-binding to bind the david user to this new role.
+## Question 17: Backup etcd
 
-Validation: Run kubectl auth can-i get pods --as david -n dev. The result should be yes. Run kubectl auth can-i delete pods --as david -n dev. The result should be no.
+- **Scenario:** As part of a disaster recovery plan, you need to perform a manual backup of the etcd database.  
+- **Initial State:** The cluster is running with an etcd instance managed by kubeadm as a static pod.  
+- **Task:** Using the `etcdctl` binary, create a snapshot of the etcd database. You will need to provide the correct endpoint, CA certificate, client certificate, and key, which can be found by inspecting the etcd static pod manifest. Save the snapshot to `/opt/etcd-backup.db`.  
+- **Validation:** Run `etcdctl snapshot status /opt/etcd-backup.db` to verify the integrity of the backup file.  
 
-Question 15: Create a Cluster-Wide RBAC Role
+---
 
-Scenario: A cluster-wide auditing tool needs permission to view all nodes and persistent volumes in the cluster.
+## Question 18: Add a New Worker Node
 
-Initial State: A ServiceAccount named auditor exists in the kube-system namespace.
+- **Scenario:** The cluster needs more capacity, and a new machine is ready to be joined as a worker node.  
+- **Initial State:** A one-control-plane, one-worker cluster exists. A new machine `new-worker` is provisioned with a container runtime.  
+- **Task:** On the control plane node, generate a new `kubeadm join` token. SSH to the `new-worker` machine and use the generated command (`kubeadm join ...`) to join the node to the cluster.  
+- **Validation:** From the control plane, run `kubectl get nodes`. The `new-worker` node should appear in the list with a `Ready` status after a few moments.  
 
-Task: Create a ClusterRole named node-pv-viewer that grants get and list permissions on nodes and persistentvolumes. Create a ClusterRoleBinding named auditor-global-binding to grant the auditor ServiceAccount this ClusterRole.
+---
 
-Validation: Run kubectl auth can-i list nodes --as=system:serviceaccount:kube-system:auditor. The result should be yes.
+## Question 19: Use Kustomize to Apply a Variant
 
-Question 16: Upgrade a kubeadm Cluster
+- **Scenario:** An application has base configurations, but you need to deploy a staging variant with increased replica counts.  
+- **Initial State:** A directory `/opt/app` contains a `kustomization.yaml` and a `deployment.yaml` (with 1 replica). A subdirectory `/opt/app/overlays/staging` contains another `kustomization.yaml`.  
+- **Task:** Edit the Kustomization file in `/opt/app/overlays/staging` to use the base configuration but patch the Deployment to have 3 replicas. Then, apply the staging configuration to the cluster using `kubectl apply -k /opt/app/overlays/staging`.  
+- **Validation:** Run `kubectl get deployment` and verify that the application's deployment has 3 replicas running.  
 
-Scenario: The cluster is running Kubernetes version 1.28.1 and needs to be upgraded to the latest patch release of 1.28.
+---
 
-Initial State: A single-node kubeadm cluster is running version 1.28.1.
+## Question 20: Configure an External CRI
 
-Task: On the control plane node, update the package manager and install the target version of kubeadm. Run kubeadm upgrade plan to verify the upgrade path. Then, apply the upgrade using kubeadm upgrade apply v1.28.x (where x is the latest patch). After the control plane is upgraded, drain the node, upgrade kubelet and kubectl, and then uncordon the node.
+- **Scenario:** A node is configured to use dockerd, but policy requires it to use containerd.  
+- **Initial State:** A worker node `worker-1` has both dockerd and containerd installed. The kubelet is configured to use the docker runtime socket.  
+- **Task:** SSH to `worker-1`. Drain the node. Stop the kubelet. Edit the kubelet configuration (`/var/lib/kubelet/kubeadm-flags.env` or similar) to point to the containerd socket (`--container-runtime-endpoint=unix:///run/containerd/containerd.sock`). Restart the kubelet. Uncordon the node.  
+- **Validation:** Run `kubectl describe node worker-1`. The Container Runtime Version should show `containerd://...`.  
 
-Validation: Run kubectl get nodes. The version column should reflect the new Kubernetes version.
+---
 
-Question 17: Backup etcd
 
-Scenario: As part of a disaster recovery plan, you need to perform a manual backup of the etcd database.
+## Domain: Services & Networking (10 Questions)
 
-Initial State: The cluster is running with an etcd instance managed by kubeadm as a static pod.
-
-Task: Using the etcdctl binary, create a snapshot of the etcd database. You will need to provide the correct endpoint, CA certificate, client certificate, and key, which can be found by inspecting the etcd static pod manifest. Save the snapshot to /opt/etcd-backup.db.
-
-Validation: Run etcdctl snapshot status /opt/etcd-backup.db to verify the integrity of the backup file.
-
-Question 18: Add a New Worker Node
-
-Scenario: The cluster needs more capacity, and a new machine is ready to be joined as a worker node.
-
-Initial State: A one-control-plane, one-worker cluster exists. A new machine new-worker is provisioned with a container runtime.
-
-Task: On the control plane node, generate a new kubeadm join token. SSH to the new-worker machine and use the generated command (kubeadm join...) to join the node to the cluster.
-
-Validation: From the control plane, run kubectl get nodes. The new-worker node should appear in the list with a Ready status after a few moments.
-
-Question 19: Use Kustomize to Apply a Variant
-
-Scenario: An application has base configurations, but you need to deploy a staging variant with increased replica counts.
-
-Initial State: A directory /opt/app contains a kustomization.yaml and a deployment.yaml (with 1 replica). A subdirectory /opt/app/overlays/staging contains another kustomization.yaml.
-
-Task: Edit the Kustomization file in /opt/app/overlays/staging to use the base configuration but patch the Deployment to have 3 replicas. Then, apply the staging configuration to the cluster using kubectl apply -k /opt/app/overlays/staging.
-
-Validation: Run kubectl get deployment and verify that the application's deployment has 3 replicas running.
-
-Question 20: Configure an External CRI
-
-Scenario: A node is configured to use dockerd, but policy requires it to use containerd.
-
-Initial State: A worker node worker-1 has both dockerd and containerd installed. The kubelet is configured to use the docker runtime socket.
-
-Task: SSH to worker-1. Drain the node. Stop the kubelet. Edit the kubelet configuration (/var/lib/kubelet/kubeadm-flags.env or similar) to point to the containerd socket (--container-runtime-endpoint=unix:///run/containerd/containerd.sock). Restart the kubelet. Uncordon the node.
-
-Validation: Run kubectl describe node worker-1. The Container Runtime Version should show containerd://....
-
-Domain: Services & Networking (10 Questions)
 Question 21: Expose a Deployment with a NodePort Service
 
 Scenario: A deployment named webapp is running in the app-space namespace, and it needs to be accessible from outside the cluster for testing purposes.
