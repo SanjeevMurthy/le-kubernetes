@@ -1,3 +1,4 @@
+# CKA Exam Domains
 - [Domain I: Troubleshooting (30%) - The High-Stakes Domain](#domain-i-troubleshooting-30---the-high-stakes-domain)  
 - [Domain II: Cluster Architecture, Installation & Configuration (25%) - The Modern Tooling Domain](#domain-ii-cluster-architecture-installation--configuration-25---the-modern-tooling-domain)  
 - [Domain III: Services & Networking (20%) - The Connectivity Domain](#domain-iii-services--networking-20---the-connectivity-domain)  
@@ -58,22 +59,15 @@ While having the lowest weight, storage questions test specific and sometimes no
 This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
 
 
-## 📘 Table of Contents – CKA 2025 Practice Question Bank  
+## Domains with 10 questions each
+[Domain: Troubleshooting (10 Questions)](#domain-troubleshooting-10-questions)
+[Domain: Workloads & Scheduling (10 Questions)](#domain-workloads--scheduling-10-questions)  
+[Domain: Cluster Maintenance (10 Questions)](#domain-cluster-maintenance-10-questions)  
+[Domain: Networking (10 Questions)](#domain-networking-10-questions)  
+[Domain: Security (10 Questions)](#domain-security-10-questions)  
+[Domain: Storage (10 Questions)](#domain-storage-10-questions)
 
-| Domain | Description | Link |
-|:--|:--|:--|
-| **Domain I:** Core Concepts | Cluster fundamentals, components, and architecture. | [Go to Domain I: Core Concepts](#domain-i-core-concepts-10---the-foundation-domain) |
-| **Domain II:** Cluster Architecture, Installation & Configuration | Covers Helm, CRDs, and RBAC configurations. | [Go to Domain II: Cluster Architecture, Installation & Configuration](#domain-ii-cluster-architecture-installation--configuration-25---the-modern-tooling-domain) |
-| **Domain III:** Services & Networking | Focus on Gateway API, Network Policies, and Services. | [Go to Domain III: Services & Networking](#domain-iii-services--networking-20---the-connectivity-domain) |
-| **Domain IV:** Workloads & Scheduling | Application lifecycle, resource management, and autoscaling. | [Go to Domain IV: Workloads & Scheduling](#domain-iv-workloads--scheduling-15---the-resource-management-domain) |
-| **Domain V:** Storage | Persistent volumes, PVC binding, and StorageClasses. | [Go to Domain V: Storage](#domain-v-storage-10---the-persistence-domain) |
-| **Domain VI:** Security | Pod security, secrets, and certificate management. | [Go to Domain VI: Security](#domain-vi-security-10---the-protection-domain) |
-| **Domain VII:** Logging & Monitoring | Cluster observability and troubleshooting tools. | [Go to Domain VII: Logging & Monitoring](#domain-vii-logging--monitoring-10---the-visibility-domain) |
-| **Domain VIII:** Troubleshooting | Diagnosing control plane, node, and network issues. | [Go to Domain VIII: Troubleshooting](#domain-viii-troubleshooting-10---the-diagnostics-domain) |
-| **Domain IX:** Upgrades & Maintenance | Cluster lifecycle operations and upgrades. | [Go to Domain IX: Upgrades & Maintenance](#domain-ix-upgrades--maintenance-10---the-sustainability-domain) |
-| **Domain X:** Advanced Topics | Gateway API, Kustomize, and multi-cluster management. | [Go to Domain X: Advanced Topics](#domain-x-advanced-topics-10---the-innovation-domain) |
-
-## Domain: Troubleshooting
+## Domain: Troubleshooting (10 Questions)
 
 ## Question 1: Control Plane Component Failure
 
