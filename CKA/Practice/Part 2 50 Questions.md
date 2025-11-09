@@ -40,109 +40,99 @@ This domain focuses on the lifecycle of applications running on the cluster and 
 
 
 
-The CKA 2025 Practice Question Bank
-This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
+# The CKA 2025 Practice Question Bank.
+## This question bank is designed to reflect the "brownfield," scenario-based nature of the 2025 CKA exam. Each question requires analysis, modification, or troubleshooting of a pre-existing environment.
 
-Domain: Troubleshooting (10 Questions)
-Question 1: Control Plane Component Failure
+# Domain: Troubleshooting
 
-Scenario: The cluster's API server is unresponsive. kubectl commands are failing with a connection refused error. The etcd and kubelet services on the control plane node cp-node are confirmed to be running.
+## Question 1: Control Plane Component Failure
 
-Initial State: The static pod manifest for the kube-apiserver located at /etc/kubernetes/manifests/kube-apiserver.yaml on cp-node has been corrupted. A command argument is misspelled.
+- **Scenario:** The cluster's API server is unresponsive. `kubectl` commands are failing with a connection refused error. The `etcd` and `kubelet` services on the control plane node `cp-node` are confirmed to be running.  
+- **Initial State:** The static pod manifest for the kube-apiserver located at `/etc/kubernetes/manifests/kube-apiserver.yaml` on `cp-node` has been corrupted. A command argument is misspelled.  
+- **Task:** SSH into `cp-node`. Investigate the kube-apiserver static pod manifest and correct the configuration error. Ensure the API server starts successfully and the cluster becomes responsive.  
+- **Validation:** From the base node, run `kubectl get nodes`. The command should execute successfully and show the cluster nodes.  
 
-Task: SSH into cp-node. Investigate the kube-apiserver static pod manifest and correct the configuration error. Ensure the API server starts successfully and the cluster becomes responsive.
+---
 
-Validation: From the base node, run kubectl get nodes. The command should execute successfully and show the cluster nodes.
+## Question 2: CNI Pod CIDR Mismatch
 
-Question 2: CNI Pod CIDR Mismatch
+- **Scenario:** A new worker node, `worker-3`, has been added to the cluster, but pods scheduled on it cannot communicate with pods on other nodes. Pods on `worker-3` are stuck in the `ContainerCreating` state.  
+- **Initial State:** The cluster is using the Calico CNI. The main Calico configuration ConfigMap, named `calico-config` in the `kube-system` namespace, defines a Pod IP range that does not include the Pod CIDR assigned to `worker-3`.  
+- **Task:** Identify the Pod CIDR assigned to `worker-3` by inspecting the node object. Edit the `calico-config` ConfigMap in the `kube-system` namespace to correctly include the Pod CIDR range of all nodes.  
+- **Validation:** Create a test pod and ensure it gets scheduled on `worker-3` and enters the Running state. Exec into the pod and ping another pod on a different worker node.  
 
-Scenario: A new worker node, worker-3, has been added to the cluster, but pods scheduled on it cannot communicate with pods on other nodes. Pods on worker-3 are stuck in the ContainerCreating state.
+---
 
-Initial State: The cluster is using the Calico CNI. The main Calico configuration ConfigMap, named calico-config in the kube-system namespace, defines a Pod IP range that does not include the Pod CIDR assigned to worker-3.
+## Question 3: CoreDNS Configuration Error
 
-Task: Identify the Pod CIDR assigned to worker-3 by inspecting the node object. Edit the calico-config ConfigMap in the kube-system namespace to correctly include the Pod CIDR range of all nodes.
+- **Scenario:** Pods across the cluster are unable to resolve external domain names (e.g., `google.com`), although internal service name resolution is working.  
+- **Initial State:** The `coredns` ConfigMap in the `kube-system` namespace has been modified, and the `forward` plugin, which points to upstream DNS servers, has been accidentally removed.  
+- **Task:** Edit the `coredns` ConfigMap. Re-add the `forward` plugin to the Corefile configuration, pointing to a public DNS server like `8.8.8.8`. After saving the changes, restart the CoreDNS pods to apply the new configuration.  
+- **Validation:** Exec into a busybox pod and run `nslookup google.com`. The command should succeed.  
 
-Validation: Create a test pod and ensure it gets scheduled on worker-3 and enters the Running state. Exec into the pod and ping another pod on a different worker node.
+---
 
-Question 3: CoreDNS Configuration Error
+## Question 4: Ingress Controller Pods Not Ready
 
-Scenario: Pods across the cluster are unable to resolve external domain names (e.g., google.com), although internal service name resolution is working.
+- **Scenario:** The NGINX Ingress Controller pods in the `ingress-nginx` namespace are in a `CrashLoopBackOff` state. Ingress resources are not functioning.  
+- **Initial State:** The `ingress-nginx-controller` Deployment has a misconfigured liveness probe with an incorrect port, causing the kubelet to repeatedly kill and restart the pods.  
+- **Task:** Inspect the `ingress-nginx-controller` Deployment in the `ingress-nginx` namespace. Identify the incorrect port in the liveness probe configuration and correct it to match the health check port exposed by the controller (port `10254`).  
+- **Validation:** Run `kubectl get pods -n ingress-nginx`. The controller pods should enter the Running state and remain stable.  
 
-Initial State: The coredns ConfigMap in the kube-system namespace has been modified, and the forward plugin, which points to upstream DNS servers, has been accidentally removed.
+---
 
-Task: Edit the coredns ConfigMap. Re-add the forward plugin to the Corefile configuration, pointing to a public DNS server like 8.8.8.8. After saving the changes, restart the CoreDNS pods to apply the new configuration.
+## Question 5: Node NotReady due to Kubelet Issue
 
-Validation: Exec into a busybox pod and run nslookup google.com. The command should succeed.
+- **Scenario:** A worker node named `node-fail` is reporting a `NotReady` status. Pods are being evicted from this node.  
+- **Initial State:** The kubelet service on `node-fail` has stopped due to a configuration error in `/var/lib/kubelet/config.yaml` (e.g., an invalid `cgroupDriver` value).  
+- **Task:** SSH into `node-fail`. Check the status of the kubelet service using `systemctl status kubelet`. Examine the service logs using `journalctl -u kubelet` to identify the configuration error. Correct the error in `/var/lib/kubelet/config.yaml` and restart the kubelet service.  
+- **Validation:** From the control plane, run `kubectl get nodes`. The status of `node-fail` should return to `Ready`.  
 
-Question 4: Ingress Controller Pods Not Ready
+---
 
-Scenario: The NGINX Ingress Controller pods in the ingress-nginx namespace are in a CrashLoopBackOff state. Ingress resources are not functioning.
+## Question 6: Service Endpoint Failure
 
-Initial State: The ingress-nginx-controller Deployment has a misconfigured liveness probe with an incorrect port, causing the kubelet to repeatedly kill and restart the pods.
+- **Scenario:** A service named `frontend-svc` in the `default` namespace exists, but it has no endpoints, even though there are running pods that should be part of the service.  
+- **Initial State:** The `frontend-svc` Service has a selector `app=frontend-app`, but the corresponding Deployment's pods have the label `app=frontend-web`.  
+- **Task:** Modify the selector of the `frontend-svc` Service to match the labels of the existing pods (`app=frontend-web`).  
+- **Validation:** Run `kubectl describe service frontend-svc`. The Endpoints field should now be populated with the IP addresses of the running pods.  
 
-Task: Inspect the ingress-nginx-controller Deployment in the ingress-nginx namespace. Identify the incorrect port in the liveness probe configuration and correct it to match the health check port exposed by the controller (port 10254).
+---
 
-Validation: Run kubectl get pods -n ingress-nginx. The controller pods should enter the Running state and remain stable.
+## Question 7: Persistent Volume Claim Stuck in Pending
 
-Question 5: Node NotReady due to Kubelet Issue
+- **Scenario:** A developer has created a PersistentVolumeClaim named `db-pvc` that is stuck in the `Pending` state and will not bind.  
+- **Initial State:** The `db-pvc` requests 5Gi of storage with the `standard` StorageClass. However, the `standard` StorageClass provisions volumes that use the `ReadWriteMany` access mode, while the PVC is requesting `ReadWriteOnce`.  
+- **Task:** There are no PVs that can satisfy the claim. Edit the `db-pvc` PersistentVolumeClaim and change its requested `accessModes` from `ReadWriteOnce` to `ReadWriteMany` to match what the StorageClass provides.  
+- **Validation:** Run `kubectl get pvc db-pvc`. The status should change from `Pending` to `Bound`.  
 
-Scenario: A worker node named node-fail is reporting a NotReady status. Pods are being evicted from this node.
+---
 
-Initial State: The kubelet service on node-fail has stopped due to a configuration error in /var/lib/kubelet/config.yaml (e.g., an invalid cgroupDriver value).
+## Question 8: Job Failing to Complete
 
-Task: SSH into node-fail. Check the status of the kubelet service using systemctl status kubelet. Examine the service logs using journalctl -u kubelet to identify the configuration error. Correct the error in /var/lib/kubelet/config.yaml and restart the kubelet service.
+- **Scenario:** A Job named `data-processor` continuously creates new pods that fail, and the Job never completes.  
+- **Initial State:** The pod template within the `data-processor` Job specifies a container image `my-app:latest` that does not exist in the registry. The pods fail with an `ImagePullBackOff` error.  
+- **Task:** Inspect the logs of one of the failed pods created by the Job to identify the image pull error. Edit the `data-processor` Job and correct the container image name to a valid one, such as `busybox`.  
+- **Validation:** Delete the failed pods. The Job should create a new pod that runs to completion. Verify by running `kubectl get jobs data-processor` and checking that `COMPLETIONS` is `1/1`.  
 
-Validation: From the control plane, run kubectl get nodes. The status of node-fail should return to Ready.
+---
 
-Question 6: Service Endpoint Failure
+## Question 9: Misconfigured Network Policy Blocking Traffic
 
-Scenario: A service named frontend-svc in the default namespace exists, but it has no endpoints, even though there are running pods that should be part of the service.
+- **Scenario:** A web application in the `web` namespace cannot connect to its database in the `db` namespace.  
+- **Initial State:** A default-deny ingress Network Policy is applied to the `db` namespace. An additional Network Policy exists that is intended to allow traffic from the `web` namespace, but its `namespaceSelector` is misconfigured.  
+- **Task:** Examine the Network Policies in the `db` namespace. Identify the policy intended to allow ingress from `web` and correct its `namespaceSelector` to properly match the labels of the `web` namespace.  
+- **Validation:** Exec into a pod in the `web` namespace and successfully connect to the database service in the `db` namespace using a tool like `curl` or `netcat`.  
 
-Initial State: The frontend-svc Service has a selector app=frontend-app, but the corresponding Deployment's pods have the label app=frontend-web.
+---
 
-Task: Modify the selector of the frontend-svc Service to match the labels of the existing pods (app=frontend-web).
+## Question 10: Scheduler Failure
 
-Validation: Run kubectl describe service frontend-svc. The Endpoints field should now be populated with the IP addresses of the running pods.
+- **Scenario:** Newly created pods are remaining in the `Pending` state indefinitely. The cluster scheduler appears to be non-functional.  
+- **Initial State:** The `kube-scheduler` static pod manifest at `/etc/kubernetes/manifests/kube-scheduler.yaml` on the control plane node references a non-existent configuration file via the `--config` flag.  
+- **Task:** SSH to the control plane node. Inspect the `kube-scheduler` logs using `crictl logs` (or equivalent) to find the error about the missing config file. Edit the manifest at `/etc/kubernetes/manifests/kube-scheduler.yaml` and remove the invalid `--config` flag to allow the scheduler to start with its default configuration.  
+- **Validation:** Create a new NGINX pod. It should be scheduled and transition to the Running state.  
 
-Question 7: Persistent Volume Claim Stuck in Pending
-
-Scenario: A developer has created a PersistentVolumeClaim named db-pvc that is stuck in the Pending state and will not bind.
-
-Initial State: The db-pvc requests 5Gi of storage with the standard StorageClass. However, the standard StorageClass provisions volumes that use the ReadWriteMany access mode, while the PVC is requesting ReadWriteOnce.
-
-Task: There are no PVs that can satisfy the claim. Edit the db-pvc PersistentVolumeClaim and change its requested accessModes from ReadWriteOnce to ReadWriteMany to match what the StorageClass provides.
-
-Validation: Run kubectl get pvc db-pvc. The status should change from Pending to Bound.
-
-Question 8: Job Failing to Complete
-
-Scenario: A Job named data-processor continuously creates new pods that fail, and the Job never completes.
-
-Initial State: The pod template within the data-processor Job specifies a container image my-app:latest that does not exist in the registry. The pods fail with an ImagePullBackOff error.
-
-Task: Inspect the logs of one of the failed pods created by the Job to identify the image pull error. Edit the data-processor Job and correct the container image name to a valid one, such as busybox.
-
-Validation: Delete the failed pods. The Job should create a new pod that runs to completion. Verify by running kubectl get jobs data-processor and checking that COMPLETIONS is 1/1.
-
-Question 9: Misconfigured Network Policy Blocking Traffic
-
-Scenario: A web application in the web namespace cannot connect to its database in the db namespace.
-
-Initial State: A default-deny ingress Network Policy is applied to the db namespace. An additional Network Policy exists that is intended to allow traffic from the web namespace, but its namespaceSelector is misconfigured.
-
-Task: Examine the Network Policies in the db namespace. Identify the policy intended to allow ingress from web and correct its namespaceSelector to properly match the labels of the web namespace.
-
-Validation: Exec into a pod in the web namespace and successfully connect to the database service in the db namespace using a tool like curl or netcat.
-
-Question 10: Scheduler Failure
-
-Scenario: Newly created pods are remaining in the Pending state indefinitely. The cluster scheduler appears to be non-functional.
-
-Initial State: The kube-scheduler static pod manifest at /etc/kubernetes/manifests/kube-scheduler.yaml on the control plane node references a non-existent configuration file via the --config flag.
-
-Task: SSH to the control plane node. Inspect the kube-scheduler logs using crictl logs (or equivalent) to find the error about the missing config file. Edit the manifest at /etc/kubernetes/manifests/kube-scheduler.yaml and remove the invalid --config flag to allow the scheduler to start with its default configuration.
-
-Validation: Create a new NGINX pod. It should be scheduled and transition to the Running state.
 
 Domain: Cluster Architecture, Installation & Configuration (10 Questions)
 Question 11: Install a Component with Helm
