@@ -1,6 +1,4 @@
-# CKA Exam Practice Questions & Solutions
-
-This document contains a detailed analysis and solution guide for CKA practice questions, grouped by the official CKA syllabus topics (2024/2025).
+# Exam Topic Questions & Solutions
 
 **Total Questions Processed:** 23 (including duplicates/variants)
 
