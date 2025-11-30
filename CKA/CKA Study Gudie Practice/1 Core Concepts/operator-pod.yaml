@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: operator
+  name: operator
+  namespace: apps
+spec:
+  containers:
+  - image: nginx:1.21.1
+    name: operator
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "256m"
+      requests:
+        memory: "64Mi"
+        cpu: "128m"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  serviceAccountName: api-access
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: disposable
+  name: disposable
+  namespace: rm
+spec:
+  containers:
+  - image: nginx:1.21.1
+    name: disposable
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "256m"
+      requests:
+        memory: "64Mi"
+        cpu: "128m"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+  # curl --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+  #    -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+  #    https://kubernetes.default.svc/api/v1/namespaces/rm/pods
