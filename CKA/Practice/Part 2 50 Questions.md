@@ -350,7 +350,37 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Scenario:** A CPU-intensive workload needs to scale automatically based on load.  
 - **Initial State:** A Deployment named `processor` is running. The pods in the deployment have CPU resource requests set.  
 - **Task:** Create a HorizontalPodAutoscaler named `processor-hpa`. It should target the `processor` Deployment, maintain a minimum of 2 and a maximum of 6 replicas, and scale up when the average CPU utilization across pods exceeds 60%.  
-- **Validation:** Run `kubectl describe hpa processor-hpa` to verify its configuration.  
+- **Validation:** Run `kubectl describe hpa processor-hpa` to verify its configuration.
+
+Here is the YAML manifest for **Question 31 – Horizontal Pod Autoscaler**:
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: processor-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: processor
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+```
+Imperative Commands for Question 31 (Deployment + HPA)
+```bash
+kubectl autoscale deployment processor \
+  --cpu-percent=60 \
+  --min=2 \
+  --max=6
+```
 
 ---
 
@@ -359,7 +389,35 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Scenario:** A Deployment is causing instability by consuming too many resources on a node. You need to constrain it based on available node capacity.  
 - **Initial State:** A node `worker-1` has 2000m of allocatable CPU and 4Gi of allocatable memory. A Deployment `resource-hog` with 2 replicas is running on it.  
 - **Task:** Calculate resource limits for the `resource-hog` pods. Each pod should be limited to `400m` CPU and `512Mi` of memory. Edit the `resource-hog` Deployment and set these values in the `resources.limits` section of the container spec.  
-- **Validation:** Describe one of the `resource-hog` pods and verify that the CPU and memory limits are correctly set.  
+- **Validation:** Describe one of the `resource-hog` pods and verify that the CPU and memory limits are correctly set.
+
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-hog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: resource-hog
+  template:
+    metadata:
+      labels:
+        app: resource-hog
+    spec:
+      containers:
+      - name: resource-hog
+        image: your-image-here
+        resources:
+          limits:
+            cpu: "400m"
+            memory: "512Mi"
+          requests:
+            cpu: "400m"
+            memory: "512Mi"
+```
 
 ---
 
@@ -370,6 +428,32 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Task:** Create a `PriorityClass` named `high-priority` with a value of `1000000`. Edit the pod manifest `/opt/agent.yaml` to use this priority class by setting the `priorityClassName` field to `high-priority`. Create the pod.  
 - **Validation:** Describe the created pod and verify that the **Priority Class** field is set to `high-priority`.  
 
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000000
+globalDefault: false
+description: "This priority class is for critical monitoring agents"
+```
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: critical-agent
+spec:
+  priorityClassName: high-priority
+  containers:
+  - name: agent
+    image: busybox
+    command: ["sh", "-c", "while true; do echo running; sleep 5; done"]
+```
+
+```bash
+kubectl describe pod critical-agent | grep -i Priority
+```
+
 ---
 
 ## Question 34: Add a Sidecar Container
@@ -377,7 +461,53 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Scenario:** An existing application pod needs a sidecar container to stream its logs to a central service.  
 - **Initial State:** A Deployment `main-app` is running. The application writes logs to `/var/log/app.log` inside a volume.  
 - **Task:** Edit the `main-app` Deployment. Add a new container to the pod spec named `log-streamer` using the `busybox` image. The new container should run the command `tail -f /var/log/app.log`. Mount the same log volume that the main application uses into this new sidecar container.  
-- **Validation:** Describe one of the pods from the `main-app` Deployment. It should show two containers: the main app container and the `log-streamer`.  
+- **Validation:** Describe one of the pods from the `main-app` Deployment. It should show two containers: the main app container and the `log-streamer`.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: main-app
+  template:
+    metadata:
+      labels:
+        app: main-app
+    spec:
+      containers:
+      - name: main-app
+        image: nginx:1.17.0
+        volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "256m"
+          limits:
+            memory: "128Mi"
+            cpu: "512m"
+      - name: log-streamer
+        image: busybox
+        command: ["sh", "-c", "tail -f /var/log/app.log"]
+        volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "256m"
+          limits:
+            memory: "128Mi"
+            cpu: "512m"
+      volumes:
+      - name: log-volume
+        emptyDir: {}
+```
 
 ---
 
@@ -387,6 +517,8 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Initial State:** A Deployment `frontend` is running version `1.0` of an application image.  
 - **Task:** Update the `frontend` Deployment to use image version `1.1`. After the update completes, perform a rollback to the previous version.  
 - **Validation:** Run `kubectl rollout history deployment frontend` to see the revision history. After the rollback, describe the deployment and verify that it is using image version `1.0` again.  
+
+
 
 ---
 
