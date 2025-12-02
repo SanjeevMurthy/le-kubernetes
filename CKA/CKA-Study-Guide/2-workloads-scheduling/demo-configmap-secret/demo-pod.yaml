@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+spec:
+  containers:
+  - name: demo-container
+    image: nginx:1.21.1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "1"
+      limits:
+        memory: "1024Mi"
+        cpu: "2.5"
+    # -----------------------------
+    # USE CONFIGMAP AS ENV VARS
+    # -----------------------------
+    env:
+    - name: LOG_DIR
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: log_dir
+
+    # -----------------------------
+    # USE SECRET AS ENV VARS
+    # -----------------------------
+    - name: APP_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: username
+    - name: APP_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: password
+
+    # -----------------------------
+    # MOUNT CONFIGMAP AS A FILE
+    # -----------------------------
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/config  # file appears inside this dir
+      readOnly: true
+
+    # -----------------------------
+    # MOUNT SECRET AS A FILE
+    # -----------------------------
+    - name: secret-volume
+      mountPath: /etc/secret
+      readOnly: true
+
+  volumes:
+  - name: config-volume
+    configMap:
+      name: app-config
+
+  - name: secret-volume
+    secret:
+      secretName: app-secret
+
