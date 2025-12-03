@@ -1,0 +1,44 @@
+#  Deployment called main-app where The application writes logs to a file: /var/log/app.log, This file is stored inside a volume that the pod already uses.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: main-app
+  template:
+    metadata:
+      labels:
+        app: main-app
+    spec:
+      containers:
+      - name: main-app
+        image: nginx:1.17.0
+        volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "256m"
+          limits:
+            memory: "128Mi"
+            cpu: "512m"
+      - name: log-streamer
+        image: busybox
+        command: ["sh", "-c", "tail -f /var/log/app.log"]
+        volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "256m"
+          limits:
+            memory: "128Mi"
+            cpu: "512m"
+      volumes:
+      - name: log-volume
+        emptyDir: {}

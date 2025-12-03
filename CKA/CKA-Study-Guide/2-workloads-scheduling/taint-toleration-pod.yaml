@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: not-gpu-pod
+spec:
+  nodeSelector:
+    gpu: "true"
+  # tolerations:
+  # - key: "gpu"
+  #   operator: "Exists"
+  #   effect: "NoSchedule"
+  containers:
+  - name: gpu-container
+    image: nginx
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "256m"
+      limits:
+        memory: "128Mi"
+        cpu: "512m"
+      
