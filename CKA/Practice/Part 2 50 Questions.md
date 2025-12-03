@@ -707,8 +707,10 @@ spec:
 ```bash
 # Add taint to the node
 kubectl taint nodes gpu-node-1 gpu=true:NoSchedule
+```
 
-# Edit the pod manifest /opt/gpu-pod.yaml
+Edit the pod manifest /opt/gpu-pod.yaml
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
