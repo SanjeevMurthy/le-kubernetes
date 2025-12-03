@@ -104,3 +104,33 @@ k get pod <pod-name> -o jsonpath='{.spec.volumes[*].name}'
 
 # List all pods and display their names and volume names using custom columns
 k get pods -o custom-columns=NAME:.metadata.name,VOLUMES:.spec.volumes[*].name
+
+# Create a ConfigMap from a file
+kubectl create configmap nginx-config --from-file=nginx.conf
+
+# Describe a ConfigMap
+k describe configmap nginx-config
+
+# Export a ConfigMap to a YAML file
+k get configmap nginx-config -o yaml > configmap-from-file.yaml
+
+# Apply a Pod manifest
+k apply -f configmap-from-file-pod.yaml
+
+# Add a label to a node
+k label node cka-multinode-m03 disktype=ssd
+
+# Apply a Deployment with Node Affinity
+k apply -f node-affinity-deployment.yaml
+
+# Taint a node to restrict scheduling
+k taint node cka-multinode-m02 gpu=true:NoSchedule
+
+# Apply a Pod with Toleration
+k apply -f taint-toleration-pod.yaml
+
+# Get node details including labels
+kubectl get node cka-multinode-m02 --show-labels
+
+# Describe a specific Pod
+k describe pod not-gpu-pod
