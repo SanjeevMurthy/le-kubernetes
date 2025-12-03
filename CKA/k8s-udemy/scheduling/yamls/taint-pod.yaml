@@ -1,13 +1,20 @@
 apiVersion: v1
 kind: Pod
 metadata:
-    name: bee 
+    name: gpu-pod 
 spec:
   containers:
   - image: nginx
-    name: mosquito
+    name: gpu-pod
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "256m"
+      limits:
+        memory: "128Mi"
+        cpu: "512m"
   tolerations:
-  - key: "spray"
+  - key: "gpu"
     operator: "Equal"
-    value: "mortein"
+    value: "true"
     effect: "NoSchedule"
