@@ -518,7 +518,23 @@ spec:
 - **Task:** Update the `frontend` Deployment to use image version `1.1`. After the update completes, perform a rollback to the previous version.  
 - **Validation:** Run `kubectl rollout history deployment frontend` to see the revision history. After the rollback, describe the deployment and verify that it is using image version `1.0` again.  
 
+To Update:
+```bash
+kubectl set image deployment/frontend frontend-container=your-image:1.1
+kubectl rollout status deployment/frontend
+```
 
+To Rollback:
+```bash
+kubectl rollout undo deployment/frontend
+kubectl rollout status deployment/frontend
+```
+
+To Validate:
+```bash
+kubectl rollout history deployment frontend
+kubectl describe deployment frontend | grep Image
+```
 
 ---
 
@@ -529,6 +545,49 @@ spec:
 - **Task:** Create a ConfigMap named `nginx-config` from the file `/opt/nginx.conf`. Then, create a pod that runs the `nginx` image. Mount the `nginx-config` ConfigMap as a volume into the pod at the path `/etc/nginx/nginx.conf`, overwriting the default configuration file.  
 - **Validation:** Exec into the pod and run `cat /etc/nginx/nginx.conf`. The content should match the custom file from `/opt/nginx.conf`.  
 
+
+Solution for Question 36: Use a ConfigMap to Configure an Application
+
+**Step 1: Create the ConfigMap from the file**
+```bash
+kubectl create configmap nginx-config --from-file=nginx.conf=/opt/nginx.conf
+```
+
+**Step 2: Create the Pod Manifest**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-custom
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+  volumes:
+    - name: nginx-config-volume
+      configMap:
+        name: nginx-config
+        items:
+          - key: nginx.conf
+            path: nginx.conf
+```
+
+**Step 3: Apply the Pod Manifest**
+```bash
+kubectl apply -f nginx-pod.yaml
+```
+
+**Validation**
+```bash
+kubectl exec -it nginx-custom -- cat /etc/nginx/nginx.conf
+```
+You should see the contents of `/opt/nginx.conf`.
+
+
 ---
 
 ## Question 37: Use a Secret for Environment Variables
@@ -537,6 +596,54 @@ spec:
 - **Initial State:** A pod manifest `/opt/app-pod.yaml` exists.  
 - **Task:** Create a generic Secret named `db-secret` with a key `DB_PASSWORD` and a value of `s3cr3tP@ssw0rd`. Edit the pod manifest `/opt/app-pod.yaml` to expose the `DB_PASSWORD` key from the `db-secret` as an environment variable named `DATABASE_PASSWORD` in the container. Create the pod.  
 - **Validation:** Exec into the pod and run `env | grep DATABASE_PASSWORD`. It should show `DATABASE_PASSWORD=s3cr3tP@ssw0rd`.  
+
+
+Solution for Question 37: Use a Secret for Environment Variables
+
+**Step 1: Create the Secret**
+
+```bash
+kubectl create secret generic db-secret \
+  --from-literal=DB_PASSWORD=s3cr3tP@ssw0rd
+```
+
+**Step 2: Edit `/opt/app-pod.yaml` to include the Secret as an environment variable**
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+  - name: app-container
+    image: your-application-image
+    env:
+    - name: DATABASE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: DB_PASSWORD
+```
+
+**Step 3: Apply the manifest**
+
+```bash
+kubectl apply -f /opt/app-pod.yaml
+```
+
+**Validation**
+
+```bash
+kubectl exec -it app-pod -- env | grep DATABASE_PASSWORD
+```
+
+Expected output:
+
+```
+DATABASE_PASSWORD=s3cr3tP@ssw0rd
+```
+
 
 ---
 
@@ -547,6 +654,46 @@ spec:
 - **Task:** Edit the Deployment manifest `/opt/workload.yaml`. Add a `nodeAffinity` rule under `spec.template.spec.affinity`. The rule should be a `requiredDuringSchedulingIgnoredDuringExecution` type that requires nodes to have the label `disktype` with the value `ssd`. Apply the manifest.  
 - **Validation:** Check which nodes the deployment’s pods are running on using `kubectl get pods -o wide`. All pods should be on nodes with the `disktype=ssd` label.  
 
+```bash
+k label node cka-multinode-m03 disktype=ssd
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ssd-affinity
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: blue
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "256m"
+          limits:
+            memory: "128Mi"
+            cpu: "512m"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                - ssd
+```
+
 ---
 
 ## Question 39: Configure Taints and Tolerations
@@ -555,6 +702,43 @@ spec:
 - **Initial State:** A node `gpu-node-1` exists. A pod manifest `/opt/gpu-pod.yaml` exists.  
 - **Task:** Add a taint to the `gpu-node-1` node with the key `gpu`, value `true`, and effect `NoSchedule`. Then, edit the pod manifest `/opt/gpu-pod.yaml` to add a toleration for this taint (`key: "gpu"`, `operator: "Exists"`, `effect: "NoSchedule"`). Create the pod.  
 - **Validation:** The `gpu-pod` should be successfully scheduled on `gpu-node-1`. A normal pod without the toleration should not be scheduled on that node.  
+
+
+```bash
+# Add taint to the node
+kubectl taint nodes gpu-node-1 gpu=true:NoSchedule
+
+# Edit the pod manifest /opt/gpu-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-pod
+spec:
+  tolerations:
+  - key: "gpu"
+    operator: "Exists"
+    effect: "NoSchedule"
+  containers:
+  - name: gpu-container
+    image: nginx
+```
+
+```bash
+# Create the pod
+kubectl apply -f /opt/gpu-pod.yaml
+```
+
+**Validation**
+```bash
+kubectl get pods -o wide
+kubectl describe pod gpu-pod
+```
+**The Issue: Taints vs. Affinity
+You are assuming that a Toleration attracts a Pod to a specific Node. It does not.
+
+Taints are Repulsive: They say "Do not come here unless you have a pass."
+Tolerations are Permission Slips: They say "I have a pass to enter if I need to," but they do not say "I must go there."
+Affinity is Attractive: This is what says "I want to go to this specific node."
 
 ---
 
