@@ -39,3 +39,52 @@ kubectl create service nodeport echoserver-nodeport --tcp=5005:80
 
 # Get the URL to access a NodePort service in Minikube
 minikube service --url echoserver-nodeport
+
+# Enable Ingress addon in Minikube (profile specific)
+minikube -p cka-multinode addons enable ingress
+
+# Create an Ingress resource imperatively with a host rule
+kubectl create ingress corellian --rule="star-alliance.com/corellian/api=corellian:8080"
+
+# Create a backend pod and service for the Ingress
+kubectl run corellian-pod --image=ealen/echo-server --restart=Never --port=80 -l app=corellian
+kubectl create service clusterip corellian --tcp=8080:80
+
+# Get Ingress LoadBalancer IP using jsonpath
+kubectl get ingress corellian -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+# Test internal service connectivity (Note: use -O- for stdout)
+kubectl run tmp --image=busybox -it --rm --restart=Never -- wget -O- http://corellian:8080
+
+# Patch Ingress Controller to use LoadBalancer (Required for Minikube Tunnel on Mac)
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
+
+# Start Minikube tunnel to expose LoadBalancer IPs (Runs in background/separate terminal)
+# sudo minikube tunnel -p cka-multinode
+
+# Add local DNS mapping for Ingress host (Required for Host-based Ingress)
+# echo "127.0.0.1 star-alliance.com" | sudo tee -a /etc/hosts
+
+# Test Ingress access from local machine
+curl -v -H "Host: star-alliance.com" http://127.0.0.1/corellian/api
+
+# Create a Deployment and LoadBalancer Service in a specific namespace
+kubectl create namespace external
+kubectl create deploy nginx --image=nginx --replicas=3 --port=80 -n external
+kubectl create service loadbalancer nginx --tcp=8080:80 -n external
+
+# Apply a fixed deployment manifest (e.g., adding command args for index.html generation)
+kubectl apply -f load-balancer-to-deployment.yaml
+
+# Test LoadBalancer access (Round-robin verification)
+for i in {1..5}; do curl http://127.0.0.1:8080; echo ""; done
+
+# Apply custom CoreDNS configuration (e.g., rewrite rules)
+kubectl apply -f coredns-custom.yaml
+kubectl rollout restart deployment coredns -n kube-system
+
+# Verify custom DNS rewrite rule (cka.example.com -> cluster.local)
+kubectl run test-dns --image=busybox:1.28 -it --rm --restart=Never -- nslookup kubernetes.default.svc.cka.example.com
+
+# Test cross-namespace access using the custom domain
+kubectl run tmp-curl --image=curlimages/curl -n hello -it --rm --restart=Never -- curl -v http://nginx.external.svc.cka.example.com:8080

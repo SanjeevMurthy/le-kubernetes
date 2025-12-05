@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mini-shopping-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mini-shopping.com
+      http:
+        paths:
+          - path: /wear
+            pathType: Prefix
+            backend:
+              service:
+                name: wear
+                port:
+                  number: 80
+          - path: /watch
+            pathType: Prefix
+            backend:
+              service:
+                name: watch
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shopping
+                port:
+                  number: 80
+
+---
+# echo "127.0.0.1 mini-shopping.com" | sudo tee -a /etc/hosts
+# curl http://mini-shopping.com/watch
+# sudo minikube tunnel -p cka-multinode

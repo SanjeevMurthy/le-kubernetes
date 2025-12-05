@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watch
+  labels:
+    app: watch
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: watch
+  template:
+    metadata:
+      labels:
+        app: watch
+    spec:
+      containers:
+        - name: watch
+          image: nginx:alpine
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "256m"
+            requests:
+              memory: "64Mi"
+              cpu: "128m"
+          ports:
+            - containerPort: 80
+          command: ["/bin/sh", "-c"]
+          args:
+            - echo "Hi from $HOSTNAME from watch" > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watch
+spec:
+  selector:
+    app: watch
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

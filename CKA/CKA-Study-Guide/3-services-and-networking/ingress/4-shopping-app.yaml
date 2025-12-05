@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopping
+  labels:
+    app: shopping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shopping
+  template:
+    metadata:
+      labels:
+        app: shopping
+    spec:
+      containers:
+        - name: shopping
+          image: nginx:alpine
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "256m"
+            requests:
+              memory: "64Mi"
+              cpu: "128m"
+          ports:
+            - containerPort: 80
+          command: ["/bin/sh", "-c"]
+          args:
+            - echo "mini-shopping homepage" > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopping
+spec:
+  selector:
+    app: shopping
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
