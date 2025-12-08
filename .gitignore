@@ -1,0 +1,24 @@
+# OS / System
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Kubernetes / Secrets
+k8s-cluster-keys/
+*.key
+*.crt
+*.pem
+*.kubeconfig
+kubeconfig
+
+# Local / Temporary / Repository Specific
+dropbox.sh
+dropbox.zip
+minikube/
