@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-pod
+spec:
+  containers:
+    - name: legacy-app
+      image: busybox:1.28
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "256m"
+        limits:
+          memory: "64Mi"
+          cpu: "256m"
+  # Important: Set policy to None so it doesn't use CoreDNS
+  dnsPolicy: None
+  dnsConfig:
+    nameservers:
+      - 8.8.4.4
+    searches:
+      - ns1.svc.cluster.local
+      - my.dns.search.suffix
