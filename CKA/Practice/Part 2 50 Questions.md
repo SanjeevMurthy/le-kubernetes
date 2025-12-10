@@ -737,6 +737,47 @@ kubectl apply -f /opt/np-<correct>.yaml
 - **Task:** Edit the pod manifest `/opt/legacy-pod.yaml`. Set the `dnsPolicy` to `None`. Add a `dnsConfig` section that specifies `8.8.4.4` in the `nameservers` list. Create the pod.
 - **Validation:** Exec into the created pod and inspect the contents of `/etc/resolv.conf`. It should show `nameserver 8.8.4.4`.
 
+### Solution
+
+By default, Pods inherit the cluster's DNS configuration (`dnsPolicy: ClusterFirst`), meaning they use CoreDNS to resolve Service names and external domains.
+To force a Pod to use a specific external DNS server **only**, you must:
+
+1.  Set `dnsPolicy` to `None`.
+2.  Provide the `dnsConfig` manually.
+
+**YAML Manifest:**
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: legacy-pod
+spec:
+  containers:
+    - name: legacy-app
+      image: busybox:1.28
+      command: ["sleep", "3600"]
+  # Important: Set policy to None so it doesn't use CoreDNS
+  dnsPolicy: None
+  dnsConfig:
+    nameservers:
+      - 8.8.4.4
+    searches:
+      - ns1.svc.cluster.local
+      - my.dns.search.suffix
+```
+
+**Validation:**
+
+```bash
+kubectl apply -f /opt/legacy-pod.yaml
+
+# Check resolv.conf inside the pod
+kubectl exec legacy-pod -- cat /etc/resolv.conf
+# Output should contain:
+# nameserver 8.8.4.4
+```
+
 ---
 
 ## Question 29: Use a LoadBalancer Service
@@ -746,6 +787,43 @@ kubectl apply -f /opt/np-<correct>.yaml
 - **Task:** Create a Service named `api-lb` of type `LoadBalancer`. It should target the `public-api` pods on port `8080`.
 - **Validation:** Run `kubectl get service api-lb`. After a moment, an `EXTERNAL-IP` should be assigned by the simulated cloud provider.
 
+### Solution
+
+A `LoadBalancer` Service exposes the Service externally using a cloud provider's load balancer. NodePort and ClusterIP services are automatically created, and the external load balancer routes to them.
+
+**Imperative Creation:**
+
+```bash
+kubectl create service loadbalancer api-lb --tcp=8080:8080 --dry-run=client -o yaml > lb.yaml
+```
+
+_Note: The imperative command assumes a selector `app=api-lb`, so you will likely need to edit the YAML to match the actual Deployment labels._
+
+**YAML Manifest:**
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-lb
+spec:
+  selector:
+    app: public-api # Must match the deployment labels
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer
+```
+
+**Validation:**
+
+```bash
+kubectl apply -f lb.yaml
+kubectl get svc api-lb
+# Wait for the EXTERNAL-IP to change from <pending> to an IP address.
+```
+
 ---
 
 ## Question 30: Modify CoreDNS for Custom Domains
@@ -754,6 +832,42 @@ kubectl apply -f /opt/np-<correct>.yaml
 - **Initial State:** CoreDNS is running.
 - **Task:** Edit the `coredns` ConfigMap in the `kube-system` namespace. Add a `hosts` block to the Corefile configuration that maps `service.internal.corp` to the IP `10.0.5.20`. Restart the CoreDNS pods.
 - **Validation:** Exec into a test pod and run `nslookup service.internal.corp`. It should resolve to `10.0.5.20`.
+
+### Solution
+
+CoreDNS configuration is stored in a ConfigMap named `coredns` in the `kube-system` namespace. You can modify the `Corefile` within this ConfigMap to add custom DNS entries using the `hosts` plugin.
+
+**Step 1: Edit the ConfigMap**
+
+```bash
+kubectl edit configmap coredns -n kube-system
+```
+
+Add the `hosts` block inside the main `.:53 { ... }` block:
+
+```text
+    hosts {
+       10.0.5.20 service.internal.corp
+       fallthrough
+    }
+```
+
+_Note: The format is `<IP> <HOSTNAME>`._
+
+**Step 2: Restart CoreDNS**
+
+For the changes to take effect immediately, restart the CoreDNS pods.
+
+```bash
+kubectl rollout restart deployment coredns -n kube-system
+```
+
+**Validation:**
+
+```bash
+# Run a temporary pod to test resolution
+kubectl run dns-test --image=busybox:1.28 --rm -it -- nslookup service.internal.corp
+```
 
 ---
 
