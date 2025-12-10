@@ -506,6 +506,76 @@ kubectl delete ingress legacy-ingress
 - **Task:** Create a Network Policy named `db-allow-frontend` in the `db` namespace. This policy should apply to pods with the label `app=db`. It should define an ingress rule that allows traffic on TCP port `5432` only from pods in a namespace that has the label `name=frontend`.
 - **Validation:** Exec into a pod in the `frontend` namespace and confirm it can connect to the DB service. Exec into a pod in another namespace (e.g., `default`) and confirm the connection is blocked.
 
+### Full Solution & Explanation
+
+#### **Concept: Cross-Namespace Access**
+
+By default, standard `podSelector` rules only match pods **within the same namespace** as the NetworkPolicy.
+To allow traffic from a _different_ namespace, you must use `namespaceSelector`.
+
+- **`namespaceSelector`**: Matches the **labels of the Namespace object** (not the pods inside it).
+- **`podSelector`**: Matches the **labels of the Pods** inside the selected namespace.
+
+#### **Step 1: Environment Setup (Replicate the Scenario)**
+
+First, we need to create the namespaces and pods to simulate the problem.
+
+```bash
+# 1. Create Namespaces
+kubectl create namespace db
+kubectl create namespace frontend
+
+# 2. LABEL THE FRONTEND NAMESPACE (Crucial Step!)
+# The NetworkPolicy will look for this label on the NAMESPACE itself.
+kubectl label namespace frontend name=frontend
+
+# 3. Create the Database Pod
+kubectl run db --image=redis --labels="app=db" -n db
+
+# 4. Create the Frontend Pod
+kubectl run frontend --image=nginx --labels="app=frontend" -n frontend
+```
+
+#### **Step 2: The Solution (Network Policy)**
+
+Create the policy in the `db` namespace to protect the `db` pod.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-allow-frontend
+  namespace: db
+spec:
+  podSelector:
+    matchLabels:
+      app: db # Selects the DB pod in 'db' namespace
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: frontend # Matches the namespace label we added in Step 1
+          # Note: We do NOT add a podSelector here, so ANY pod in the 'frontend' namespace is allowed.
+      ports:
+        - protocol: TCP
+          port: 6379 # Redis port (or 5432 if using Postgres)
+```
+
+_(Note: I used Redis (port 6379) for the example pod as it's lighter than Postgres, but the concept is identical for port 5432)._
+
+#### **Step 3: Validation**
+
+```bash
+# 1. Test from frontend (Should Work)
+kubectl exec -it frontend -n frontend -- timeout 2 curl <db-pod-ip>:6379
+# (Or use nc/telnet if installed)
+
+# 2. Test from another namespace (Should Fail/Timeout)
+kubectl run hacker --image=nginx --restart=Never --rm -it -- timeout 2 curl <db-pod-ip>:6379
+```
+
 ---
 
 ## Question 25: Allow Egress Traffic with a Network Policy
@@ -514,6 +584,39 @@ kubectl delete ingress legacy-ingress
 - **Initial State:** A pod with label `app=api-client` in the `default` namespace. A default-deny egress policy is in effect for the namespace.
 - **Task:** Create a Network Policy named `allow-external-api` that applies to pods with `app=api-client`. The policy should define an egress rule that allows traffic to the IP block `192.0.2.10/32` on TCP port `443`.
 - **Validation:** Exec into the `api-client` pod. Confirm that `curl https://192.0.2.10` works, but `curl https://google.com` times out.
+
+### Solution
+
+#### **Concept: Egress Isolation**
+
+Network Policies are additive (allow-lists). By default, all traffic is allowed.
+As soon as you apply a Network Policy that selects a pod and specifies "Egress" in `policyTypes`, **ALL** outbound traffic from that pod is blocked, _except_ what is explicitly allowed by the rules.
+This is why we only need to define the rule for `192.0.2.10`. Everything else is automatically blocked because it's not on the list.
+
+#### **YAML Manifest**
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-api
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: api-client
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock: # Use ipBlock for external CIDR ranges
+            cidr: 192.0.2.10/32
+      ports:
+        - protocol: TCP
+          port: 443
+```
+
+_Note: If you need DNS resolution (e.g., to resolve google.com even if you block access to it), you would also need to allow UDP port 53 to the cluster DNS._
 
 ---
 
@@ -524,6 +627,52 @@ kubectl delete ingress legacy-ingress
 - **Task:** Create a headless Service named `db-svc-headless`. It should target pods with the label `app=db`. To make it headless, set the `clusterIP` field to `None`.
 - **Validation:** Run `nslookup db-svc-headless`. It should return the individual IP addresses of the three database pods.
 
+### Solution
+
+A **Headless Service** allows you to communicate directly with Pods by returning their individual IP addresses via DNS, rather than a single ClusterIP. This is often used for stateful applications (like databases) where knowing the identity of each replica is important. You create one by setting `clusterIP: None` in the Service spec.
+
+**Imperative Command:**
+
+There isn't a direct flag to set `clusterIP: None` with `kubectl create service`. You usually generate a standard ClusterIP service content and modify it.
+
+```bash
+kubectl create service clusterip db-svc-headless --tcp=80:80 --dry-run=client -o yaml > headless.yaml
+```
+
+**YAML Manifest:**
+
+Edit the file to add `clusterIP: None` and ensure the selector is correct.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-svc-headless
+spec:
+  clusterIP: None # Key field for Headless Service
+  selector:
+    app: db # Must match the Pod labels
+  ports:
+    - port: 80 # Service port
+      targetPort: 80 # Pod port
+```
+
+**Apply:**
+
+```bash
+kubectl apply -f headless.yaml
+```
+
+**Validation:**
+
+```bash
+# Verify the service has no ClusterIP
+kubectl get svc db-svc-headless
+
+# DNS Lookup (should return multiple IPs)
+kubectl run tmp-shell --rm -it --image=busybox:1.28 -- nslookup db-svc-headless
+```
+
 ---
 
 ## Question 27: Select the Correct Network Policy Manifest
@@ -532,6 +681,52 @@ kubectl delete ingress legacy-ingress
 - **Initial State:** Three YAML files containing Network Policy definitions.
 - **Task:** Analyze the files to determine which one correctly implements the following rule: “In the backend namespace, allow ingress traffic on port 8000 to pods with label `role=api` only from pods that have the label `role=frontend`.” Apply the correct manifest file.
 - **Validation:** Test connectivity from a `frontend` pod to an `api` pod (should succeed) and from another pod (should fail).
+
+### Solution
+
+To strictly allow traffic from a specific set of pods (`role=frontend`) to another set (`role=api`) on a specific port (`8000`), the NetworkPolicy must:
+
+1.  **Target the destination pods**: Use `spec.podSelector` to select `role=api`.
+2.  **Define Ingress source**: Use an `ingress` rule with `from: - podSelector` matching `role=frontend`.
+3.  **Specify Port**: Restrict traffic to TCP port `8000`.
+
+**Correct Manifest Structure:**
+
+You need to look for the manifest that uses `podSelector` (not `namespaceSelector`) in the `from` section, assuming all pods are in the same namespace.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-frontend
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      role: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+```
+
+**Common Pitfalls in Exams:**
+
+- **Empty PodSelector**: `podSelector: {}` selects ALL pods in the namespace.
+- **NamespaceSelector**: Using `namespaceSelector` instead of `podSelector` in the `from` block would allow traffic from ALL pods in a specific namespace.
+
+**Action:**
+Inspect the provided files (`cat /opt/np-1.yaml`, etc.) and apply the one that matches.
+
+```bash
+kubectl apply -f /opt/np-<correct>.yaml
+```
 
 ---
 
