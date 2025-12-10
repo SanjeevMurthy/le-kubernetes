@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: myfrontend
+      image: nginx
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "256m"
+        limits:
+          memory: "128Mi"
+          cpu: "512m"
+      volumeMounts:
+        - mountPath: "/var/log/nginx"
+          name: logs-pd
+  volumes:
+    - name: logs-pd
+      persistentVolumeClaim:
+        claimName: logs-pvc

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: logs-pv
+spec:
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Delete
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadOnlyMany
+  hostPath:
+    path: "/tmp/logs"
+    type: DirectoryOrCreate
