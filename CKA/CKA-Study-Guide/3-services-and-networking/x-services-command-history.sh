@@ -88,3 +88,49 @@ kubectl run test-dns --image=busybox:1.28 -it --rm --restart=Never -- nslookup k
 
 # Test cross-namespace access using the custom domain
 kubectl run tmp-curl --image=curlimages/curl -n hello -it --rm --restart=Never -- curl -v http://nginx.external.svc.cka.example.com:8080
+
+
+
+# Gateway API Installation (Standard + NGINX Gateway Fabric)
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.2.1/deploy/crds.yaml
+kubectl apply -k "https://github.com/nginx/nginx-gateway-fabric/config/default?ref=v2.2.1"
+
+# Create a secure Ingress with TLS
+kubectl create deployment app-svc --image=nginx --port=80
+kubectl expose deployment app-svc --port=80
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=app.example.com"
+kubectl create secret tls app-tls --key tls.key --cert tls.crt
+kubectl create ingress legacy-ingress --rule="app.example.com/=app-svc:80,tls=app-tls" --class=nginx
+
+# Test HTTPS Ingress (requires host entry)
+# echo "127.0.0.1 app.example.com" | sudo tee -a /etc/hosts
+curl -k --resolve app.example.com:443:127.0.0.1 https://app.example.com
+
+# Gateway API usage (HTTPRoute and Gateway)
+kubectl apply -f main-gateway.yaml
+kubectl apply -f app-route-httproute.yaml
+
+# Network Policy Setup (Namespaces and Labels)
+kubectl create namespace np-db
+kubectl create namespace np-frontend
+kubectl label namespace np-frontend project=frontend
+
+# Create pods for Network Policy testing
+kubectl run frontend --image=nginx -n np-frontend
+kubectl label pod frontend -n np-frontend app=frontend --overwrite
+kubectl run db --image=nginx -n np-db
+kubectl label pod db -n np-db app=db --overwrite
+
+# Apply Network Policy
+kubectl apply -f db-network-policy.yaml -n np-db
+
+# Test Network Policy (Exec into frontend)
+kubectl exec -it frontend -n np-frontend -- bash
+
+# Edit CoreDNS ConfigMap interactively
+kubectl edit configmap coredns -n kube-system
+kubectl rollout restart deployment coredns -n kube-system
+
+# Verify DNS Resolution (Custom Domain) via busybox
+kubectl run dns-test-verify --image=busybox:1.28 --rm -it --restart=Never -- nslookup service.internal.corp
