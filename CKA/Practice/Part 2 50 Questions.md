@@ -1298,6 +1298,86 @@ Affinity is Attractive: This is what says "I want to go to this specific node."
 - **Task:** Create a PersistentVolumeClaim named `my-pvc` that requests `1Gi` of storage with the `ReadWriteOnce` access mode. Then, create a pod named `storage-pod` that mounts this PVC at the path `/data`.
 - **Validation:** Exec into the `storage-pod` and create a file in the `/data` directory. Delete the pod. Recreate the pod. Exec into the new pod and verify that the file still exists in `/data`.
 
+### Solution
+
+This question tests your ability to dynamically provision storage using a PersistentVolumeClaim (PVC) and mount it into a Pod. Since a default StorageClass exists, you only need to create the PVC, and the cluster will automatically create the backing PV.
+
+**1. Create the PersistentVolumeClaim (PVC):**
+
+Create a file named `my-pvc.yaml`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+**2. Create the Pod:**
+
+Create a file named `storage-pod.yaml`. Note the `volumes` and `volumeMounts` sections.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-pod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - mountPath: "/data"
+          name: my-data
+  volumes:
+    - name: my-data
+      persistentVolumeClaim:
+        claimName: my-pvc
+```
+
+**3. Apply the Manifests:**
+
+```bash
+kubectl apply -f my-pvc.yaml
+kubectl apply -f storage-pod.yaml
+```
+
+**4. Validation:**
+
+Verify the PVC is bound:
+
+```bash
+kubectl get pvc my-pvc
+# STATUS should be 'Bound'
+```
+
+Test Data Persistence:
+
+```bash
+# 1. Write data
+kubectl exec storage-pod -- sh -c "echo 'Hello Storage' > /data/file.txt"
+
+# 2. Delete the pod (data stays in PVC/PV)
+kubectl delete pod storage-pod
+
+# 3. Recreate the pod
+kubectl apply -f storage-pod.yaml
+
+# 4. Verify data exists
+kubectl exec storage-pod -- cat /data/file.txt
+# Output should be 'Hello Storage'
+```
+
+**Note on Physical Storage (Minikube):**
+Since you are using the default `standard` StorageClass in Minikube, it uses the `hostPath` provisioner. The actual files are stored on the Minikube node (not your local laptop's filesystem) at a path like `/tmp/hostpath-provisioner/default/my-pvc`. You can verify this by SSHing into the node (`minikube ssh`) and checking that directory.
+
 ---
 
 ## Question 42: Patch a StorageClass to be the Default
@@ -1306,6 +1386,72 @@ Affinity is Attractive: This is what says "I want to go to this specific node."
 - **Initial State:** Two StorageClasses, `slow` and `fast`, exist.
 - **Task:** Use the `kubectl patch` command to add the annotation `storageclass.kubernetes.io/is-default-class="true"` to the `fast` StorageClass. Ensure the `slow` StorageClass does not have this annotation.
 - **Validation:** Create a new PVC without specifying a `storageClassName`. Describe the PVC and verify that it was provisioned using the `fast` StorageClass.
+
+### Solution
+
+To set a StorageClass as the default, you need to add the specific annotation `storageclass.kubernetes.io/is-default-class: "true"`. This can be done using the `kubectl patch` command.
+
+**1. Check Current StorageClasses:**
+
+```bash
+kubectl get sc
+# You should see 'slow' and 'fast' (and likely 'standard').
+```
+
+**2. Patch 'fast' to be Default:**
+
+```bash
+kubectl patch storageclass standard -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+
+_Note: If another class (like `standard`) is already marked as default, you might want to remove its default status to avoid confusion, though Kubernetes usually picks the one most recently marked or warns if multiple exist._
+
+**3. Ensure 'slow' is NOT Default:**
+
+If `slow` was previously default, you would remove the annotation or set it to false:
+
+```bash
+kubectl patch storageclass slow -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+
+**4. Validation:**
+
+Verify the output of `get sc`:
+
+```bash
+kubectl get sc
+# The 'fast' class should now display '(default)' next to its name.
+```
+
+Create a PVC without specifying a ConfigMap:
+
+```yaml
+# test-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-default-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+```
+
+```bash
+kubectl apply -f test-pvc.yaml
+kubectl get pvc test-default-pvc
+kubectl describe pvc test-default-pvc | grep "StorageClass"
+# Should show: StorageClass: fast
+```
+
+**Common Issue: Pending PVC**
+If the PVC remains in `Pending` state with "no persistent volumes available for this claim and no storage class is set":
+
+1.  **Cause**: The PVC yaml likely has `storageClassName: ""` which explicitly disables dynamic provisioning.
+2.  **Fix**: Remove the `storageClassName` field (or set it to `null`) to allow the default StorageClass to take over.
+3.  **Note**: PVC `spec` is immutable. You cannot edit the field on an existing PVC. **You must delete and recreate the PVC.**
 
 ---
 
@@ -1378,3 +1524,11 @@ Affinity is Attractive: This is what says "I want to go to this specific node."
 - **Initial State:** A PVC `source-pvc` exists and is bound. The underlying CSI driver supports volume cloning.
 - **Task:** Create a new PVC manifest for a PVC named `cloned-pvc`. In the `spec`, add a `dataSource` block that specifies `name: source-pvc` and `kind: PersistentVolumeClaim`. Apply the manifest.
 - **Validation:** Run `kubectl get pvc cloned-pvc`. It should become `Bound`. Create a pod that mounts `cloned-pvc`, and verify that it contains the same data as the `source-pvc`.
+
+```
+
+```
+
+```
+
+```
