@@ -1462,6 +1462,62 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Task:** Create a PersistentVolumeClaim named `claim-for-pv-data` that exactly matches the specifications of `pv-data-001` (requests 2Gi storage, ReadWriteOnce access mode, and `storageClassName: manual`) to ensure it binds to that specific PV.
 - **Validation:** Run `kubectl get pvc claim-for-pv-data`. Its status should be `Bound`, and describing it should show it is bound to the `pv-data-001` volume.
 
+### Solution
+
+This question tests your understanding of static provisioning and how PVCs bind to specific PVs based on matching criteria (Capacity, Access Mode, and Storage Class).
+
+**Step 1: Setup - Create the Initial PV (Pre-requisite)**
+First, create the Persistent Volume as described in the "Initial State".
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-data-001
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  hostPath:
+    path: "/tmp/data-001"
+EOF
+```
+
+**Step 2: Create the PVC**
+Create a PVC that requests specific resources matching the PV. Crucially, the `storageClassName` must match.
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim-for-pv-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: manual
+EOF
+```
+
+**Step 3: Validation**
+
+Check if the PVC is bound to the correct PV.
+
+```bash
+# Check status - should be "Bound"
+kubectl get pvc claim-for-pv-data
+
+# Verify it is bound to 'pv-data-001'
+kubectl describe pvc claim-for-pv-data | grep "Volume:"
+# Output should show: Volume: pv-data-001
+```
+
 ---
 
 ## Question 44: Configure Volume Reclaim Policy
@@ -1470,6 +1526,79 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Initial State:** A manifest for a PV is at `/opt/pv.yaml`.
 - **Task:** Edit the PV manifest at `/opt/pv.yaml`. Set the `persistentVolumeReclaimPolicy` field to `Delete`. Create the PV.
 - **Validation:** Create a PVC that binds to this PV. Then, delete the PVC. The PV's status should change to `Terminating` and it should eventually be deleted.
+
+### Solution
+
+The `persistentVolumeReclaimPolicy` controls what happens to a PersistentVolume when its bound PVC is deleted.
+
+- **Retain**: (Default for manual PVs) The PV is released but keeps the data. It requires manual cleanup.
+- **Delete**: (Default for dynamic provisioning) The PV is deleted along with the underlying storage.
+- **Recycle**: (Deprecated) Performs a basic scrub (rm -rf).
+
+**Step 1: Define the PV with Reclaim Policy 'Delete'**
+
+Create or edit `/opt/pv.yaml`.
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: temp-pv
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  # This is the key setting
+  persistentVolumeReclaimPolicy: Delete
+  hostPath:
+    path: /tmp/temp-data
+```
+
+Apply it:
+
+```bash
+kubectl apply -f /opt/pv.yaml
+```
+
+**Step 2: Create a PVC to bind to it**
+
+To test it, we need a PVC that will bind to this specific PV. We can use a selector or just match the attributes.
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: temp-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  # Ensure this is empty to match the PV if it doesn't have a class,
+  # or match the PV's class if it has one.
+  storageClassName: ""
+```
+
+**Step 3: Validation (The Delete Test)**
+
+```bash
+# 1. Create resources
+kubectl apply -f /opt/pv.yaml
+kubectl apply -f temp-pvc.yaml
+
+# 2. Verify binding
+kubectl get pv temp-pv
+# Status should be Bound
+
+# 3. Delete the PVC
+kubectl delete pvc temp-pvc
+
+# 4. Check the PV again
+kubectl get pv temp-pv
+# It should be gone (or briefly Terminating)
+```
 
 ---
 
@@ -1480,6 +1609,68 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Task:** Edit the `db-pvc` PersistentVolumeClaim and change the `spec.resources.requests.storage` value from `10Gi` to `20Gi`.
 - **Validation:** Run `kubectl describe pvc db-pvc`. Check the events to see a successful resize operation. The capacity of the PVC should now show `20Gi`.
 
+### Solution
+
+This question tests your ability to expand Persistent Volumes. This feature must be enabled in the StorageClass via `allowVolumeExpansion: true`. The minikube `standard` class usually has this enabled (or we can patch it).
+
+**Step 1: Setup - Create StorageClass and PVC (Pre-requisite)**
+
+```bash
+# 1. Create a StorageClass that allows expansion
+cat <<EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: expandable-sc
+provisioner: k8s.io/minikube-hostpath
+allowVolumeExpansion: true
+EOF
+
+# 2. Create the initial PVC
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: expandable-sc
+  resources:
+    requests:
+      storage: 10Gi
+EOF
+```
+
+**Step 2: Expand the PVC**
+
+You can do this via `kubectl edit` or patching.
+
+```bash
+kubectl patch pvc db-pvc -p '{"spec":{"resources":{"requests":{"storage":"20Gi"}}}}'
+```
+
+Alternatively, open the editor:
+
+```bash
+kubectl edit pvc db-pvc
+# Change storage: 10Gi to 20Gi
+```
+
+**Step 3: Validation**
+
+```bash
+# Check the status
+kubectl get pvc db-pvc
+# Look for CAPACITY 20Gi (It usually happens instantly on hostPath)
+
+# Check events for confirmation
+kubectl describe pvc db-pvc
+# Look for: FileSystemResizeForSuccessful
+```
+
+> **Note**: For some storage types, the resize only happens _after_ a Pod using the PVC is restarted or the filesystem is mounted. For `hostPath` (minikube), it is usually immediate.
+
 ---
 
 ## Question 46: Use a HostPath Volume
@@ -1488,6 +1679,63 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Initial State:** A log file exists at `/var/log/node-app.log` on a worker node.
 - **Task:** Create a pod that uses a `hostPath` volume to mount the `/var/log` directory from the host node into the pod at the path `/node-logs`. The pod should be scheduled to the specific worker node where the log file exists.
 - **Validation:** Exec into the pod and run `cat /node-logs/node-app.log`. It should display the contents of the log file from the host node.
+
+### Solution
+
+This question covers mounting a directory from the underlying node into a Pod using `hostPath`. This is often used for system agents or debugging but has security implications (the Pod can read/write host files).
+
+**Step 1: Identify the Node**
+
+Find the node name you want to schedule on.
+
+```bash
+kubectl get nodes
+# Assume node is 'worker-node-1' / 'minikube'
+```
+
+**Step 2: Create the Pod Manifest**
+
+Use `nodeName` to force scheduling to that specific node.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-pod
+spec:
+  # Force scheduling to the node where the log file is
+  nodeName: minikube # Change this to your actual node name
+  containers:
+    - name: logs-viewer
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - mountPath: /node-logs
+          name: log-volume
+  volumes:
+    - name: log-volume
+      hostPath:
+        path: /var/log
+        type: Directory
+```
+
+**Step 3: Validation**
+
+First, ensure the dummy file exists on the node (Minikube example):
+
+```bash
+minikube ssh "sudo touch /var/log/node-app.log && echo 'Host Log Content' | sudo tee /var/log/node-app.log"
+```
+
+Then create and check the pod:
+
+```bash
+kubectl apply -f hostpath-pod.yaml
+
+# Read the file from inside the pod
+kubectl exec hostpath-pod -- cat /node-logs/node-app.log
+# Output: Host Log Content
+```
 
 ---
 
@@ -1498,6 +1746,50 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Task:** Edit the pod manifest. Define an `emptyDir` volume named `shared-data`. Mount this volume into both containers at the path `/shared`. Create the pod.
 - **Validation:** Exec into the first container and create a file in `/shared`. Then, exec into the second container and verify that the file is visible and accessible at `/shared`.
 
+### Solution
+
+This scenario demonstrates the sidecar pattern where containers in the same Pod share a filesystem. `emptyDir` creates a temporary directory that exists as long as the Pod is running.
+
+**Step 1: Create the Pod Manifest**
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-container-pod
+spec:
+  containers:
+    - name: c1
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+    - name: c2
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+  volumes:
+    - name: shared-data
+      emptyDir: {}
+```
+
+**Step 2: Apply and Validate**
+
+```bash
+# Apply
+kubectl apply -f multi-container-pod.yaml
+
+# Create a file in container 1
+kubectl exec multi-container-pod -c c1 -- sh -c "echo 'Shared Data' > /shared/data.txt"
+
+# Read the file from container 2
+kubectl exec multi-container-pod -c c2 -- cat /shared/data.txt
+# Output should be: Shared Data
+```
+
 ---
 
 ## Question 48: Create a Read-Only Volume Mount
@@ -1506,6 +1798,48 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Initial State:** A ConfigMap `app-config` exists.
 - **Task:** Create a pod. Mount the `app-config` ConfigMap as a volume. In the `volumeMounts` section for the container, set the `readOnly` field to `true`.
 - **Validation:** Exec into the pod and attempt to write a file to the mounted config directory (e.g., `touch /path/to/config/new-file`). The command should fail with a "Read-only file system" error.
+
+### Solution
+
+Mounting volumes as `readOnly` is a best practice for configuration data (ConfigMaps/Secrets) to ensure immutability from the application's perspective.
+
+**Step 1: Create the ConfigMap (Pre-requisite)**
+
+```bash
+kubectl create configmap app-config --from-literal=config.json='{"debug":true}'
+```
+
+**Step 2: Create the Pod with ReadOnly Mount**
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readonly-pod
+spec:
+  containers:
+    - name: app
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+          readOnly: true
+  volumes:
+    - name: config-volume
+      configMap:
+        name: app-config
+```
+
+**Step 3: Validation**
+
+```bash
+kubectl apply -f readonly-pod.yaml
+
+# Try to write to the mount path
+kubectl exec readonly-pod -- touch /etc/config/hack.txt
+# Output should be: touch: /etc/config/hack.txt: Read-only file system
+```
 
 ---
 
@@ -1516,6 +1850,38 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Task:** Create a PersistentVolume manifest. The PV should have a capacity of `5Gi`, access mode `ReadWriteMany`, and a `reclaimPolicy` of `Retain`. The volume source should be `nfs`, with the server set to `192.168.1.100` and the path to `/data/shared`. Apply the manifest.
 - **Validation:** Run `kubectl get pv`. The new PV should be listed with the status `Available`.
 
+### Solution
+
+This tests your ability to create static PersistentVolumes, specifically for Network File Systems (NFS), which support `ReadWriteMany` (RWX) access modes.
+
+**Step 1: Create the PV Manifest**
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 192.168.1.100
+    path: "/data/shared"
+```
+
+**Step 2: Apply and Validate**
+
+```bash
+kubectl apply -f nfs-pv.yaml
+
+# Check the status
+kubectl get pv nfs-pv
+# Status should be 'Available' (since no PVC has bound to it yet)
+```
+
 ---
 
 ## Question 50: Clone a Persistent Volume Claim
@@ -1525,10 +1891,43 @@ If the PVC remains in `Pending` state with "no persistent volumes available for 
 - **Task:** Create a new PVC manifest for a PVC named `cloned-pvc`. In the `spec`, add a `dataSource` block that specifies `name: source-pvc` and `kind: PersistentVolumeClaim`. Apply the manifest.
 - **Validation:** Run `kubectl get pvc cloned-pvc`. It should become `Bound`. Create a pod that mounts `cloned-pvc`, and verify that it contains the same data as the `source-pvc`.
 
+### Solution
+
+Volume cloning allows you to provision a new PersistentVolumeClaim with data populated from an existing PVC. This is handled by the CSI driver (assuming it supports cloning). The key configuration is the `dataSource` field.
+
+> **Note**: The source PVC must be in the same namespace and have the same StorageClass (CSI driver).
+
+**Step 1: Create the Clone PVC Manifest**
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloned-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi # Must be >= source PVC size
+  storageClassName: fast # Must match source or be a compatible CSI class
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: source-pvc
 ```
 
-```
+**Step 2: Apply and Validate**
 
-```
+```bash
+# 1. Apply the manifest
+kubectl apply -f cloned-pvc.yaml
 
+# 2. Check the status
+kubectl get pvc cloned-pvc
+# Status should be 'Bound'
+
+# 3. Validation Pod
+# Create a pod to mount the new volume and inspect contents
+kubectl run validator --image=busybox --restart=Never --command -- sleep 3600
+# (Mounting requires a full manifest or overrides, typically you would just inspect the PV or use a debug pod manifest)
 ```
