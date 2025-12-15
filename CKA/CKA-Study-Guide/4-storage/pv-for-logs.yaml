@@ -3,10 +3,10 @@ kind: PersistentVolume
 metadata:
   name: logs-pv
 spec:
-  storageClassName: ""
+  storageClassName: "slow"
   persistentVolumeReclaimPolicy: Delete
   capacity:
-    storage: 2Gi
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
     - ReadOnlyMany
