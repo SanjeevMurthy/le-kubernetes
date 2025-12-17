@@ -234,6 +234,75 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Task:** Edit the `coredns` ConfigMap. Re-add the `forward` plugin to the Corefile configuration, pointing to a public DNS server like `8.8.8.8`. After saving the changes, restart the CoreDNS pods to apply the new configuration.
 - **Validation:** Exec into a busybox pod and run `nslookup google.com`. The command should succeed.
 
+### Solution
+
+This scenario simulates a common DNS issue where the cluster can resolve internal services (like `kubernetes.default`) but fails to resolve external domains (like `google.com`). This is controlled by the `forward` plugin in the CoreDNS configuration (Corefile). If this plugin is missing or misconfigured, CoreDNS doesn't know where to send queries for domains it doesn't authorize.
+
+**Step-by-Step Solution:**
+
+1.  **Verify the Problem (Optional):**
+    Check the current CoreDNS configuration to confirm the missing `forward` plugin.
+
+    ```bash
+    kubectl get cm coredns -n kube-system -o yaml
+    ```
+
+    _You should see the `Corefile` data block. Notice that the `forward . ...` line is missing._
+
+2.  **Edit the ConfigMap:**
+    You need to add the `forward` plugin back into the Corefile.
+
+    ```bash
+    kubectl edit cm coredns -n kube-system
+    ```
+
+    _Locate the `Corefile` section. Add the `forward` line inside the main block (usually the one responsible for `.`). It should look something like this:_
+
+    ```text
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        # Add this line:
+        forward . 8.8.8.8
+        # OR use the node's resolver:
+        # forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    ```
+
+    _Save and exit (`:wq`)._
+
+3.  **Restart CoreDNS Pods:**
+    ConfigMap changes are not picked up immediately by running pods (unless they have a reloader, but explicit restart is faster and safer for the exam).
+
+    ```bash
+    kubectl rollout restart deployment coredns -n kube-system
+    ```
+
+**Validation:**
+
+1.  **Run a Test Pod:**
+    Launch a temporary pod with DNS tools (busybox or dnsutils).
+
+    ```bash
+    kubectl run test-dns --image=busybox:1.28 --restart=Never --rm -it -- nslookup google.com
+    ```
+
+    _(Note: busybox 1.28 is often recommended because newer versions sometimes have issues with nslookup)._
+
+    _Output should show the address of google.com._
+
 ---
 
 ## Question 4: Ingress Controller Pods Not Ready
@@ -242,6 +311,62 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Initial State:** The `ingress-nginx-controller` Deployment has a misconfigured liveness probe with an incorrect port, causing the kubelet to repeatedly kill and restart the pods.
 - **Task:** Inspect the `ingress-nginx-controller` Deployment in the `ingress-nginx` namespace. Identify the incorrect port in the liveness probe configuration and correct it to match the health check port exposed by the controller (port `10254`).
 - **Validation:** Run `kubectl get pods -n ingress-nginx`. The controller pods should enter the Running state and remain stable.
+
+### Solution
+
+This scenario tests your ability to troubleshoot `CrashLoopBackOff` errors caused by misconfigured health checks. A `livenessProbe` determines if a container is running. If it fails, the kubelet kills the container and restarts it. If the probe is checking the wrong port, it will continually fail even if the application is healthy, creating a restart loop.
+
+**Step-by-Step Solution:**
+
+1.  **Identify the Problematic Pods:**
+    Check the pods in the specified namespace.
+
+    ```bash
+    kubectl get pods -n ingress-nginx
+    ```
+
+    _You should see pods with status `CrashLoopBackOff` or high restart counts._
+
+2.  **Investigate the Cause:**
+    Describe one of the failing pods to look at the Events section.
+
+    ```bash
+    kubectl describe pod <pod-name> -n ingress-nginx
+    ```
+
+    _Look for "Liveness probe failed: Connection refused" or similar messages in the Events. Note the port being successfully or unsuccessfully accessed._
+
+3.  **Edit the Deployment:**
+    The pods are managed by a Deployment. You must edit the Deployment manifest.
+
+    ```bash
+    kubectl edit deployment ingress-nginx-controller -n ingress-nginx
+    ```
+
+4.  **Correct the Liveness Probe:**
+    Scroll down to the `livenessProbe` section of the container spec.
+    _Change the port field from the incorrect value (e.g., `8080` or `80`) to the correct port `10254`._
+
+    ```yaml
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 10254 # <-- Ensure this is 10254
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    ```
+
+    _Save and exit (`:wq`)._
+
+5.  **Verify Verification:**
+    The Deployment will rollout a new ReplicaSet with the fixed configuration.
+
+    ```bash
+    kubectl get pods -n ingress-nginx -w
+    ```
+
+    _Watch as the old pods terminate and the new pods reach the `Running` state and stay there (Ready 1/1)._
 
 ---
 
@@ -252,6 +377,77 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Task:** SSH into `node-fail`. Check the status of the kubelet service using `systemctl status kubelet`. Examine the service logs using `journalctl -u kubelet` to identify the configuration error. Correct the error in `/var/lib/kubelet/config.yaml` and restart the kubelet service.
 - **Validation:** From the control plane, run `kubectl get nodes`. The status of `node-fail` should return to `Ready`.
 
+### Solution
+
+This question tests your ability to troubleshoot node-level components, specifically the `kubelet`, which is the primary node agent. The `kubelet` is a systemd service, so you must use standard Linux system administration tools (`systemctl`, `journalctl`, `vi`) rather than `kubectl`.
+
+**Step-by-Step Solution:**
+
+1.  **SSH into the Failing Node:**
+    Access the node experiencing issues (specified as `node-fail` or similar).
+
+    ```bash
+    ssh node-fail
+    ```
+
+2.  **Check Kubelet Status:**
+    Verify if the service is running, failed, or stopped.
+
+    ```bash
+    systemctl status kubelet
+    ```
+
+    _You will likely see `Active: activating (auto-restart)` or `Active: failed`. The exit code might be non-zero._
+
+3.  **Inspect Logs for Errors:**
+    Check the logs to find the _reason_ it is failing.
+
+    ```bash
+    journalctl -u kubelet | tail -n 50
+    ```
+
+    _Look for specific error messages. A common one in this scenario is related to the **cgroup driver**. For example: "failed to run Kubelet: misconfiguration: kubelet cgroup driver: "systemd" is different from docker cgroup driver: "cgroupfs""._
+
+    _Another possibility is a syntax error in the config file, which the logs will pinpoint._
+
+4.  **Edit the Configuration:**
+    The logs likely pointed to `/var/lib/kubelet/config.yaml`. Open it.
+
+    ```bash
+    sudo vi /var/lib/kubelet/config.yaml
+    ```
+
+    _Find the erroneous parameter. If the error was the cgroup driver mismatch, change `cgroupDriver: systemd` to `cgroupDriver: cgroupfs` (or vice versa, matching what the container runtime is using)._
+
+5.  **Restart the Kubelet:**
+    After saving the configuration, you must restart the service for changes to take effect.
+
+    ```bash
+    sudo systemctl daemon-reload # Optional, but good practice if unit file changed
+    sudo systemctl restart kubelet
+    ```
+
+6.  **Verify Node Recovery (On Node):**
+
+    ```bash
+    systemctl status kubelet
+    ```
+
+    _Ensure it says `Active: active (running)`._
+
+    _Exit the node:_
+
+    ```bash
+    exit
+    ```
+
+7.  **Verify Node Recovery (From Control Plane):**
+    Back on the main terminal:
+    ```bash
+    kubectl get nodes
+    ```
+    _The node status should change from `NotReady` to `Ready`. (It may take up to a minute)._
+
 ---
 
 ## Question 6: Service Endpoint Failure
@@ -260,6 +456,59 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Initial State:** The `frontend-svc` Service has a selector `app=frontend-app`, but the corresponding Deployment's pods have the label `app=frontend-web`.
 - **Task:** Modify the selector of the `frontend-svc` Service to match the labels of the existing pods (`app=frontend-web`).
 - **Validation:** Run `kubectl describe service frontend-svc`. The Endpoints field should now be populated with the IP addresses of the running pods.
+
+### Solution
+
+Services find the pods they route traffic to using **Label Selectors**. If the Service's `spec.selector` does not exactly match the key-value pairs in the Pod's `metadata.labels`, the `Endpoints` list will be empty, and no traffic will reach the application.
+
+**Step-by-Step Solution:**
+
+1.  **Verify the Issue:**
+    Check the service and note the empty Endpoints.
+
+    ```bash
+    kubectl describe service frontend-svc
+    ```
+
+    _Look for the `Endpoints:` row. It will likely say `<none>`._
+    _Also note the `Selector:` value (e.g., `app=frontend-app`)._
+
+2.  **Check Pod Labels:**
+    Find the actual labels on the application pods.
+
+    ```bash
+    kubectl get pods --show-labels
+    ```
+
+    _Locate the frontend pods and see their labels (e.g., `app=frontend-web`)._
+
+3.  **Edit the Service:**
+    Update the service to match the pods.
+
+    ```bash
+    kubectl edit service frontend-svc
+    ```
+
+4.  **Update the Selector:**
+    Find the `selector` section and change the value.
+    Change `app: frontend-app` to `app: frontend-web`.
+
+    ```yaml
+    spec:
+      selector:
+        app: frontend-web # Updated to match pods
+      ports:
+      ...
+    ```
+
+    _Save and exit (`:wq`)._
+
+5.  **Validation:**
+    Check the endpoints again.
+    ```bash
+    kubectl describe service frontend-svc
+    ```
+    _The `Endpoints` field should now show IP addresses (e.g., `10.244.1.5:80`)._
 
 ---
 
@@ -270,6 +519,65 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Task:** There are no PVs that can satisfy the claim. Edit the `db-pvc` PersistentVolumeClaim and change its requested `accessModes` from `ReadWriteOnce` to `ReadWriteMany` to match what the StorageClass provides.
 - **Validation:** Run `kubectl get pvc db-pvc`. The status should change from `Pending` to `Bound`.
 
+### Solution
+
+For a PersistentVolumeClaim (PVC) to bind to a PersistentVolume (PV), the request must be satisfied by the volume's capabilities. This includes capacity, storage class, and **Access Modes**. If a PVC requests `ReadWriteOnce` but the available PVs (or the dynamic provisioner) only support `ReadWriteMany`, binding will fail.
+
+**Step-by-Step Solution:**
+
+1.  **Investigate the PVC:**
+    Check why the PVC is pending.
+
+    ```bash
+    kubectl describe pvc db-pvc
+    ```
+
+    _Check the Events section. You might see messages like "waiting for a volume to be created, either by external provisioner..." or "no persistent volumes available for this claim and no storage class is set"._
+
+2.  **Edit the PVC:**
+    You need to change the `accessModes`.
+    **Important:** You typically cannot update `accessModes` of an existing PVC if it has already been bound or if the field is immutable (depending on the K8s version and state). However, for a _Pending_ PVC that hasn't found a match, you often can, or you may need to delete and recreate it. The instructions say "Edit", so we try that first.
+
+    ```bash
+    kubectl edit pvc db-pvc
+    ```
+
+3.  **Modify Access Mode:**
+    Change:
+
+    ```yaml
+    spec:
+      accessModes:
+        - ReadWriteOnce
+    ```
+
+    To:
+
+    ```yaml
+    spec:
+      accessModes:
+        - ReadWriteMany
+    ```
+
+    _Save and exit (`:wq`)._
+
+    _Note: If the API server rejects the update (saying the field is immutable), you must export the YAML, delete the PVC, and recreate it._
+
+    ```bash
+    # If edit fails:
+    kubectl get pvc db-pvc -o yaml > db-pvc.yaml
+    vi db-pvc.yaml # fix the accessMode and remove status/metadata fields
+    kubectl delete pvc db-pvc
+    kubectl apply -f db-pvc.yaml
+    ```
+
+4.  **Validation:**
+    Check the status.
+    ```bash
+    kubectl get pvc db-pvc
+    ```
+    _It should now show `Bound` (assuming the StorageClass can provision it)._
+
 ---
 
 ## Question 8: Job Failing to Complete
@@ -278,6 +586,68 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Initial State:** The pod template within the `data-processor` Job specifies a container image `my-app:latest` that does not exist in the registry. The pods fail with an `ImagePullBackOff` error.
 - **Task:** Inspect the logs of one of the failed pods created by the Job to identify the image pull error. Edit the `data-processor` Job and correct the container image name to a valid one, such as `busybox`.
 - **Validation:** Delete the failed pods. The Job should create a new pod that runs to completion. Verify by running `kubectl get jobs data-processor` and checking that `COMPLETIONS` is `1/1`.
+
+### Solution
+
+Kubernetes Jobs handle batch processes. If the pods created by a Job fail (e.g., due to configuration errors or application crashes), the Job controller will create new pods (up to `backoffLimit`) to try to complete the task. In this scenario, an invalid image causes an infinite failure loop until the backoff limit is reached.
+
+**Step-by-Step Solution:**
+
+1.  **Identify the Failed Pods:**
+    List the pods to see the status.
+
+    ```bash
+    kubectl get pods
+    ```
+
+    _You will see pods named `data-processor-xxxxx` with status `ImagePullBackOff` or `ErrImagePull`._
+
+2.  **Investigate the Error:**
+    Describe a pod to verify the cause.
+
+    ```bash
+    kubectl describe pod <pod-name>
+    ```
+
+    _Check the Events section for "Failed to pull image"._
+
+3.  **Edit the Job:**
+    You cannot change the `template` of an existing Job mostly. However, for the exam/practice, you might be able to edit it if the field is mutable, or more likely, you will need to replace it.
+    _Try editing first:_
+
+    ```bash
+    kubectl edit job data-processor
+    ```
+
+    _Change `image: my-app:latest` to `image: busybox`._
+    _If you receive an error stating the field is immutable, proceed to the next method._
+
+    _Method 2: Replace (safest)_
+
+    ```bash
+    kubectl get job data-processor -o yaml > job.yaml
+    vi job.yaml
+    # Change image to 'busybox'
+    # Remove 'controller-uid' and 'resourceVersion' from metadata
+    # Remove 'status' section
+    kubectl replace --force -f job.yaml
+    ```
+
+    _(Note: `replace --force` deletes and recreates it)._
+
+4.  **Clean Up (If not using replace):**
+    If you successfully edited the job or if previous failed pods are still there, you might want to delete the failed pods to force a new one immediately, though the Job controller handles this.
+
+    ```bash
+    kubectl delete pods -l job-name=data-processor
+    ```
+
+5.  **Validation:**
+    Watch the job status.
+    ```bash
+    kubectl get jobs data-processor -w
+    ```
+    _It should eventually show Completions `1/1`._
 
 ---
 
@@ -288,6 +658,68 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Task:** Examine the Network Policies in the `db` namespace. Identify the policy intended to allow ingress from `web` and correct its `namespaceSelector` to properly match the labels of the `web` namespace.
 - **Validation:** Exec into a pod in the `web` namespace and successfully connect to the database service in the `db` namespace using a tool like `curl` or `netcat`.
 
+### Solution
+
+Network Policies use labels to select pods and namespaces. A common mistake is using `matchLabels` on a `namespaceSelector` that doesn't match the actual labels on the namespace object itself (which are different from pod labels).
+
+**Step-by-Step Solution:**
+
+1.  **Check Namespace Labels:**
+    First, find out what labels the `web` namespace actually has.
+
+    ```bash
+    kubectl get namespace web --show-labels
+    ```
+
+    _Note the labels, e.g., `name=web` or `project=web`._
+
+2.  **Inspect Policies:**
+    List the policies in the `db` namespace.
+
+    ```bash
+    kubectl get netpol -n db
+    ```
+
+    _Identify the one that looks like it should allow access (e.g., `allow-web`)._
+
+3.  **Check Policy Configuration:**
+    Describe the policy to see its selectors.
+
+    ```bash
+    kubectl describe netpol allow-web -n db
+    ```
+
+    _Look at the `Ingress` rules. You might see `NamespaceSelector: project=web` but the namespace actually has `name=web`._
+
+4.  **Edit the Policy:**
+    Correct the selector.
+
+    ```bash
+    kubectl edit netpol allow-web -n db
+    ```
+
+    _Change the `namespaceSelector` to match the actual label found in Step 1._
+
+    ```yaml
+    ingress:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                name: web # Ensure this matches the output from Step 1
+    ```
+
+    _Save and exit (`:wq`)._
+
+5.  **Validation:**
+    Test connectivity.
+    ```bash
+    # Assuming there is a pod 'web-pod' in 'web' and a service 'db-svc' in 'db'
+    kubectl exec -n web web-pod -- curl -m 2 db-svc.db
+    # OR using nc
+    kubectl exec -n web web-pod -- nc -z -v -w 2 db-svc.db 5432
+    ```
+    _The command should succeed._
+
 ---
 
 ## Question 10: Scheduler Failure
@@ -296,6 +728,72 @@ This scenario tests your understanding of Kubernetes networking, specifically th
 - **Initial State:** The `kube-scheduler` static pod manifest at `/etc/kubernetes/manifests/kube-scheduler.yaml` on the control plane node references a non-existent configuration file via the `--config` flag.
 - **Task:** SSH to the control plane node. Inspect the `kube-scheduler` logs using `crictl logs` (or equivalent) to find the error about the missing config file. Edit the manifest at `/etc/kubernetes/manifests/kube-scheduler.yaml` and remove the invalid `--config` flag to allow the scheduler to start with its default configuration.
 - **Validation:** Create a new NGINX pod. It should be scheduled and transition to the Running state.
+
+### Solution
+
+The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods sit in the `Pending` state forever. In a kubeadm cluster, the scheduler runs as a static pod, meaning its definition lives in `/etc/kubernetes/manifests`. Debugging involves checking why the container keeps exiting.
+
+**Step-by-Step Solution:**
+
+1.  **Confirm Scheduler Issue:**
+    Check the system components.
+
+    ```bash
+    kubectl get pods -n kube-system
+    ```
+
+    _You will likely see `kube-scheduler-controlplane` in `CrashLoopBackOff` or seemingly missing if it's failing fast._
+
+2.  **SSH to Control Plane:**
+    Access the node.
+
+    ```bash
+    ssh control-plane
+    ```
+
+3.  **Inspect Logs:**
+    Since the pod is crashing, `kubectl logs` might work, but `crictl` is more reliable on the node.
+
+    ```bash
+    crictl ps -a | grep scheduler
+    # Get the container ID from the output
+    crictl logs <container-id>
+    ```
+
+    _Look for errors like: `stat /etc/kubernetes/scheduler.conf: no such file or directory`._
+
+4.  **Edit the Manifest:**
+    Modify the static pod definition.
+
+    ```bash
+    cd /etc/kubernetes/manifests
+    vi kube-scheduler.yaml
+    ```
+
+    _Find the line containing the invalid flag, e.g., `--config=/etc/kubernetes/scheduler.conf`. Delete this line or correct the path if you knew the correct one. In this scenario, we remove it to revert to defaults._
+
+5.  **Save and Exit:**
+    Save the file (`:wq`). The Kubelet will automatically restart the static pod.
+
+6.  **Verify Recovery:**
+    Wait a few seconds.
+
+    ```bash
+    crictl ps | grep scheduler
+    # Should show Running
+    ```
+
+    _Exit SSH._
+
+7.  **Validation:**
+    Create a test pod.
+    ```bash
+    kubectl run test-schedule --image=nginx
+    kubectl get pod test-schedule -w
+    ```
+    _It should move from Pending to ContainerCreating to Running._
+
+---
 
 ## Domain: Cluster Architecture, Installation & Configuration (10 Questions)
 
