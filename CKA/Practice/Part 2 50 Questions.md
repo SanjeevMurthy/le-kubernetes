@@ -75,6 +75,80 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Task:** SSH into `cp-node`. Investigate the kube-apiserver static pod manifest and correct the configuration error. Ensure the API server starts successfully and the cluster becomes responsive.
 - **Validation:** From the base node, run `kubectl get nodes`. The command should execute successfully and show the cluster nodes.
 
+### Solution
+
+This scenario simulates a broken control plane where the `kube-apiserver` is down due to a syntax error in its static pod manifest. Since the API server is the entry point for all `kubectl` commands, standard CLI tools will not work. Accessing the node via SSH and fixing the manifest file directly is the required approach.
+
+**Step-by-Step Solution:**
+
+1.  **SSH into the Control Plane Node:**
+    Access the node where the API server is running (specified as `cp-node`).
+
+    ```bash
+    ssh cp-node
+    ```
+
+2.  **Verify the Component Status (Optional but Recommended):**
+    Since `kubectl` is down, use `crictl` or check the kubelet logs to confirm the API server is failing.
+
+    ```bash
+    # Check running containers (apiserver will likely be missing or exiting)
+    crictl ps | grep apiserver
+
+    # Check kubelet logs for manifest errors
+    journalctl -u kubelet | tail -n 50
+    ```
+
+3.  **Locate and Edit the Manifest:**
+    The static pod manifests are managed by the kubelet and located in `/etc/kubernetes/manifests`.
+
+    ```bash
+    cd /etc/kubernetes/manifests/
+    ls
+    # You should see kube-apiserver.yaml
+    ```
+
+4.  **Fix the Configuration Error:**
+    Open the file and look for the misspelled argument.
+
+    ```bash
+    vi kube-apiserver.yaml
+    ```
+
+    _Look for a line that looks like:_
+    `- --commmand-argument` (e.g., misspelled) or an invalid flag.
+    _Correct it to:_
+    `- --command-argument` (correct spelling).
+
+    _Example:_ finding a typo like `--etcd-servers` written as `--etcd-serveer`.
+
+5.  **Save and Exit:**
+    Save the file (`:wq` in vi). The kubelet automatically watches this directory and will detect the change. It will kill the old (failing) pod and start a new one with the corrected configuration.
+
+6.  **Verify Recovery:**
+    Wait a few moments for the API server to initialize.
+
+    ```bash
+    # Check if the container is running now
+    crictl ps | grep apiserver
+    ```
+
+7.  **Exit the Node:**
+
+    ```bash
+    exit
+    ```
+
+**Validation:**
+
+Back on the base node, try to interact with the cluster.
+
+```bash
+kubectl get nodes
+```
+
+_Output should list the nodes with Status 'Ready'._
+
 ---
 
 ## Question 2: CNI Pod CIDR Mismatch
@@ -83,6 +157,73 @@ This question bank is designed to reflect the "brownfield," scenario-based natur
 - **Initial State:** The cluster is using the Calico CNI. The main Calico configuration ConfigMap, named `calico-config` in the `kube-system` namespace, defines a Pod IP range that does not include the Pod CIDR assigned to `worker-3`.
 - **Task:** Identify the Pod CIDR assigned to `worker-3` by inspecting the node object. Edit the `calico-config` ConfigMap in the `kube-system` namespace to correctly include the Pod CIDR range of all nodes.
 - **Validation:** Create a test pod and ensure it gets scheduled on `worker-3` and enters the Running state. Exec into the pod and ping another pod on a different worker node.
+
+### Solution
+
+This scenario tests your understanding of Kubernetes networking, specifically the relationship between the Node's `PodCIDR` (assigned by the Kubernetes Controller Manager) and the overlay network configuration managed by the CNI plugin (Calico). If the CNI is not aware of the CIDR range intended for a node, it cannot properly assign IPs or route traffic, leading to connectivity issues or pods stuck in `ContainerCreating`.
+
+**Step-by-Step Solution:**
+
+1.  **Identify the Node's Assigned Pod CIDR:**
+    Check the `spec.podCIDR` field of the problematic node (`worker-3`).
+
+    ```bash
+    kubectl get node worker-3 -o jsonpath='{.spec.podCIDR}'
+    # Example Output checking: 192.168.3.0/24
+    ```
+
+2.  **Inspect the CNI Configuration:**
+    Check the `calico-config` ConfigMap in the `kube-system` namespace to see the currently configured IP pool.
+
+    ```bash
+    kubectl get cm calico-config -n kube-system -o yaml
+    ```
+
+    _Look for a field defining the network range, such a `typha_service_name` or a JSON blob in the `data` section describing the IP Pool (e.g., `cni_network_config`). Assume the configured range is too narrow (e.g., `192.168.0.0/23`) and misses the new node's CIDR._
+
+3.  **Update the ConfigMap:**
+    Edit the ConfigMap to expand the range to cover the new node's CIDR (e.g., change `192.168.0.0/23` to `192.168.0.0/16` or explicitly add the missing range).
+
+    ```bash
+    kubectl edit cm calico-config -n kube-system
+    ```
+
+    _Locate the CIDR definition within the data section and update it._
+    _Save and exit (`:wq`)._
+
+4.  **Restart CNI Pods:**
+    For the changes to take effect, restart the Calico node pods (DaemonSet).
+
+    ```bash
+    kubectl rollout restart daemonset calico-node -n kube-system
+    ```
+
+**Validation:**
+
+1.  **Create a Test Pod on the Node:**
+    Use a `nodeSelector` or `nodeName` to force a pod onto `worker-3`.
+
+    ```bash
+    kubectl run test-pod --image=busybox --restart=Never --overrides='{"spec": {"nodeName": "worker-3"}}' -- sleep 3600
+    ```
+
+2.  **Verify Pod Running Status:**
+
+    ```bash
+    kubectl get pod test-pod
+    # Status should eventually change to Running
+    ```
+
+3.  **Test Connectivity:**
+    Ping a pod on a different node.
+
+    ```bash
+    # Get IP of a pod on another node (e.g., coredns)
+    kubectl get pods -n kube-system -o wide
+
+    # Ping from test-pod
+    kubectl exec -it test-pod -- ping -c 2 <OTHER_POD_IP>
+    ```
 
 ---
 
