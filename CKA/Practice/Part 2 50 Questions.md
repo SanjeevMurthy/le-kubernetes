@@ -804,6 +804,63 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Task:** Add the `prometheus-community` Helm repository. Install the Prometheus chart from this repository into the `monitoring` namespace, giving it the release name `prom-stack`.
 - **Validation:** Run `helm list -n monitoring`. It should show the `prom-stack` release in a deployed status.
 
+### Solution
+
+Helm is the package manager for Kubernetes. It uses "Charts" (packages) stored in "Repositories". To install a chart, you first add the repository, update your local cache, and then run the install command.
+
+**Step-by-Step Solution:**
+
+1.  **Add the Repository:**
+    Add the `prometheus-community` repo to your Helm configuration.
+
+    ```bash
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    ```
+
+2.  **Update Repo Cache:**
+    Ensure you have the latest chart versions.
+
+    ```bash
+    helm repo update
+    ```
+
+3.  **Search for the Chart (Optional):**
+    Verify the chart exists and find the correct name.
+
+    ```bash
+    helm search repo prometheus-community/prometheus
+    ```
+
+4.  **Install the Chart:**
+    Install `prometheus` with the release name `prom-stack` into the `monitoring` namespace.
+
+    ```bash
+    helm install prom-stack prometheus-community/prometheus --namespace monitoring
+    ```
+
+    _If the namespace does not exist (though the scenario says it does), you would add `--create-namespace`._
+
+5.  **Validation:**
+    Check the installed release.
+
+    ```bash
+    helm list -n monitoring
+    ```
+
+    _You should see `prom-stack` with status `deployed`._
+
+To fix the permission error, we need to instruct the Prometheus server to run with permissions that allow it to write to the storage volume. Since you are running in Minikube, the most reliable fix is to run the container as the root user.
+
+```bash
+helm upgrade prom-stack prometheus-community/prometheus --namespace monitoring \
+  --set server.securityContext.runAsUser=0 \
+  --set server.securityContext.runAsNonRoot=false \
+  --set server.securityContext.runAsGroup=0 \
+  --set server.securityContext.fsGroup=0
+
+kubectl get pods -n monitoring -w
+```
+
 ---
 
 ## Question 12: Helm Install with Custom Values
@@ -812,6 +869,53 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Initial State:** The `jetstack` Helm repository has been added.
 - **Task:** Install the `cert-manager` chart from the `jetstack` repository into the `cert-manager` namespace. During installation, use the `--set` flag to set the `installCRDs` value to `false`.
 - **Validation:** Run `kubectl get crds | grep cert-manager`. No CRDs related to cert-manager should be present.
+
+### Solution
+
+Helm charts allow configuration via values. `cert-manager` extensively uses Custom Resource Definitions (CRDs) to manage certificates. By default, the chart might try to install them, but in production environments, it is often recommended to manage CRDs separately (or they might already exist) to avoid accidental deletion during chart uninstallation.
+
+**Step-by-Step Solution:**
+
+1.  **Add/Update the Repository:**
+    Ensure the `jetstack` repository is added and updated.
+
+    ```bash
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    ```
+
+2.  **Create Namespace:**
+    Create the `cert-manager` namespace if it doesn't restrict.
+
+    ```bash
+    kubectl create namespace cert-manager --dry-run=client -o yaml | kubectl apply -f -
+    ```
+
+_This command generates the namespace definition in YAML format without sending it to the API server (`--dry-run=client -o yaml`) and pipes it to `kubectl apply`. This provides an idempotent way to ensure the namespace exists without failing if it was already created._
+
+3.  **Install with Custom Flag:**
+    Install `cert-manager` setting `installCRDs` to `false`.
+
+    ```bash
+    helm install cert-manager jetstack/cert-manager \
+      --namespace cert-manager \
+      --set installCRDs=false
+    ```
+
+4.  **Validation:**
+    Verify that no CRDs were created by the helm chart.
+
+    ```bash
+    kubectl get crds | grep cert-manager
+    ```
+
+    _This command should return no results._
+
+    _Check the release status:_
+
+    ```bash
+    helm list -n cert-manager
+    ```
 
 ---
 
@@ -822,6 +926,43 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Task:** List all CRDs in the cluster and save the list to a file named `/opt/crds.txt`. Then, use `kubectl explain` to find the documentation for the `spec.vault.address` field of the `VaultSecret` CRD and save this documentation to `/opt/crd_field.txt`.
 - **Validation:** Check the contents of the two files, `/opt/crds.txt` and `/opt/crd_field.txt`, to ensure they contain the correct information.
 
+### Solution
+
+Custom Resource Definitions (CRDs) extend the Kubernetes API. Once installed, `kubectl` treats them like native resources. You can list them using `kubectl get crds` and explore their schema/documentation using `kubectl explain`, just like you would for a Pod or Service.
+
+**Step-by-Step Solution:**
+
+1.  **List CRDs:**
+    Get all custom resource definitions and save them to the specified file.
+
+    ```bash
+    kubectl get crds > /opt/crds.txt
+    ```
+
+    _You can verify the list contains the Vault CRD:_
+
+    ```bash
+    grep vault /opt/crds.txt
+    ```
+
+2.  **Explain the Field:**
+    Use `kubectl explain` to drill down into the schema of the `VaultSecret` resource. The question asks for `spec.vault.address`.
+
+    ```bash
+    # Syntax: kubectl explain <resource>.<path>
+    kubectl explain VaultSecret.spec.vault.address > /opt/crd_field.txt
+    ```
+
+    _Note: If `VaultSecret` (Kind) doesn't work, try the plural name or full name if necessary, e.g., `vaultsecrets.spec.vault.address`._
+
+3.  **Validation:**
+    Verify the files were created and contain content.
+
+    ```bash
+    cat /opt/crds.txt
+    cat /opt/crd_field.txt
+    ```
+
 ---
 
 ## Question 14: Create a Specific RBAC Role
@@ -830,6 +971,72 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Initial State:** The `dev` namespace exists. A user `david` is present in the cluster's authentication system.
 - **Task:** Create a Role named `pod-service-reader` in the `dev` namespace that grants `get`, `list`, and `watch` permissions on pods and services. Then, create a RoleBinding named `david-reader-binding` to bind the `david` user to this new role.
 - **Validation:** Run `kubectl auth can-i get pods --as david -n dev`. The result should be `yes`. Run `kubectl auth can-i delete pods --as david -n dev`. The result should be `no`.
+
+### Solution
+
+RBAC (Role-Based Access Control) in Kubernetes is used to regulate access to computer or network resources.
+
+- **Role**: Defines permissions (verbs like `get`, `list`) on resources (like `pods`) within a specific namespace.
+- **RoleBinding**: Grants the permissions defined in a Role to a User, Group, or ServiceAccount.
+
+**Step-by-Step Solution:**
+
+1.  **Create the Role:**
+    Use the imperative command to create the role `pod-service-reader` in namespace `dev` with the specified verbs and resources.
+
+    ```bash
+    kubectl create role pod-service-reader --verb=get,list,watch --resource=pods,services -n dev
+    ```
+
+    _Alternatively, define it via YAML:_
+
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      namespace: dev
+      name: pod-service-reader
+    rules:
+      - apiGroups: [""] # "" indicates the core API group
+        resources: ["pods", "services"]
+        verbs: ["get", "list", "watch"]
+    ```
+
+2.  **Create the RoleBinding:**
+    Bind the user `david` to the role `pod-service-reader`.
+
+    ```bash
+    kubectl create rolebinding david-reader-binding --role=pod-service-reader --user=david -n dev
+    ```
+
+    _YAML Alternative:_
+
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: david-reader-binding
+      namespace: dev
+    subjects:
+      - kind: User
+        name: david # Name is case sensitive
+        apiGroup: rbac.authorization.k8s.io
+    roleRef:
+      kind: Role
+      name: pod-service-reader
+      apiGroup: rbac.authorization.k8s.io
+    ```
+
+3.  **Validation:**
+    Use the `auth can-i` command to verify permissions as the user `david`.
+
+    ```bash
+    # Should return 'yes'
+    kubectl auth can-i get pods --as david -n dev
+
+    # Should return 'no'
+    kubectl auth can-i delete pods --as david -n dev
+    ```
 
 ---
 
@@ -840,6 +1047,76 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Task:** Create a `ClusterRole` named `node-pv-viewer` that grants `get` and `list` permissions on nodes and persistent volumes. Create a `ClusterRoleBinding` named `auditor-global-binding` to grant the `auditor` ServiceAccount this ClusterRole.
 - **Validation:** Run `kubectl auth can-i list nodes --as=system:serviceaccount:kube-system:auditor`. The result should be `yes`.
 
+### Solution
+
+While `Roles` and `RoleBindings` are namespaced, `ClusterRoles` and `ClusterRoleBindings` are cluster-wide. This is required for:
+
+1.  Cluster-scoped resources (like Nodes, PersistentVolumes).
+2.  Granting access multiple namespaces or the entire cluster.
+
+**0. Setup Initial State:**
+Ensure the ServiceAccount exists as per the scenario.
+
+```bash
+kubectl create serviceaccount auditor -n kube-system
+```
+
+**Step-by-Step Solution:**
+
+1.  **Create ClusterRole:**
+    Define the permissions for cluster-scoped resources.
+
+    ```bash
+    kubectl create clusterrole node-pv-viewer --verb=get,list --resource=nodes,persistentvolumes
+    ```
+
+    _Alternatively via YAML:_
+
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: node-pv-viewer
+    rules:
+      - apiGroups: [""]
+        resources: ["nodes", "persistentvolumes"]
+        verbs: ["get", "list"]
+    ```
+
+2.  **Create ClusterRoleBinding:**
+    Bind the ServiceAccount to the ClusterRole. Note that for ServiceAccounts, you must specify the namespace they belong to.
+
+    ```bash
+    kubectl create clusterrolebinding auditor-global-binding \
+      --clusterrole=node-pv-viewer \
+      --serviceaccount=kube-system:auditor
+    ```
+
+    _Alternatively via YAML:_
+
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: auditor-global-binding
+    subjects:
+      - kind: ServiceAccount
+        name: auditor
+        namespace: kube-system
+    roleRef:
+      kind: ClusterRole
+      name: node-pv-viewer
+      apiGroup: rbac.authorization.k8s.io
+    ```
+
+3.  **Validation:**
+    Check permissions impersonating the ServiceAccount username. The username format for a ServiceAccount is `system:serviceaccount:<namespace>:<name>`.
+
+    ```bash
+    kubectl auth can-i list nodes --as=system:serviceaccount:kube-system:auditor
+    # Expected: yes
+    ```
+
 ---
 
 ## Question 16: Upgrade a kubeadm Cluster
@@ -848,6 +1125,109 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Initial State:** A single-node kubeadm cluster is running version `1.28.1`.
 - **Task:** On the control plane node, update the package manager and install the target version of `kubeadm`. Run `kubeadm upgrade plan` to verify the upgrade path. Then, apply the upgrade using `kubeadm upgrade apply v1.28.x` (where `x` is the latest patch). After the control plane is upgraded, drain the node, upgrade `kubelet` and `kubectl`, and then uncordon the node.
 - **Validation:** Run `kubectl get nodes`. The version column should reflect the new Kubernetes version.
+
+### Solution
+
+Upgrading a Kubeadm cluster involves a specific order of operations:
+
+1.  **Upgrade kubeadm** on the node.
+2.  **Drain** the node (to prepare for downtime/restarts).
+3.  **Upgrade the cluster** using `kubeadm upgrade apply` (for control plane) or `node` (for workers).
+4.  **Upgrade kubelet and kubectl** on the node.
+5.  **Restart kubelet** and **Uncordon** the node.
+
+**Step-by-Step Solution:**
+
+_Note: The commands below assume a Debian/Ubuntu-based system, which is standard for the CKA exam._
+
+1.  **Update Package Repository:**
+    Update the `apt` cache to find new versions.
+
+    ```bash
+    apt-get update
+    ```
+
+2.  **Find Available Versions:**
+    Check specifically for the 1.28 versions.
+
+    ```bash
+    apt-cache madison kubeadm | grep 1.28
+    # Example Output:
+    #  kubeadm | 1.28.2-1.1 | https://pkgs.k8s.io/core:/stable:/v1.28/deb/ Packages
+    ```
+
+    _Assume we identify `1.28.2-1.1` as the target._
+
+3.  **Upgrade kubeadm:**
+    Install/Upgrade the `kubeadm` binary first. To prevent it from being upgraded automatically in the future, we use `install` with specific version, and then `apt-mark hold` is a good practice (often already held).
+
+    ```bash
+    apt-mark unhold kubeadm
+    apt-get install -y kubeadm=1.28.2-1.1
+    apt-mark hold kubeadm
+    ```
+
+    _Verify version:_ `kubeadm version`
+
+4.  **Plan the Upgrade:**
+    Verify the upgrade plan looks correct.
+
+    ```bash
+    kubeadm upgrade plan
+    ```
+
+    _This checks pre-flight requirements and shows you the versions you can upgrade to._
+
+5.  **Apply the Upgrade:**
+    This upgrades the control plane components (etcd, API server, controller-manager, scheduler).
+
+    ```bash
+    sudo kubeadm upgrade apply v1.28.2
+    ```
+
+    _Wait for the "SUCCESS" message._
+
+6.  **Drain the Node:**
+    Prepare the node for kubelet upgrade.
+
+    ```bash
+    kubectl drain <node-name> --ignore-daemonsets
+    ```
+
+    _(If running on the same node, use `localhost` or the node name found in `kubectl get nodes`)._
+
+7.  **Upgrade kubelet and kubectl:**
+    Upgrade the remaining binaries.
+
+    ```bash
+    apt-mark unhold kubelet kubectl
+    apt-get install -y kubelet=1.28.2-1.1 kubectl=1.28.2-1.1
+    apt-mark hold kubelet kubectl
+    ```
+
+8.  **Restart Kubelet:**
+    Reload the configuration.
+
+    ```bash
+    systemctl daemon-reload
+    systemctl restart kubelet
+    ```
+
+9.  **Uncordon the Node:**
+    Bring the node back into scheduling.
+
+    ```bash
+    kubectl uncordon <node-name>
+    ```
+
+10. **Validation:**
+    Check the node status and version.
+
+    ```bash
+    kubectl get nodes
+    ```
+
+    _The `VERSION` column should now show `v1.28.2` and status `Ready`._
 
 ---
 
@@ -858,6 +1238,52 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Task:** Using the `etcdctl` binary, create a snapshot of the etcd database. You will need to provide the correct endpoint, CA certificate, client certificate, and key, which can be found by inspecting the etcd static pod manifest. Save the snapshot to `/opt/etcd-backup.db`.
 - **Validation:** Run `etcdctl snapshot status /opt/etcd-backup.db` to verify the integrity of the backup file.
 
+### Solution
+
+All cluster data is stored in **etcd**. Backing it up is critical for restoring the cluster in case of a crash. Since etcd is secured with mutual TLS (mTLS), we must provide the certificates to the `etcdctl` tool to authorize the snapshot backup.
+
+**Step-by-Step Solution:**
+
+1.  **Retrieve Certificate Paths:**
+    The etcd server configuration is defined in its static pod manifest. We need to find the paths for:
+
+    - `--trusted-ca-file` (CACert)
+    - `--cert-file` (Cert)
+    - `--key-file` (Key)
+    - `--listen-client-urls` (Endpoint)
+
+    ```bash
+    # Inspect the manifest
+    cat /etc/kubernetes/manifests/etcd.yaml | grep file
+    ```
+
+    _Typical output locations (standard kubeadm):_
+
+    - Point 1 (CACert): `/etc/kubernetes/pki/etcd/ca.crt`
+    - Point 2 (Cert): `/etc/kubernetes/pki/etcd/server.crt`
+    - Point 3 (Key): `/etc/kubernetes/pki/etcd/server.key`
+
+2.  **Take the Snapshot:**
+    Run the `etcdctl` command. Ensure `ETCDCTL_API=3` is set (it is the default in newer versions, but good practice to be explicit).
+
+    ```bash
+    ETCDCTL_API=3 etcdctl \
+      --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key \
+      snapshot save /opt/etcd-backup.db
+    ```
+
+3.  **Validation:**
+    Verify the snapshot file was created and is valid.
+
+    ```bash
+    ETCDCTL_API=3 etcdctl --write-out=table snapshot status /opt/etcd-backup.db
+    ```
+
+    _This should display a table with Hash, Revision, and Total Key details._
+
 ---
 
 ## Question 18: Add a New Worker Node
@@ -866,6 +1292,48 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Initial State:** A one-control-plane, one-worker cluster exists. A new machine `new-worker` is provisioned with a container runtime.
 - **Task:** On the control plane node, generate a new `kubeadm join` token. SSH to the `new-worker` machine and use the generated command (`kubeadm join ...`) to join the node to the cluster.
 - **Validation:** From the control plane, run `kubectl get nodes`. The `new-worker` node should appear in the list with a `Ready` status after a few moments.
+
+### Solution
+
+Bootstrapping a new node into a Kubernetes cluster involves trust establishment. The `kubeadm join` command uses a token (shared secret) to authenticate with the control plane and a discovery token hash to validate the control plane's identity.
+
+**Step-by-Step Solution:**
+
+1.  **Generate Join Command:**
+    Run this on the **control plane** node. This command generates a valid token and prints the full `kubeadm join` command needed by the worker.
+
+    ```bash
+    kubeadm token create --print-join-command
+    ```
+
+    _Output will look like:_
+    `kubeadm join <control-plane-ip>:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>`
+
+2.  **Access the Worker Node:**
+    SSH into the new machine.
+
+    ```bash
+    ssh new-worker
+    ```
+
+3.  **Run the Join Command:**
+    Paste the command generated in Step 1. You needs `sudo` or root privileges.
+
+    ```bash
+    sudo kubeadm join <control-plane-ip>:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+    ```
+
+    _Wait for the "This node has joined the cluster" message._
+
+4.  **Validation:**
+    Go back to the control plane and check the node list.
+
+    ```bash
+    exit # Exit ssh session
+    kubectl get nodes
+    ```
+
+    _The new node should be in `Ready` state (or `NotReady` initially until the CNI plugin initializes pod networking on it)._
 
 ---
 
@@ -876,6 +1344,81 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Task:** Edit the Kustomization file in `/opt/app/overlays/staging` to use the base configuration but patch the Deployment to have 3 replicas. Then, apply the staging configuration to the cluster using `kubectl apply -k /opt/app/overlays/staging`.
 - **Validation:** Run `kubectl get deployment` and verify that the application's deployment has 3 replicas running.
 
+### Solution
+
+Kustomize is a configuration management tool built into `kubectl`. It allows you to define a "base" set of resources and then create "overlays" (variants) that patch the base for different environments (e.g., dev, staging, prod) without duplicating the entire YAML.
+
+- **Base:** The common configuration.
+- **Overlay:** Specific changes (like `replicas` or `resource` limits) applied on top of the base.
+
+**Step-by-Step Solution:**
+
+1.  **Navigate to Overlay Directory:**
+    Go to where the staging configuration is defined.
+
+    ```bash
+    cd /opt/app/overlays/staging
+    ```
+
+2.  **Edit Kustomization File:**
+    You need to tell Kustomize to patch the `replicas` field. While you can use a separate patch file, Kustomize also supports inline patches or specific transformers like `replicas`.
+
+    _Method A: Using the `replicas` field (Simplest)_
+    Open `kustomization.yaml`:
+
+    ```bash
+    vi kustomization.yaml
+    ```
+
+    Add/Modify:
+
+    ```yaml
+    resources:
+      - ../../base # Points to the base directory
+
+    replicas:
+      - name: my-app-deployment # Name of the deployment in the base
+        count: 3
+    ```
+
+    _Method B: Using an inline patch_
+
+    ```yaml
+    resources:
+      - ../../base
+
+    patches:
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: my-app-deployment
+        patch: |-
+          - op: replace
+            path: /spec/replicas
+            value: 3
+    ```
+
+    _(Method A is preferred for simple replica changes)._
+
+3.  **Apply with Kustomize:**
+    Use `kubectl apply -k <directory>`.
+
+    ```bash
+    kubectl apply -k .
+    # OR
+    kubectl apply -k /opt/app/overlays/staging
+    ```
+
+4.  **Validation:**
+    Check that the deployment was updated (or created) with 3 replicas.
+
+    ```bash
+    kubectl get deployment
+    ```
+
+    _Ensure the `READY` column says `3/3`._
+
 ---
 
 ## Question 20: Configure an External CRI
@@ -884,6 +1427,73 @@ The kube-scheduler is responsible for assigning pods to nodes. If it fails, pods
 - **Initial State:** A worker node `worker-1` has both dockerd and containerd installed. The kubelet is configured to use the docker runtime socket.
 - **Task:** SSH to `worker-1`. Drain the node. Stop the kubelet. Edit the kubelet configuration (`/var/lib/kubelet/kubeadm-flags.env` or similar) to point to the containerd socket (`--container-runtime-endpoint=unix:///run/containerd/containerd.sock`). Restart the kubelet. Uncordon the node.
 - **Validation:** Run `kubectl describe node worker-1`. The Container Runtime Version should show `containerd://...`.
+
+### Solution
+
+The Container Runtime Interface (CRI) allows Kubernetes to support various container runtimes. Changing the runtime involves ensuring the new runtime is installed/active and then reconfiguring the `kubelet` to point to the new runtime's socket.
+
+- **Docker Shim (Legacy):** `unix:///var/run/dockershim.sock` (Deprecated/Removed in 1.24+)
+- **Containerd:** `unix:///run/containerd/containerd.sock`
+
+**Step-by-Step Solution:**
+
+1.  **Drain the Node:**
+    Schedule downtime for the node.
+
+    ```bash
+    kubectl drain worker-1 --ignore-daemonsets
+    ```
+
+2.  **SSH to the Node:**
+    Access the worker node.
+
+    ```bash
+    ssh worker-1
+    ```
+
+3.  **Stop Kubelet:**
+    Stop the service before making changes.
+
+    ```bash
+    systemctl stop kubelet
+    ```
+
+4.  **Edit Configuration:**
+    Detailed configuration for kubeadm-managed nodes is often passed via environment variables in `/var/lib/kubelet/kubeadm-flags.env`. This file constructs the flags passed to the kubelet binary.
+
+    ```bash
+    vi /var/lib/kubelet/kubeadm-flags.env
+    ```
+
+    _Find the `--container-runtime-endpoint` flag (or add it if missing) and set it to:_
+    `--container-runtime-endpoint=unix:///run/containerd/containerd.sock`
+
+    _Example line:_
+    `KUBELET_KUBEADM_ARGS="--container-runtime-endpoint=unix:///run/containerd/containerd.sock --pod-infra-container-image=..."`
+
+5.  **Restart Kubelet:**
+    Start the service.
+
+    ```bash
+    systemctl start kubelet
+    ```
+
+6.  **Uncordon Usage:**
+    Return to the control plane (exit SSH) and enable the node.
+
+    ```bash
+    exit
+    kubectl uncordon worker-1
+    ```
+
+7.  **Validation:**
+    Check the CRI version.
+
+    ```bash
+    kubectl describe node worker-1 | grep "Container Runtime"
+    ```
+
+    _It should show `containerd://<version>` instead of `docker://...`._
 
 ---
 
