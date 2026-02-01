@@ -64,11 +64,11 @@ staticPodPath: /etc/kubernetes/manifests
 #### How to Check and Compare Drivers:
 
 | Component         | Command to Check                                                                  |
-| :---------------- | :-------------------------------------------------------------------------------- | ------------------------ |
+| :---------------- | :-------------------------------------------------------------------------------- |
 | **System (Init)** | `ps -p 1 -o comm=` (Should return `systemd` on modern Linux)                      |
-| **Docker**        | `docker info 2>/dev/null                                                          | grep -i "Cgroup Driver"` |
+| **Docker**        | `docker info 2>/dev/null \| grep -i "Cgroup Driver"`                              |
 | **Containerd**    | `grep SystemdCgroup /etc/containerd/config.toml` (If `true`, driver is `systemd`) |
-| **Kubelet**       | `kubectl get cm -n kube-system kubelet-config -o yaml                             | grep cgroupDriver`       |
+| **Kubelet**       | `kubectl get cm -n kube-system kubelet-config -o yaml \| grep cgroupDriver`       |
 
 > [!IMPORTANT]
 > Since Kubernetes v1.22, if you don't specify `cgroupDriver` in the Kubelet configuration, it defaults to `systemd` if the node is running systemd. Before v1.22, it defaulted to `cgroupfs`.
