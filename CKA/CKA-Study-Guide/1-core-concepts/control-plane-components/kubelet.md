@@ -21,21 +21,42 @@ The kubelet relies on two main configuration files.
 
 This file controls the internal parameters and behavior of the kubelet process itself.
 
+```yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 0s
+    cacheUnauthorizedTTL: 0s
+cgroupDriver: systemd
+clusterDNS:
+  - 10.96.0.10
+clusterDomain: cluster.local
+containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
+staticPodPath: /etc/kubernetes/manifests
+```
+
 **Key Attributes & Troubleshooting:**
 
 - **`staticPodPath`**:
-
   - **Role**: Directory where static pod manifests are stored.
   - **Default**: `/etc/kubernetes/manifests`
   - **Issue**: If static pods (like api-server or etcd) aren't starting, verify this path points to the correct directory.
 
 - **`authentication`**:
-
   - **Role**: Configures how the kubelet authenticates requests (e.g., from the API server).
   - **Common Config**: `anonymous: enabled: false`, `x509: clientCAFile: /etc/kubernetes/pki/ca.crt`.
 
 - **`cgroupDriver`**:
-
   - **Role**: Determines how the kubelet manipulates cgroups for resources.
   - **Critical Config**: This **MUST** match the container runtime's driver.
   - **Start Error**: `failed to run Kubelet: misconfiguration: kubelet cgroup driver: "systemd" is different from docker cgroup driver: "cgroupfs"`
@@ -47,6 +68,28 @@ This file controls the internal parameters and behavior of the kubelet process i
 ### 2. Kubeconfig Access (`/etc/kubernetes/kubelet.conf`)
 
 This file defines the **identity** the kubelet uses to authenticate with the Kubernetes API server.
+
+```yaml
+apiVersion: v1
+clusters:
+  - cluster:
+      certificate-authority-data: LS0t...
+      server: https://192.168.1.10:6443
+    name: kubernetes
+contexts:
+  - context:
+      cluster: kubernetes
+      user: system:node:worker-node-1
+    name: system:node:worker-node-1@kubernetes
+current-context: system:node:worker-node-1@kubernetes
+kind: Config
+preferences: {}
+users:
+  - name: system:node:worker-node-1
+    user:
+      client-certificate-data: LS0t...
+      client-key-data: LS0t...
+```
 
 - **Role**: Contains the certificate and key for the `system:node:<node-name>` user.
 - **Location**: Usually `/etc/kubernetes/kubelet.conf`.
@@ -73,7 +116,6 @@ This file defines the **identity** the kubelet uses to authenticate with the Kub
     _Look for: "executable not found", "failed to parse config", "address already in use"._
 
 3.  **Validate Dependencies**:
-
     - Is the **Container Runtime** (containerd/docker) running? `systemctl status containerd`
     - Is **Swap** disabled? (Kubelet fails if swap is on, unless configured otherwise).
 
