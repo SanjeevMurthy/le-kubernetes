@@ -57,9 +57,21 @@ staticPodPath: /etc/kubernetes/manifests
   - **Common Config**: `anonymous: enabled: false`, `x509: clientCAFile: /etc/kubernetes/pki/ca.crt`.
 
 - **`cgroupDriver`**:
-  - **Role**: Determines how the kubelet manipulates cgroups for resources.
-  - **Critical Config**: This **MUST** match the container runtime's driver.
+  - **Role**: Determines how the kubelet manipulates cgroups (Control Groups) for resource isolation. There are two options: `cgroupfs` (raw) and `systemd`.
+  - **Critical Config**: This **MUST** match the container runtime's driver. If they differ, you will have two managers (systemd and the runtime) fighting over the same cgroups.
   - **Start Error**: `failed to run Kubelet: misconfiguration: kubelet cgroup driver: "systemd" is different from docker cgroup driver: "cgroupfs"`
+
+#### How to Check and Compare Drivers:
+
+| Component         | Command to Check                                                                  |
+| :---------------- | :-------------------------------------------------------------------------------- | ------------------------ |
+| **System (Init)** | `ps -p 1 -o comm=` (Should return `systemd` on modern Linux)                      |
+| **Docker**        | `docker info 2>/dev/null                                                          | grep -i "Cgroup Driver"` |
+| **Containerd**    | `grep SystemdCgroup /etc/containerd/config.toml` (If `true`, driver is `systemd`) |
+| **Kubelet**       | `kubectl get cm -n kube-system kubelet-config -o yaml                             | grep cgroupDriver`       |
+
+> [!IMPORTANT]
+> Since Kubernetes v1.22, if you don't specify `cgroupDriver` in the Kubelet configuration, it defaults to `systemd` if the node is running systemd. Before v1.22, it defaulted to `cgroupfs`.
 
 - **`clusterDNS`**:
   - **Role**: List of IP addresses for the cluster DNS server.
