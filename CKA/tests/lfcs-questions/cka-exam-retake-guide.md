@@ -10,6 +10,8 @@
 2. [Q2 — Install CNI Plugin (Calico) with NetworkPolicy Support](#q2--install-cni-plugin-calico-with-networkpolicy-support)
 3. [Q3 — List cert-manager CRDs and Extract Field Documentation](#q3--list-cert-manager-crds-and-extract-field-documentation)
 4. [Q4 — RBAC for Custom Resources (CRDs)](#q4--rbac-for-custom-resources-crds)
+5. [Q19 — Persist Kernel Modules and Sysctl Network Settings](#q19--persist-kernel-modules-and-sysctl-network-settings)
+6. [Q20 — Full Worker Node Bootstrap Prerequisites](#q20--full-worker-node-bootstrap-prerequisites)
 
 ### Domain 2: Workloads & Scheduling (15%)
 
@@ -315,6 +317,131 @@ kubectl create rolebinding school-admin-binding \
 kubectl auth can-i create students --as=jane -n <namespace>     # → yes
 kubectl auth can-i delete classes --as=jane -n <namespace>      # → yes
 kubectl auth can-i create pods --as=jane -n <namespace>         # → no
+```
+
+---
+
+### Q19 — Persist Kernel Modules and Sysctl Network Settings
+
+**Problem:** A worker node was rebooted and container networking stopped functioning. Investigation shows the `overlay` and `br_netfilter` kernel modules are not loaded, and the required sysctl network parameters are not set. Load the modules and apply the network settings immediately, and ensure both persist across reboots.
+
+**Reference Doc:** https://kubernetes.io/docs/setup/production-environment/container-runtimes/#prerequisites
+
+**Solution Steps:**
+
+1. Make kernel modules persistent and load them immediately:
+
+```bash
+# Write to persistent config (loaded at every boot)
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+# Load immediately for the current session
+sudo modprobe overlay
+sudo modprobe br_netfilter
+```
+
+> **CRITICAL:** `modprobe` only loads modules for the current session. `/etc/modules-load.d/` ensures they survive reboots. **Both** are needed.
+
+2. Configure sysctl network parameters persistently:
+
+```bash
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply immediately without reboot
+sudo sysctl --system
+```
+
+> **WARNING:** The `net.bridge.*` parameters only exist **after** the `br_netfilter` kernel module is loaded. If you write the sysctl file but `br_netfilter` isn't loaded at boot, the settings silently fail. This is why Step 1 must come before Step 2.
+
+> **Why `/etc/sysctl.d/` and not `/etc/sysctl.conf`?** Both work, but `/etc/sysctl.d/` is the modern modular approach — it avoids editing system files directly and is what the official Kubernetes docs recommend.
+
+**Verification:**
+
+```bash
+# Modules loaded
+lsmod | grep overlay
+# → overlay   ...
+lsmod | grep br_netfilter
+# → br_netfilter   ...
+
+# Sysctl applied
+sysctl net.ipv4.ip_forward
+# → net.ipv4.ip_forward = 1
+sysctl net.bridge.bridge-nf-call-iptables
+# → net.bridge.bridge-nf-call-iptables = 1
+sysctl net.bridge.bridge-nf-call-ip6tables
+# → net.bridge.bridge-nf-call-ip6tables = 1
+```
+
+---
+
+### Q20 — Full Worker Node Bootstrap Prerequisites
+
+**Problem:** You are bootstrapping a new worker node for an existing kubeadm cluster. Prepare the node by: (a) disabling swap permanently, (b) loading the required kernel modules persistently, and (c) configuring the required network parameters persistently.
+
+**Reference Doc:** https://kubernetes.io/docs/setup/production-environment/container-runtimes/#prerequisites
+
+**Solution Steps:**
+
+1. Disable swap permanently:
+
+```bash
+# Disable swap immediately
+sudo swapoff -a
+
+# Comment out the swap entry in /etc/fstab to prevent re-enabling on reboot
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+```
+
+2. Load kernel modules (persistent + immediate):
+
+```bash
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+```
+
+3. Set network parameters (persistent + immediate):
+
+```bash
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sudo sysctl --system
+```
+
+**Key Pattern:** Two persistence mechanisms are tested here — `/etc/modules-load.d/` for kernel modules and `/etc/sysctl.d/` for sysctl parameters. Both require you to also apply the change immediately (`modprobe` and `sysctl --system` respectively). Getting only the immediate part without the persistent config file will lose you points.
+
+**Verification:**
+
+```bash
+# Swap is off
+free -h | grep Swap
+# → Swap: 0B 0B 0B
+
+# Swap entry is commented in fstab
+grep swap /etc/fstab
+# → #/dev/... swap swap defaults 0 0
+
+# Modules loaded
+lsmod | grep -E "overlay|br_netfilter"
+
+# Sysctl applied
+sysctl net.ipv4.ip_forward net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables
 ```
 
 ---
@@ -1314,4 +1441,4 @@ Problem: Can't reach cluster
 
 ---
 
-_18 unique questions. Every solution verified against official Kubernetes documentation patterns. You were 2% away — this guide covers every gap. Trust your preparation and go claim that CKA._
+_20 unique questions. Every solution verified against official Kubernetes documentation patterns. You were 2% away — this guide covers every gap. Trust your preparation and go claim that CKA._
