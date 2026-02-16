@@ -2,6 +2,41 @@
 
 > **Purpose:** This guide covers every question from your first CKA attempt with verified solutions, imperative shortcuts, declarative YAML, verification steps, and official doc links. Grouped by CKA exam domain.
 
+## Table of Contents
+
+### Domain 1: Cluster Architecture, Installation & Configuration (25%)
+
+1. [Q1 — Install containerd from .deb Package](#q1--install-containerd-from-deb-package)
+2. [Q2 — Install CNI Plugin (Calico) with NetworkPolicy Support](#q2--install-cni-plugin-calico-with-networkpolicy-support)
+3. [Q3 — List cert-manager CRDs and Extract Field Documentation](#q3--list-cert-manager-crds-and-extract-field-documentation)
+4. [Q4 — RBAC for Custom Resources (CRDs)](#q4--rbac-for-custom-resources-crds)
+
+### Domain 2: Workloads & Scheduling (15%)
+
+5. [Q5 — Create a Horizontal Pod Autoscaler (HPA)](#q5--create-a-horizontal-pod-autoscaler-hpa)
+6. [Q6 — Create a PriorityClass](#q6--create-a-priorityclass)
+7. [Q7 — Fix Pending Pods by Adjusting Resource Requests](#q7--fix-pending-pods-by-adjusting-resource-requests)
+8. [Q8 — Add a Sidecar Log Container to an Existing Deployment](#q8--add-a-sidecar-log-container-to-an-existing-deployment)
+9. [Q9 — Helm Template and Install with Custom Values](#q9--helm-template-and-install-with-custom-values)
+
+### Domain 3: Services & Networking (20%)
+
+10. [Q10 — Expose a Deployment Using a NodePort Service](#q10--expose-a-deployment-using-a-nodeport-service)
+11. [Q11 — Create an Ingress Resource](#q11--create-an-ingress-resource)
+12. [Q12 — Replace Ingress with Gateway API (TLS) + HTTPRoute](#q12--replace-ingress-with-gateway-api-tls--httproute)
+13. [Q13 — Select and Apply the Correct NetworkPolicy](#q13--select-and-apply-the-correct-networkpolicy)
+14. [Q14 — Update NGINX ConfigMap to Enable TLSv1.2](#q14--update-nginx-configmap-to-enable-tlsv12)
+
+### Domain 4: Storage (10%)
+
+15. [Q15 — Create a StorageClass](#q15--create-a-storageclass)
+16. [Q16 — Create a PVC to Bind an Existing PV, Then Attach to a Pod](#q16--create-a-pvc-to-bind-an-existing-pv-then-attach-to-a-pod)
+
+### Domain 5: Troubleshooting (30%)
+
+17. [Q17 — Fix Broken Cluster: kube-apiserver and kube-scheduler Down](#q17--fix-broken-cluster-kube-apiserver-and-kube-scheduler-down)
+18. [Q18 — Troubleshoot a Completely Failed Cluster (kubelet down)](#q18--troubleshoot-a-completely-failed-cluster-kubelet-down)
+
 ---
 
 ## Exam Setup — Paste First
@@ -131,11 +166,11 @@ metadata:
 spec:
   calicoNetwork:
     ipPools:
-    - blockSize: 26
-      cidr: 192.168.0.0/16    # ← Change this to match your cluster's podCIDR
-      encapsulation: VXLANCrossSubnet
-      natOutgoing: Enabled
-      nodeSelector: all()
+      - blockSize: 26
+        cidr: 192.168.0.0/16 # ← Change this to match your cluster's podCIDR
+        encapsulation: VXLANCrossSubnet
+        natOutgoing: Enabled
+        nodeSelector: all()
 ```
 
 ```bash
@@ -240,11 +275,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: school-admin
-  namespace: default        # use the namespace from the question
+  namespace: default # use the namespace from the question
 rules:
-- apiGroups: ["school.example.com"]      # CRD's spec.group
-  resources: ["students", "classes"]      # CRD's spec.names.plural
-  verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["school.example.com"] # CRD's spec.group
+    resources: ["students", "classes"] # CRD's spec.names.plural
+    verbs: ["get", "list", "create", "update", "delete"]
 ```
 
 4. Create the RoleBinding:
@@ -267,12 +302,12 @@ kubectl create rolebinding school-admin-binding \
 
 **Mapping Cheat Sheet:**
 
-| CRD Field | RBAC Field |
-|---|---|
-| `spec.group` (e.g., `school.example.com`) | `rules[].apiGroups[]` |
-| `spec.names.plural` (e.g., `students`) | `rules[].resources[]` |
-| `spec.scope: Namespaced` | Use Role + RoleBinding |
-| `spec.scope: Cluster` | Use ClusterRole + ClusterRoleBinding |
+| CRD Field                                 | RBAC Field                           |
+| ----------------------------------------- | ------------------------------------ |
+| `spec.group` (e.g., `school.example.com`) | `rules[].apiGroups[]`                |
+| `spec.names.plural` (e.g., `students`)    | `rules[].resources[]`                |
+| `spec.scope: Namespaced`                  | Use Role + RoleBinding               |
+| `spec.scope: Cluster`                     | Use ClusterRole + ClusterRoleBinding |
 
 **Verification:**
 
@@ -320,12 +355,12 @@ spec:
   minReplicas: 2
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
 ```
 
 > **WARNING:** The deployment's containers **must** have `resources.requests.cpu` set for HPA to work.
@@ -363,9 +398,9 @@ apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: <new-priority-class-name>
-value: 1000000                      # Adjust as specified
-globalDefault: false                # Only one can be true cluster-wide
-preemptionPolicy: PreemptLowerPriority    # or "Never"
+value: 1000000 # Adjust as specified
+globalDefault: false # Only one can be true cluster-wide
+preemptionPolicy: PreemptLowerPriority # or "Never"
 description: "Custom priority class for critical workloads"
 ```
 
@@ -435,8 +470,8 @@ Update the container resources section:
 ```yaml
 resources:
   requests:
-    cpu: "500m"           # Calculated value
-    memory: "256Mi"       # Calculated value
+    cpu: "500m" # Calculated value
+    memory: "256Mi" # Calculated value
   limits:
     cpu: "500m"
     memory: "256Mi"
@@ -473,20 +508,20 @@ spec:
   template:
     spec:
       containers:
-      - name: main-app                    # Existing container
-        # ... existing config ...
-        volumeMounts:
-        - name: log-volume
-          mountPath: /var/log/app         # Where app writes logs
-      - name: sidecar-logger              # NEW sidecar container
-        image: busybox:1.36
-        command: ["sh", "-c", "tail -f /var/log/app/app.log"]
-        volumeMounts:
-        - name: log-volume
-          mountPath: /var/log/app         # Same path to read logs
+        - name: main-app # Existing container
+          # ... existing config ...
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/app # Where app writes logs
+        - name: sidecar-logger # NEW sidecar container
+          image: busybox:1.36
+          command: ["sh", "-c", "tail -f /var/log/app/app.log"]
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/app # Same path to read logs
       volumes:
-      - name: log-volume
-        emptyDir: {}                      # Shared between containers
+        - name: log-volume
+          emptyDir: {} # Shared between containers
 ```
 
 3. Apply:
@@ -617,12 +652,12 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: <label-matching-deployment-pods>     # Must match pod labels
+    app: <label-matching-deployment-pods> # Must match pod labels
   ports:
-  - port: 80                  # Service port
-    targetPort: 8080          # Container port
-    nodePort: 30080           # Optional: specific node port (30000-32767)
-    protocol: TCP
+    - port: 80 # Service port
+      targetPort: 8080 # Container port
+      nodePort: 30080 # Optional: specific node port (30000-32767)
+      protocol: TCP
 ```
 
 **Verification:**
@@ -660,20 +695,20 @@ metadata:
   name: <ingress-name>
   namespace: <namespace>
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /    # If needed
+    nginx.ingress.kubernetes.io/rewrite-target: / # If needed
 spec:
-  ingressClassName: nginx         # Check: kubectl get ingressclass
+  ingressClassName: nginx # Check: kubectl get ingressclass
   rules:
-  - host: app.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix          # Prefix or Exact
-        backend:
-          service:
-            name: <service-name>
-            port:
-              number: 80
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix # Prefix or Exact
+            backend:
+              service:
+                name: <service-name>
+                port:
+                  number: 80
 ```
 
 **Verification:**
@@ -718,20 +753,20 @@ metadata:
   name: secure-gateway
   namespace: <namespace>
 spec:
-  gatewayClassName: <existing-gateway-class>    # From step 2
+  gatewayClassName: <existing-gateway-class> # From step 2
   listeners:
-  - name: https
-    port: 443
-    protocol: HTTPS
-    hostname: "secure.example.com"              # From Ingress spec.rules[].host
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        name: tls-secret                        # From Ingress spec.tls[].secretName
-    allowedRoutes:
-      kinds:
-      - kind: HTTPRoute
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: "secure.example.com" # From Ingress spec.rules[].host
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: tls-secret # From Ingress spec.tls[].secretName
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
 ```
 
 4. Create the HTTPRoute:
@@ -744,17 +779,17 @@ metadata:
   namespace: <namespace>
 spec:
   parentRefs:
-  - name: secure-gateway                        # References the Gateway above
+    - name: secure-gateway # References the Gateway above
   hostnames:
-  - "secure.example.com"
+    - "secure.example.com"
   rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: <service-name>                      # From Ingress backend
-      port: 80                                  # From Ingress backend port
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: <service-name> # From Ingress backend
+          port: 80 # From Ingress backend port
 ```
 
 5. Apply and then delete the old Ingress:
@@ -819,24 +854,25 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-frontend-to-backend
-  namespace: backend                    # Applied in backend namespace
+  namespace: backend # Applied in backend namespace
 spec:
   podSelector:
     matchLabels:
-      app: backend                      # Targets backend pods
+      app: backend # Targets backend pods
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: frontend                # OR kubernetes.io/metadata.name: frontend
-      podSelector:
-        matchLabels:
-          app: frontend                 # Optional: further restricts to frontend pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: frontend # OR kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: frontend # Optional: further restricts to frontend pods
 ```
 
 **Reject policies that:**
+
 - Have an empty `podSelector: {}` (too permissive — targets all pods)
 - Have an empty `from: []` or missing `from` (allows all traffic)
 - Use `namespaceSelector: {}` (matches ALL namespaces)
@@ -926,12 +962,12 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: <storageclass-name>
-provisioner: kubernetes.io/no-provisioner    # Or specific provisioner
-reclaimPolicy: Retain                        # Retain or Delete
-volumeBindingMode: WaitForFirstConsumer      # Or Immediate
-allowVolumeExpansion: true                   # If needed
-parameters:                                  # Provisioner-specific
-  type: gp2                                  # Example for AWS EBS
+provisioner: kubernetes.io/no-provisioner # Or specific provisioner
+reclaimPolicy: Retain # Retain or Delete
+volumeBindingMode: WaitForFirstConsumer # Or Immediate
+allowVolumeExpansion: true # If needed
+parameters: # Provisioner-specific
+  type: gp2 # Example for AWS EBS
 ```
 
 ```bash
@@ -964,6 +1000,7 @@ kubectl describe pv <pv-name>
 ```
 
 > **WARNING:** If the PV status is `Released` (not `Available`), you must clear the `claimRef` first:
+>
 > ```bash
 > kubectl patch pv <pv-name> -p '{"spec":{"claimRef": null}}'
 > ```
@@ -978,12 +1015,12 @@ metadata:
   namespace: mariadb
 spec:
   accessModes:
-  - ReadWriteOnce                      # Must match the PV
+    - ReadWriteOnce # Must match the PV
   resources:
     requests:
-      storage: 250Mi                   # Must match or be <= PV capacity
-  volumeName: <pv-name>               # Binds to this specific PV
-  storageClassName: ""                 # Empty string if PV has no storageClass
+      storage: 250Mi # Must match or be <= PV capacity
+  volumeName: <pv-name> # Binds to this specific PV
+  storageClassName: "" # Empty string if PV has no storageClass
 ```
 
 > **CRITICAL:** If the PV has a `storageClassName`, the PVC must match it exactly. If the PV has no `storageClassName`, set it to `""` (empty string) in the PVC.
@@ -999,15 +1036,15 @@ spec:
   template:
     spec:
       containers:
-      - name: mariadb
-        # ... existing config ...
-        volumeMounts:
-        - name: mariadb-storage
-          mountPath: /var/lib/mysql
+        - name: mariadb
+          # ... existing config ...
+          volumeMounts:
+            - name: mariadb-storage
+              mountPath: /var/lib/mysql
       volumes:
-      - name: mariadb-storage
-        persistentVolumeClaim:
-          claimName: mariadb           # Matches PVC name
+        - name: mariadb-storage
+          persistentVolumeClaim:
+            claimName: mariadb # Matches PVC name
 ```
 
 ```bash
@@ -1072,6 +1109,7 @@ sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
 **Common fixes:**
+
 - **Wrong `--etcd-servers` URL:** Update to the correct external etcd endpoint (IP/hostname may have changed during migration).
 - **Wrong cert paths:** Verify `--etcd-cafile`, `--etcd-certfile`, `--etcd-keyfile` point to existing files.
 - **Wrong `--advertise-address`:** Should match the node's current IP.
@@ -1089,6 +1127,7 @@ sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml
 ```
 
 **Common fixes:**
+
 - **Wrong `--kubeconfig` path:** Should be `/etc/kubernetes/scheduler.conf`
 - **Wrong port or bind address for the API server connection**
 - **Missing or incorrect authentication config**
@@ -1139,13 +1178,13 @@ sudo journalctl -u kubelet --no-pager -l | tail -50
 
 2. Common kubelet issues and fixes:
 
-| Symptom in journalctl | Fix |
-|---|---|
-| `failed to load kubelet config file` | Restore or fix `/var/lib/kubelet/config.yaml` |
-| `container runtime is not running` | Start containerd: `sudo systemctl start containerd` |
-| `unable to load client CA file` | Fix cert path in kubelet config |
-| `node not found` | Check `--hostname-override` or DNS |
-| `kubelet.service: Failed with result 'exit-code'` | Check config file paths |
+| Symptom in journalctl                             | Fix                                                 |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `failed to load kubelet config file`              | Restore or fix `/var/lib/kubelet/config.yaml`       |
+| `container runtime is not running`                | Start containerd: `sudo systemctl start containerd` |
+| `unable to load client CA file`                   | Fix cert path in kubelet config                     |
+| `node not found`                                  | Check `--hostname-override` or DNS                  |
+| `kubelet.service: Failed with result 'exit-code'` | Check config file paths                             |
 
 3. Check the kubelet config and service file:
 
@@ -1216,24 +1255,24 @@ kubectl create rolebinding my-rb --role=my-role --user=jane $do > rb.yaml
 
 ### Card B — Exam Documentation Bookmarks
 
-| Topic | URL |
-|---|---|
-| Container Runtimes | https://kubernetes.io/docs/setup/production-environment/container-runtimes/ |
-| Cluster Troubleshooting | https://kubernetes.io/docs/tasks/debug/debug-cluster/ |
-| kubectl Cheat Sheet | https://kubernetes.io/docs/reference/kubectl/cheatsheet/ |
-| RBAC | https://kubernetes.io/docs/reference/access-authn-authz/rbac/ |
-| Custom Resources | https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/ |
-| Network Policies | https://kubernetes.io/docs/concepts/services-networking/network-policies/ |
-| Persistent Volumes | https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
-| Storage Classes | https://kubernetes.io/docs/concepts/storage/storage-classes/ |
-| HPA Walkthrough | https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/ |
-| Pod Priority | https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/ |
-| Ingress | https://kubernetes.io/docs/concepts/services-networking/ingress/ |
-| Gateway API | https://kubernetes.io/docs/concepts/services-networking/gateway/ |
-| Gateway API TLS Guide | https://gateway-api.sigs.k8s.io/guides/tls/ |
-| ConfigMaps | https://kubernetes.io/docs/concepts/configuration/configmap/ |
-| Sidecar Containers | https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/ |
-| Helm | https://helm.sh/docs/ |
+| Topic                   | URL                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| Container Runtimes      | https://kubernetes.io/docs/setup/production-environment/container-runtimes/            |
+| Cluster Troubleshooting | https://kubernetes.io/docs/tasks/debug/debug-cluster/                                  |
+| kubectl Cheat Sheet     | https://kubernetes.io/docs/reference/kubectl/cheatsheet/                               |
+| RBAC                    | https://kubernetes.io/docs/reference/access-authn-authz/rbac/                          |
+| Custom Resources        | https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/  |
+| Network Policies        | https://kubernetes.io/docs/concepts/services-networking/network-policies/              |
+| Persistent Volumes      | https://kubernetes.io/docs/concepts/storage/persistent-volumes/                        |
+| Storage Classes         | https://kubernetes.io/docs/concepts/storage/storage-classes/                           |
+| HPA Walkthrough         | https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/ |
+| Pod Priority            | https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/       |
+| Ingress                 | https://kubernetes.io/docs/concepts/services-networking/ingress/                       |
+| Gateway API             | https://kubernetes.io/docs/concepts/services-networking/gateway/                       |
+| Gateway API TLS Guide   | https://gateway-api.sigs.k8s.io/guides/tls/                                            |
+| ConfigMaps              | https://kubernetes.io/docs/concepts/configuration/configmap/                           |
+| Sidecar Containers      | https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/                 |
+| Helm                    | https://helm.sh/docs/                                                                  |
 
 ### Card C — Troubleshooting Decision Tree
 
@@ -1275,4 +1314,4 @@ Problem: Can't reach cluster
 
 ---
 
-*18 unique questions. Every solution verified against official Kubernetes documentation patterns. You were 2% away — this guide covers every gap. Trust your preparation and go claim that CKA.*
+_18 unique questions. Every solution verified against official Kubernetes documentation patterns. You were 2% away — this guide covers every gap. Trust your preparation and go claim that CKA._
