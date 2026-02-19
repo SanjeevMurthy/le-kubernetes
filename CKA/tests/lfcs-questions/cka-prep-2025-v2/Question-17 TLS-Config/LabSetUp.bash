@@ -23,7 +23,7 @@ data:
         listen 443 ssl;
         ssl_certificate /etc/nginx/tls/tls.crt;
         ssl_certificate_key /etc/nginx/tls/tls.key;
-        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_protocols TLSv1.3;
         location / {
           return 200 "Hello TLS\n";
         }
@@ -66,7 +66,9 @@ spec:
 EOF
 
 # Step 5: Create a ClusterIP service
-kubectl -n nginx-static expose deployment nginx-static --port=443 --target-port=443 --name=nginx-static
+kubectl -n nginx-static expose deployment nginx-static --port=443 --target-port=443 --name=nginx-service
 
-echo "nginx TLS lab setup complete."
+echo "✅ TLS lab setup complete!"
+echo "   ConfigMap nginx-config has ssl_protocols set to TLSv1.3 only."
+echo "   Task: Add TLSv1.2 support, make ConfigMap immutable, update /etc/hosts, verify."
 

@@ -94,8 +94,6 @@ run_setup() {
 
   chmod +x "$setup"
   if bash "$setup"; then
-    echo ""
-    print_success "Lab setup complete! Scenario created."
     start_timer
   else
     print_error "Setup failed! Check the output above."
