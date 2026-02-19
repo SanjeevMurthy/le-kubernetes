@@ -1,0 +1,12 @@
+#!/bin/bash
+# Q14 — TLS Config: Verify
+PASS=0; FAIL=0
+echo "🔍 Checking ConfigMap has TLSv1.2..."
+PROTO=$(kubectl get cm nginx-config -n nginx-static -o yaml 2>/dev/null | grep ssl_protocols || echo "")
+if echo "$PROTO" | grep -q "TLSv1.2"; then echo "  ✅ TLSv1.2 present"; ((PASS++)); else echo "  ❌ TLSv1.2 not in ssl_protocols"; ((FAIL++)); fi
+echo "🔍 Checking ConfigMap is immutable..."
+IMM=$(kubectl get cm nginx-config -n nginx-static -o jsonpath='{.immutable}' 2>/dev/null || echo "")
+if [[ "$IMM" == "true" ]]; then echo "  ✅ Immutable"; ((PASS++)); else echo "  ❌ immutable=$IMM"; ((FAIL++)); fi
+echo "🔍 Checking /etc/hosts entry..."
+if grep -q "ckaquestion.k8s.local" /etc/hosts 2>/dev/null; then echo "  ✅ /etc/hosts OK"; ((PASS++)); else echo "  ❌ Missing"; ((FAIL++)); fi
+echo ""; echo "Results: $PASS passed, $FAIL failed"; [[ $FAIL -eq 0 ]]

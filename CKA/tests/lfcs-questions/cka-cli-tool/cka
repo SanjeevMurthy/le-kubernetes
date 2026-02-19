@@ -1,0 +1,329 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════════
+#  CKA Exam Practice CLI
+#  Interactive tool for practicing CKA exam questions on any
+#  Kubernetes playground (Killercoda, minikube, kind, etc.)
+# ═══════════════════════════════════════════════════════════════════
+set -euo pipefail
+
+# Resolve the script's directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source library files
+source "$SCRIPT_DIR/lib/colors.sh"
+source "$SCRIPT_DIR/lib/questions.sh"
+source "$SCRIPT_DIR/lib/menu.sh"
+source "$SCRIPT_DIR/lib/setup_map.sh"
+
+# Source of truth for questions and solutions
+RETAKE_GUIDE="$SCRIPT_DIR/../cka-retake-questions-final.md"
+
+# ─── Timer ─────────────────────────────────────────────────────────
+TIMER_START=""
+TIMER_FILE="$SCRIPT_DIR/.timer"
+
+start_timer() {
+  TIMER_START=$(date +%s)
+  echo "$TIMER_START" > "$TIMER_FILE"
+  echo ""
+  print_success "${ICON_CLOCK}  Timer started!"
+}
+
+stop_timer() {
+  if [[ -f "$TIMER_FILE" ]]; then
+    TIMER_START=$(cat "$TIMER_FILE")
+  fi
+  if [[ -z "${TIMER_START:-}" ]]; then
+    print_warn "No timer running"
+    return
+  fi
+  local end=$(date +%s)
+  local elapsed=$(( end - TIMER_START ))
+  local mins=$(( elapsed / 60 ))
+  local secs=$(( elapsed % 60 ))
+
+  echo ""
+  print_separator
+  if (( mins < 5 )); then
+    echo -e "  ${GREEN}${ICON_MEDAL} Time: ${BOLD}${mins}m ${secs}s${RESET}${GREEN} — Excellent pace!${RESET}"
+  elif (( mins < 10 )); then
+    echo -e "  ${YELLOW}${ICON_CLOCK}  Time: ${BOLD}${mins}m ${secs}s${RESET}${YELLOW} — Good, but aim for under 5 min${RESET}"
+  else
+    echo -e "  ${RED}${ICON_CLOCK}  Time: ${BOLD}${mins}m ${secs}s${RESET}${RED} — Over 10 min. Practice this one more!${RESET}"
+  fi
+  print_separator
+
+  TIMER_START=""
+  rm -f "$TIMER_FILE"
+}
+
+get_elapsed() {
+  if [[ -f "$TIMER_FILE" ]]; then
+    local start=$(cat "$TIMER_FILE")
+    local now=$(date +%s)
+    local elapsed=$(( now - start ))
+    local mins=$(( elapsed / 60 ))
+    local secs=$(( elapsed % 60 ))
+    echo "${mins}m ${secs}s"
+  else
+    echo "not running"
+  fi
+}
+
+# ─── Actions ───────────────────────────────────────────────────────
+
+run_setup() {
+  local q="$1"
+  local folder=$(get_question_folder "$q")
+
+  # Try local setup.sh first, then fall back to v2 LabSetUp.bash via map
+  local setup="$SCRIPT_DIR/questions/$folder/setup.sh"
+  if [[ ! -f "$setup" ]]; then
+    setup=$(get_setup_path "$folder")
+  fi
+
+  if [[ -z "$setup" ]] || [[ ! -f "$setup" ]]; then
+    print_error "Setup script not found for $folder"
+    return 1
+  fi
+
+  echo ""
+  echo -e "  ${ICON_GEAR}  ${BOLD}Setting up scenario...${RESET}"
+  print_separator
+  echo ""
+
+  chmod +x "$setup"
+  if bash "$setup"; then
+    echo ""
+    print_success "Lab setup complete! Scenario created."
+    start_timer
+  else
+    print_error "Setup failed! Check the output above."
+  fi
+}
+
+# Extract a section from the retake guide between Q header and next "---" separator
+extract_section() {
+  local guide="$1"
+  local qid="$2"      # e.g., "01"
+  local section="$3"  # "question" or "solution"
+
+  if [[ ! -f "$guide" ]]; then
+    echo "Retake guide not found: $guide"
+    return 1
+  fi
+
+  local header="### Q${qid#0}"
+  local in_section=false
+  local found=false
+  local past_problem=false
+  local past_solution=false
+
+  while IFS= read -r line; do
+    # Start capturing when we find the Q header
+    if [[ "$line" == ${header}* ]] && [[ "$found" == false ]]; then
+      found=true
+      in_section=true
+      if [[ "$section" == "question" ]]; then
+        echo "$line"
+      fi
+      continue
+    fi
+
+    # Stop at the next horizontal rule (---) which marks the next question
+    if $in_section && [[ "$line" == "---" ]]; then
+      break
+    fi
+
+    if $in_section; then
+      if [[ "$section" == "question" ]]; then
+        # Show everything up to "Solution Steps:" or "Sample Target" or "Sample Deployment"
+        if [[ "$line" == *"Solution Steps:"* ]] || [[ "$line" == *"Sample Target"* ]] || [[ "$line" == *"Sample Deployment"* ]] || [[ "$line" == *"Sample Existing"* ]]; then
+          break
+        fi
+        echo "$line"
+      elif [[ "$section" == "solution" ]]; then
+        # Show everything from "Solution Steps:" onward
+        if [[ "$line" == *"Solution Steps:"* ]]; then
+          past_solution=true
+        fi
+        if $past_solution; then
+          echo "$line"
+        fi
+      fi
+    fi
+  done < "$guide"
+
+  if [[ "$found" == false ]]; then
+    echo "Question Q${qid} not found in retake guide"
+  fi
+}
+
+show_question() {
+  local q="$1"
+  local id=$(get_question_id "$q")
+  echo ""
+  print_separator
+  echo -e "  ${BOLD}${CYAN}${ICON_BOOK} Question${RESET}"
+  print_separator
+  echo ""
+  extract_section "$RETAKE_GUIDE" "$id" "question" | while IFS= read -r line; do
+    if [[ "$line" =~ ^#\  ]]; then
+      echo -e "  ${BOLD}${WHITE}${line}${RESET}"
+    elif [[ "$line" =~ ^\>\  ]]; then
+      echo -e "  ${YELLOW}${line}${RESET}"
+    else
+      echo "  $line"
+    fi
+  done
+  echo ""
+}
+
+show_solution() {
+  local q="$1"
+  local id=$(get_question_id "$q")
+
+  if confirm_action "Are you sure you want to see the solution?"; then
+    echo ""
+    print_separator
+    echo -e "  ${BOLD}${CYAN}${ICON_HINT} Solution${RESET}"
+    print_separator
+    echo ""
+    extract_section "$RETAKE_GUIDE" "$id" "solution" | while IFS= read -r line; do
+      if [[ "$line" =~ ^#\  ]]; then
+        echo -e "  ${BOLD}${WHITE}${line}${RESET}"
+      elif [[ "$line" =~ ^\>\  ]]; then
+        echo -e "  ${YELLOW}${line}${RESET}"
+      else
+        echo "  $line"
+      fi
+    done
+    echo ""
+  fi
+}
+
+run_verify() {
+  local q="$1"
+  local folder=$(get_question_folder "$q")
+  local vscript="$SCRIPT_DIR/questions/$folder/verify.sh"
+
+  if [[ ! -f "$vscript" ]]; then
+    print_warn "No verification script for this question"
+    print_info "Manual verification: check the solution and compare"
+    return
+  fi
+
+  echo ""
+  echo -e "  ${ICON_CHECK}  ${BOLD}Verifying your solution...${RESET}"
+  print_separator
+  echo ""
+
+  chmod +x "$vscript"
+  if bash "$vscript"; then
+    echo ""
+    print_success "All checks passed!"
+    stop_timer
+  else
+    echo ""
+    print_error "Some checks failed. Review and try again."
+    if [[ -f "$TIMER_FILE" ]]; then
+      echo -e "  ${GRAY}${ICON_CLOCK}  Timer still running: $(get_elapsed)${RESET}"
+    fi
+  fi
+}
+
+run_cleanup() {
+  local q="$1"
+  local folder=$(get_question_folder "$q")
+  local cscript="$SCRIPT_DIR/questions/$folder/cleanup.sh"
+
+  if [[ ! -f "$cscript" ]]; then
+    print_warn "No cleanup script for this question"
+    return
+  fi
+
+  if confirm_action "Clean up all resources for this question?"; then
+    echo ""
+    echo -e "  ${ICON_BROOM}  ${BOLD}Cleaning up...${RESET}"
+    chmod +x "$cscript"
+    if bash "$cscript"; then
+      print_success "Cleanup complete!"
+      rm -f "$TIMER_FILE"
+      TIMER_START=""
+    else
+      print_error "Cleanup encountered errors. Check manually."
+    fi
+  fi
+}
+
+# ─── Question Action Loop ─────────────────────────────────────────
+
+question_loop() {
+  local q="$1"
+  while true; do
+    # Reload timer from file if exists
+    if [[ -f "$TIMER_FILE" ]]; then
+      TIMER_START=$(cat "$TIMER_FILE")
+    fi
+    show_question_actions "$q"
+    read -r action
+    case "${action^^}" in
+      S) run_setup "$q" ;;
+      Q) show_question "$q" ;;
+      H) show_solution "$q" ;;
+      V) run_verify "$q" ;;
+      C) run_cleanup "$q" ;;
+      B) return ;;
+      *) print_warn "Invalid option. Try S/Q/H/V/C/B" ;;
+    esac
+    echo ""
+    echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+    read -r
+  done
+}
+
+# ─── Main Loop ─────────────────────────────────────────────────────
+
+main() {
+  clear
+  while true; do
+    show_main_menu
+    read -r choice
+    case "$choice" in
+      1)
+        show_question_list
+        echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+        read -r
+        ;;
+      2)
+        show_question_list
+        show_question_selector
+        read -r qnum
+        if [[ "$qnum" =~ ^[Bb]$ ]]; then
+          continue
+        fi
+        # Pad single digit
+        qnum=$(printf "%02d" "$qnum" 2>/dev/null || echo "$qnum")
+        local q
+        if q=$(get_question_by_num "$qnum"); then
+          question_loop "$q"
+        else
+          print_error "Question Q${qnum} not found. Enter 1-17."
+          sleep 1
+        fi
+        ;;
+      3|q|Q)
+        echo ""
+        echo -e "  ${ICON_ROCKET} ${BOLD}Good luck on your CKA! You've got this.${RESET}"
+        echo ""
+        exit 0
+        ;;
+      *)
+        print_warn "Invalid option. Enter 1, 2, or 3."
+        sleep 1
+        ;;
+    esac
+  done
+}
+
+main "$@"
