@@ -1,0 +1,96 @@
+For the selected question, explain the question and scenario and provide the step by step solution with required yaml and bash commands along with validation steps.
+Insert the solution below this question
+
+---
+
+@x-services-command-history.sh#L93-305 
+selected lines are the commands from the terminal bash history. Update the same file based on the instructions below
+
+1. Extract unique commands from the selected list
+2. Verify the unique command for its correctness against the kubernetes offical documentation or commands
+3. Check if the command or a similar command already exist in this file
+4. Finally the list of unique with one liner explanation of the command, replace the selected lines with the final list of commands
+
+
+##Mock solutions prompt
+This is the solution of the online test i took fro CKA certification exam.
+Identify and analyze all the questions and solutions provided and provide the refined step by step solution with required yaml and bash commands along with validation steps. 
+Ceate a new file called mock1-solutions.md and insert all the questions and solutions in to the new file, under same directory
+Along with the solution add a link to the officail kubernetes documentation for all the question.
+In the end add quick reference 'Kubectl' commands and 'Kubeadm' commands
+
+## CKA Troubleshooting Questions based on usecase prompt
+The draft file contais the details around troubleshooting CKA control plane components and type of error to check, what action to take to fix the issue. What steps are need to fix each of the control plane componenets when they are failing. Basically what all actions or steps need to fix and verify the running status of control plane components.
+
+Read the draft, and based on the knowledge you have on CKA troubleshooting, and knowledge you can dig online to know about the real sceanrio based questions, create a markdown file with scenario based questions and step by step solutions to solve those questions. Try to address all the control plane components, types of errors we might based on the missing configuration, certificates, network etc. Try to create 2-3 scenarios for each of the control plane componets and give me all the scenarios, sloutions in a structured way along with commands and yaml manifests.
+
+ask me any questions you need to clarify before proceeding.
+
+
+Based on the provided sources, here are the questions and scenarios related to troubleshooting and managing Kubernetes control plane components (`api-server`, `etcd`, `scheduler`, `controller-manager`, `CNI`, `kubelet`, `kubeadm`).
+
+### **1. Troubleshooting the API Server (Control Plane Failure)**
+
+Several sources describe a scenario where the cluster is unresponsive because the API server is failing.
+
+- **Scenario:** A cluster has been migrated or rebooted, and `kubectl` commands fail with "connection refused."
+- **Diagnosis:** The `kube-apiserver` static pod is crashing (CrashLoopBackOff).
+- **Root Cause & Fix:**
+  - Investigate `/var/log/pods` or `/var/log/containers` for the API server.
+  - Check the manifest at `/etc/kubernetes/manifests/kube-apiserver.yaml`.
+  - **The Fix:** Identify that the **etcd server port** is misconfigured (e.g., it is pointing to port `2380` or `2359` instead of the correct `2379`, or pointing to `localhost` when it should be an external IP). Correct the port in the manifest to restore the cluster.
+
+### **2. Troubleshooting the Kubelet**
+
+There are multiple variations of `kubelet` failure scenarios.
+
+- **Scenario A (Worker Node Not Ready):** A worker node (e.g., `cluster3-worker1`) is reported as "NotReady" or not part of the cluster.
+  - **Diagnosis:** SSH into the node and check `systemctl status kubelet`. It is inactive or failed.
+  - **Root Cause:** The systemd service file (`/etc/systemd/system/kubelet.service.d/10-kubeadm.conf` or similar) has an **incorrect path** to the `kubelet` binary (e.g., `/usr/local/bin/kubelet` instead of `/usr/bin/kubelet`).
+  - **Fix:** Correct the path in the config, run `systemctl daemon-reload`, and restart the service.
+- **Scenario B (Certificates/Config):** A node is not responding. Check `kubelet` logs (`journalctl -u kubelet`). Identify if client certificates or config paths (`/var/lib/kubelet/config.yaml`) are incorrect.
+
+### **3. Etcd Backup and Restore**
+
+- **Scenario:** You are asked to perform maintenance on the cluster's database.
+- **Task:**
+  1.  Create a snapshot of the etcd database using `etcdctl snapshot save`. You must provide the correct endpoints, CA certificate, server certificate, and key files (found in the etcd static pod manifest).
+  2.  Restore the snapshot to a **new** data directory (e.g., `/var/lib/etcd-backup`).
+  3.  Update the `etcd.yaml` static pod manifest to point `hostPath` to this new directory to make the restore effective.
+
+### **4. Kube-Scheduler Maintenance**
+
+- **Scenario:** You need to manipulate the scheduler to test manual pod scheduling.
+- **Task:**
+  1.  **Stop the Scheduler:** Temporarily disable `kube-scheduler` by moving its manifest file out of `/etc/kubernetes/manifests`.
+  2.  **Manual Scheduling:** Create a pod. It will stay in `Pending` state. Manually schedule it by adding the `nodeName` field to the pod specification.
+  3.  **Restart Scheduler:** Move the manifest back to the directory and confirm the scheduler restarts and manages new pods.
+
+### **5. Troubleshooting & Installing CNI (Container Network Interface)**
+
+- **Scenario A (Installation):** Install a specific CNI (e.g., Flannel or Calico) from a provided manifest.
+  - **Troubleshooting:** After installation, pods may fail to communicate or start (CrashLoop).
+  - **Fix:** Check the CNI ConfigMap or logs. For **Flannel**, ensure the `Network` CIDR in the ConfigMap matches the `podCIDR` assigned to the nodes (e.g., changing `10.244.0.0/16` to match the cluster's specific range like `192.168.0.0/16`).
+- **Scenario B (Identification):** Identify which CNI plugin is currently configured and locate its configuration file (usually in `/etc/cni/net.d/`).
+
+### **6. Kubeadm & Cluster Upgrades**
+
+- **Scenario:** A node is running an older Kubernetes version (e.g., 1.24) and must be upgraded to match the master (e.g., 1.25).
+- **Task:**
+  - **Control Plane:** Drain node, upgrade `kubeadm`, run `kubeadm upgrade plan` and `apply`, upgrade `kubelet` and `kubectl`, restart `kubelet`, uncordon.
+  - **Worker Node:** Drain node, upgrade `kubeadm`, run `kubeadm upgrade node`, upgrade `kubelet` and `kubectl`, restart `kubelet`, uncordon.
+
+### **7. Certificates & Expiration (Kubeadm/OpenSSL)**
+
+- **Scenario A (Check Expiry):** Check how long the API Server certificate is valid. Use `openssl x509 -text` on the cert file or `kubeadm certs check-expiration`.
+- **Scenario B (Renew Cert):** Renew the API server certificate using `kubeadm certs renew apiserver`.
+- **Scenario C (Kubelet Certs):** Identify the **Issuer** and **Extended Key Usage** for the Kubelet's client and server certificates (Client is usually issued by `kubernetes`, Server cert by the Node itself).
+
+### **8. Component Identification**
+
+- **Task:** Check the control plane node and determine how each component (`kubelet`, `kube-apiserver`, `etcd`, `kube-scheduler`, `kube-controller-manager`, `dns`) is installed/running.
+- **Answer Key:**
+  - **Kubelet:** Runs as a **Systemd Service/Process**.
+  - **API/Etcd/Scheduler/Controller:** Run as **Static Pods** (manifests in `/etc/kubernetes/manifests`).
+  - **DNS (CoreDNS):** Runs as a standard **Pod/Deployment**.
+

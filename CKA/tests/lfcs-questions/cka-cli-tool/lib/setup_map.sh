@@ -4,7 +4,7 @@
 # This avoids duplicating setup scripts.
 
 CLI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-V2_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../cka-prep-2025-v2" && pwd)"
+V2_DIR="$CLI_DIR/../cka-prep-2025-v2"
 
 declare -A SETUP_MAP=(
   ["q01-cri-dockerd"]="Question-9 Cri-Dockerd"
