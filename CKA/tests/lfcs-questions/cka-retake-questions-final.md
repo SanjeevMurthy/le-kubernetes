@@ -19,6 +19,7 @@
 8. [Q8 — Fix Pending Pods by Adjusting Resource Requests](#q8--fix-pending-pods-by-adjusting-resource-requests)
 9. [Q9 — Add a Sidecar Container to an Existing Deployment](#q9--add-a-sidecar-container-to-an-existing-deployment)
 10. [Q10 — Taints and Tolerations](#q10--taints-and-tolerations)
+11. [Q19 — Create a Static Pod on a Specific Node](#q19--create-a-static-pod-on-a-specific-node)
 
 ### Domain 3: Services & Networking (20%)
 
@@ -36,6 +37,7 @@
 ### Domain 5: Troubleshooting (30%)
 
 18. [Q18 — Fix kube-apiserver After Cluster Migration (etcd Port Fix)](#q18--fix-kube-apiserver-after-cluster-migration-etcd-port-fix)
+19. [Q20 — Troubleshoot a Static Pod Not Starting](#q20--troubleshoot-a-static-pod-not-starting)
 
 ---
 
@@ -2055,6 +2057,236 @@ sudo systemctl restart kubelet
 
 ---
 
+### Q19 — Create a Static Pod on a Specific Node
+
+**Problem:** Create a static pod named `my-static-pod` on `node01` using the `nginx:1.27` image. The pod must run on `node01` and be visible via `kubectl get pods`.
+
+**Reference Doc:** https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/
+
+**Solution Steps:**
+
+1. Generate the pod YAML on the control plane (where kubectl works):
+
+```bash
+kubectl run my-static-pod --image=nginx:1.27 --dry-run=client -o yaml > my-static-pod.yaml
+```
+
+2. SSH into the target node:
+
+```bash
+ssh node01
+```
+
+3. **CRITICAL:** Find the actual `staticPodPath` on that node — do NOT assume it's `/etc/kubernetes/manifests/`:
+
+```bash
+# Check kubelet config for the static pod directory
+cat /var/lib/kubelet/config.yaml | grep staticPodPath
+# e.g., staticPodPath: /etc/kubernetes/manifests
+```
+
+> **WARNING:** The exam may set `staticPodPath` to a **non-default directory** like `/etc/kubernetes/static-pods/` or `/var/lib/kubelet/static-pods/`. If you place the manifest in the wrong directory, the pod will **never** appear. Always verify!
+
+4. Copy the pod YAML to the static pod directory on node01:
+
+```bash
+# If you generated it on the control plane, copy the content:
+sudo tee /etc/kubernetes/manifests/my-static-pod.yaml > /dev/null <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-static-pod
+  labels:
+    run: my-static-pod
+spec:
+  containers:
+  - name: my-static-pod
+    image: nginx:1.27
+    resources: {}
+EOF
+```
+
+5. Exit back to the control plane:
+
+```bash
+exit
+```
+
+**Verification:**
+
+```bash
+kubectl get pods -o wide
+# Should see: my-static-pod-node01   1/1   Running   ...   node01
+# The pod name is appended with the node name
+
+kubectl describe pod my-static-pod-node01
+# Controlled By: Node/node01 (confirms it's a static pod)
+```
+
+**⚡ Imperative Command:**
+
+```bash
+# Generate YAML
+kubectl run my-static-pod --image=nginx:1.27 $do > my-static-pod.yaml
+
+# SSH and place it
+ssh node01
+# Find staticPodPath
+grep staticPodPath /var/lib/kubelet/config.yaml
+# Copy YAML to the correct directory
+sudo cp /path/to/my-static-pod.yaml /etc/kubernetes/manifests/
+exit
+```
+
+> No single imperative command can create a static pod remotely — you must SSH to the node and place the manifest file manually.
+
+**📝 Points to Remember:**
+
+- **ALWAYS check `staticPodPath`** in `/var/lib/kubelet/config.yaml` on the target node — NEVER assume `/etc/kubernetes/manifests/`
+- Static pod names get suffixed with the node name: `my-static-pod` on `node01` becomes `my-static-pod-node01`
+- Static pods create **mirror pods** on the API server — you can see them with `kubectl get pods` but CANNOT delete them via `kubectl delete` (they'll be recreated)
+- `kubectl run ... --dry-run=client -o yaml` may NOT work when SSH'd into a worker node (no kubeconfig) — generate the YAML on the control plane first, then copy it
+- Pod names must be **lowercase** and RFC 1123 compliant — if the question says "MyStaticPod", convert to `my-static-pod` or `mystaticpod`
+- To delete a static pod: remove the manifest file from the `staticPodPath` directory on the node
+- Control plane components (`kube-apiserver`, `etcd`, `kube-scheduler`, `kube-controller-manager`) are themselves static pods
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`static pods` · `create static pods` · `staticPodPath` · `kubelet` · `mirror pods`
+
+---
+
+### Q20 — Troubleshoot a Static Pod Not Starting
+
+**Problem:** A static pod named `web-server` was created on `node01` by placing its manifest in `/etc/kubernetes/manifests/`. However, the pod is not appearing in `kubectl get pods` output. Troubleshoot and fix the issue.
+
+**Reference Doc:** https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/
+
+**Debugging Flowchart:**
+
+```
+Static pod not showing in kubectl get pods?
+├── 1. SSH into the target node
+│     ssh node01
+├── 2. Is kubelet running?
+│     systemctl status kubelet
+│     └── Not running → systemctl start kubelet
+├── 3. Check staticPodPath configuration
+│     grep staticPodPath /var/lib/kubelet/config.yaml
+│     └── Mismatch? Move manifest to the correct directory
+├── 4. Is the manifest YAML valid?
+│     kubectl apply --dry-run=client -f <manifest> (from control plane)
+│     └── Syntax error → fix the YAML
+├── 5. Check kubelet logs for errors
+│     journalctl -u kubelet | grep -i "static\|error" | tail -30
+│     └── Image pull error → fix image name/tag
+└── 6. Check if pod is running via crictl
+      sudo crictl ps -a | grep web-server
+      └── CrashLoopBackOff → check container logs: crictl logs <id>
+```
+
+**Solution Steps:**
+
+1. SSH into the node where the static pod should be running:
+
+```bash
+ssh node01
+```
+
+2. Check if kubelet is running:
+
+```bash
+sudo systemctl status kubelet
+# If not active:
+sudo systemctl start kubelet
+sudo systemctl enable kubelet
+```
+
+3. **KEY STEP:** Check the actual `staticPodPath` in kubelet config:
+
+```bash
+cat /var/lib/kubelet/config.yaml | grep staticPodPath
+# Example output: staticPodPath: /etc/kubernetes/static-pods
+```
+
+> If the output shows a **different path** than where the manifest was placed (e.g., `/etc/kubernetes/static-pods` instead of `/etc/kubernetes/manifests`), **move the manifest to the correct directory**:
+
+```bash
+# Move the manifest to the actual staticPodPath
+sudo mv /etc/kubernetes/manifests/web-server.yaml /etc/kubernetes/static-pods/
+```
+
+4. If the path is correct, validate the manifest YAML:
+
+```bash
+# Check for syntax errors (do this from control plane where kubectl works)
+kubectl apply --dry-run=client -f web-server.yaml
+```
+
+Common YAML issues:
+
+- Wrong `apiVersion` (should be `v1` for pods)
+- Indentation errors
+- Pod name contains uppercase letters (must be lowercase)
+- Missing required fields (`metadata.name`, `spec.containers[].image`)
+
+5. Check kubelet logs for specific errors:
+
+```bash
+sudo journalctl -u kubelet --no-pager | grep -i "static\|error\|web-server" | tail -30
+```
+
+6. If kubelet config was modified, restart kubelet:
+
+```bash
+sudo systemctl restart kubelet
+```
+
+7. Exit and verify from the control plane:
+
+```bash
+exit
+kubectl get pods -o wide | grep web-server
+# Should show: web-server-node01   1/1   Running
+```
+
+**Verification:**
+
+```bash
+kubectl get pods -o wide
+# web-server-node01 should be Running on node01
+
+kubectl describe pod web-server-node01
+# Verify: Controlled By: Node/node01
+# Verify: Status: Running
+```
+
+**⚡ Imperative Command:**
+
+No imperative kubectl command — this is a troubleshooting task. Use SSH, `systemctl`, and file system operations:
+
+```bash
+# Quick diagnostic one-liner after SSH
+ssh node01 "grep staticPodPath /var/lib/kubelet/config.yaml && ls /etc/kubernetes/manifests/ && systemctl status kubelet --no-pager | head -5"
+```
+
+**📝 Points to Remember:**
+
+- **Trap #1 (most common):** `staticPodPath` in kubelet config is set to a different directory than where you placed the manifest — ALWAYS check `/var/lib/kubelet/config.yaml`
+- **Trap #2:** Pod name must be lowercase RFC 1123 — `MyStaticPod` will fail silently; use `my-static-pod` instead
+- **Trap #3:** You placed the manifest on the control plane instead of the target worker node — always SSH to the correct node first
+- The kubelet config file is at `/var/lib/kubelet/config.yaml` — this is where `staticPodPath` is defined
+- `crictl ps -a` on the node shows container-level status even when `kubectl` can't see the pod
+- If you change the kubelet config file itself (not just the manifest), you **must** restart kubelet: `sudo systemctl restart kubelet`
+- Static pods don't show in `kubectl get pods` if the kubelet on that node is down or the manifest is in the wrong directory
+- Alternative way to check staticPodPath: `ps -ef | grep kubelet | grep config` to find the config file path
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`static pods` · `troubleshoot kubelet` · `staticPodPath` · `debug cluster` · `kubelet configuration`
+
+---
+
 # APPENDIX: Quick Reference Cards
 
 ---
@@ -2136,4 +2368,4 @@ Problem: Can't reach cluster
 
 ---
 
-_18 questions based on the actual CKA exam. Every solution verified against official Kubernetes documentation patterns. Trust your preparation and go claim that CKA._
+_20 questions based on the actual CKA exam. Every solution verified against official Kubernetes documentation patterns. Trust your preparation and go claim that CKA._
