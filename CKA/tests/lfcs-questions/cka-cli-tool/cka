@@ -308,7 +308,7 @@ main() {
         if q=$(get_question_by_num "$qnum"); then
           question_loop "$q"
         else
-          print_error "Question Q${qnum} not found. Enter 1-17."
+          print_error "Question Q${qnum} not found. Enter 1-18."
           sleep 1
         fi
         ;;

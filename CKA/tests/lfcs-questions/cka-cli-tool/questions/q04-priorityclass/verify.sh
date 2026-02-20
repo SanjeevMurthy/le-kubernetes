@@ -1,5 +1,5 @@
 #!/bin/bash
-# Q4 — PriorityClass: Verify
+# Q5 — PriorityClass: Verify
 set -e
 PASS=0; FAIL=0
 
@@ -12,16 +12,30 @@ else
   ((FAIL++))
 fi
 
-echo "🔍 Checking PriorityClass value is one less than highest..."
-HIGHEST=$(kubectl get priorityclasses -o jsonpath='{range .items[*]}{.metadata.name} {.value}{"\n"}{end}' | grep -v system- | sort -k2 -n | tail -1 | awk '{print $2}')
+echo "🔍 Checking PriorityClass value is one less than highest user-defined..."
+# Get the highest user-defined PC value (exclude system-* and high-priority itself)
+HIGHEST=$(kubectl get priorityclasses -o jsonpath='{range .items[*]}{.metadata.name} {.value}{"\n"}{end}' \
+  | grep -v "^system-" | grep -v "^high-priority " | sort -k2 -n | tail -1 | awk '{print $2}')
 HP_VAL=$(kubectl get priorityclass high-priority -o jsonpath='{.value}' 2>/dev/null || echo "0")
-EXPECTED=$((HIGHEST > HP_VAL ? HIGHEST : HP_VAL))
-if [[ "$HP_VAL" -gt 0 ]]; then
-  echo "  ✅ PriorityClass value: $HP_VAL"
-  ((PASS++))
+
+if [[ -n "$HIGHEST" ]] && [[ "$HIGHEST" -gt 0 ]]; then
+  EXPECTED=$((HIGHEST - 1))
+  if [[ "$HP_VAL" == "$EXPECTED" ]]; then
+    echo "  ✅ PriorityClass value: $HP_VAL (= $HIGHEST - 1)"
+    ((PASS++))
+  else
+    echo "  ❌ PriorityClass value: $HP_VAL (expected: $EXPECTED = highest($HIGHEST) - 1)"
+    ((FAIL++))
+  fi
 else
-  echo "  ❌ PriorityClass value seems wrong: $HP_VAL"
-  ((FAIL++))
+  # Fallback: just check it has a positive value
+  if [[ "$HP_VAL" -gt 0 ]]; then
+    echo "  ✅ PriorityClass value: $HP_VAL (could not determine highest — accepting positive value)"
+    ((PASS++))
+  else
+    echo "  ❌ PriorityClass value: $HP_VAL (expected positive value)"
+    ((FAIL++))
+  fi
 fi
 
 echo "🔍 Checking deployment uses high-priority..."

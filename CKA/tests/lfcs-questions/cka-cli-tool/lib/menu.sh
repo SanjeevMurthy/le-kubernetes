@@ -39,7 +39,7 @@ show_question_list() {
 
 show_question_selector() {
   echo ""
-  echo -e "  ${BOLD}${WHITE}Enter question number (1-17) or 'b' to go back:${RESET}"
+  echo -e "  ${BOLD}${WHITE}Enter question number (1-18) or 'b' to go back:${RESET}"
   echo -ne "  ${BOLD}> Q${RESET}"
 }
 

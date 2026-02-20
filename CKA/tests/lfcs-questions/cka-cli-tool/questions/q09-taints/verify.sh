@@ -1,5 +1,5 @@
 #!/bin/bash
-# Q9 — Taints and Tolerations: Verify
+# Q10 — Taints and Tolerations: Verify
 set -e
 PASS=0; FAIL=0
 
@@ -13,14 +13,26 @@ else
   ((FAIL++))
 fi
 
-echo "🔍 Checking pod with toleration is Running on node01..."
-POD_NODE=$(kubectl get pods -o wide --no-headers 2>/dev/null | grep -i running | awk '{print $7}' | grep node01 || echo "")
-if [[ -n "$POD_NODE" ]]; then
-  echo "  ✅ Pod is running on node01"
+echo "🔍 Checking a running pod exists on node01..."
+POD_ON_NODE=$(kubectl get pods -o wide --no-headers --field-selector=status.phase=Running 2>/dev/null | awk '{print $1, $7}' | grep node01 | head -1 || echo "")
+if [[ -n "$POD_ON_NODE" ]]; then
+  POD_NAME=$(echo "$POD_ON_NODE" | awk '{print $1}')
+  echo "  ✅ Pod '$POD_NAME' is running on node01"
   ((PASS++))
+
+  echo "🔍 Checking pod has the correct toleration..."
+  TOLERATION=$(kubectl get pod "$POD_NAME" -o jsonpath='{.spec.tolerations}' 2>/dev/null || echo "")
+  if echo "$TOLERATION" | grep -q "PERMISSION"; then
+    echo "  ✅ Pod has PERMISSION toleration"
+    ((PASS++))
+  else
+    echo "  ❌ Pod is on node01 but does not have PERMISSION toleration"
+    ((FAIL++))
+  fi
 else
   echo "  ❌ No running pod found on node01"
   ((FAIL++))
+  echo "  (skipping toleration check)"
 fi
 
 echo ""
