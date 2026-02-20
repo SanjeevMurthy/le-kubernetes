@@ -2,12 +2,12 @@
 set -e
 
 # Step 1: Create namespace
-kubectl create namespace nginx-static || true
+kubectl create namespace nginx-static --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 2: Create a TLS secret (self-signed)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout tls.key -out tls.crt -subj "/CN=ckaquestion.k8s.local"
-kubectl -n nginx-static create secret tls nginx-tls --cert=tls.crt --key=tls.key
+kubectl -n nginx-static create secret tls nginx-tls --cert=tls.crt --key=tls.key --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 3: Create ConfigMap with TLSv1.2 and TLSv1.3 enabled
 cat <<EOF | kubectl -n nginx-static apply -f -
@@ -66,7 +66,19 @@ spec:
 EOF
 
 # Step 5: Create a ClusterIP service
-kubectl -n nginx-static expose deployment nginx-static --port=443 --target-port=443 --name=nginx-service
+kubectl apply -n nginx-static -f - <<SVCEOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: nginx-static
+spec:
+  selector:
+    app: nginx-static
+  ports:
+  - port: 443
+    targetPort: 443
+SVCEOF
 
 echo "✅ TLS lab setup complete!"
 echo "   ConfigMap nginx-config has ssl_protocols set to TLSv1.3 only."

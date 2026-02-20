@@ -30,7 +30,19 @@ spec:
 EOF
 
 echo "🔹 Exposing backend as ClusterIP service..."
-kubectl expose deployment backend-deployment -n backend --port=80 --target-port=80 --name=backend-service
+kubectl apply -n backend -f - <<SVCEOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: backend
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 80
+SVCEOF
 
 echo "🔹 Deploying frontend app..."
 kubectl apply -n frontend -f - <<EOF

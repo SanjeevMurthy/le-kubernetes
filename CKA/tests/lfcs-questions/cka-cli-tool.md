@@ -30,3 +30,10 @@ create a new folder under `/Users/sanjeevmurthy/le/repos/le-kubernetes/CKA/tests
 
 Use your creative way to build this CLI tool.
 Ask me any questions you have to build this CLI tool.
+
+Later prompts issued:
+One change: When a question scenario is selected start a timer and upon verification of the solution, stop the timer and mention the minutes spent to solve the question.
+
+I was testing the CLI tool, for Question 7, it was suppose to create the scenario with one pending pod with lack fo resources, but i can see all the pods are in running state in the cluster.Need to fix the cli tool
+
+Verify for all questions if all the scenarios will be setup properly when running this CLI ? If needed fix it and also check the interactive terminal messges there are some duplication in printing task complete message

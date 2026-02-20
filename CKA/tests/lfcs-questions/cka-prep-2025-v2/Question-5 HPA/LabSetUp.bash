@@ -44,7 +44,19 @@ spec:
 EOF
 
 echo "🔹 Exposing Apache deployment internally..."
-kubectl expose deployment apache-deployment -n autoscale --port=80 --target-port=80
+kubectl apply -n autoscale -f - <<SVCEOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: apache-deployment
+  namespace: autoscale
+spec:
+  selector:
+    app: apache
+  ports:
+  - port: 80
+    targetPort: 80
+SVCEOF
 
 echo "✅ HPA lab setup complete."
 echo "   - Namespace: autoscale"

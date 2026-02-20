@@ -95,6 +95,8 @@ run_setup() {
   chmod +x "$setup"
   if bash "$setup"; then
     start_timer
+    # Automatically show the question after scenario setup
+    show_question "$q"
   else
     print_error "Setup failed! Check the output above."
   fi
