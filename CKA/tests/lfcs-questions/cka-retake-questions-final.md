@@ -119,6 +119,23 @@ sysctl net.ipv4.ip_forward                  # → 1
 sysctl net.netfilter.nf_conntrack_max       # → 131072
 ```
 
+**⚡ Imperative Command:**
+
+No imperative kubectl command — this is a system-level task using `dpkg`, `systemctl`, and `sysctl`.
+
+**📝 Points to Remember:**
+
+- `sysctl --system` applies ALL files in `/etc/sysctl.d/` — it's better than `sysctl -p` which only applies `/etc/sysctl.conf`
+- `br_netfilter` kernel module **must** be loaded BEFORE the `net.bridge.*` sysctl parameters can be set — otherwise they silently fail
+- `systemctl enable --now` combines `enable` (persist) + `start` (immediate) in one command
+- The `.deb` package name may vary — use `ls ~/` to find the exact filename
+- If `dpkg -i` fails with dependency errors, always follow up with `sudo apt-get install -f`
+- Double-check the service name: it's `cri-docker.service` (not `cri-dockerd` or `containerd`)
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`container runtimes prerequisites` · `forwarding IPv4 and letting iptables see bridged traffic` · `cri-dockerd`
+
 ---
 
 ### Q2 — Install CNI Plugin (Calico) with NetworkPolicy Support
@@ -195,6 +212,27 @@ kubectl get pod test-cni -o wide                # Should have an IP in the Pod C
 kubectl delete pod test-cni $now
 ```
 
+**⚡ Imperative Command:**
+
+No imperative kubectl command — CNI installation is manifest-based. Apply directly from URL:
+
+```bash
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml
+```
+
+**📝 Points to Remember:**
+
+- **Calico supports NetworkPolicies, Flannel does NOT** — if the question mentions "network policy enforcement", always pick Calico
+- The Pod CIDR in `custom-resources.yaml` **must match** the cluster's `--pod-network-cidr` (check with `kubeadm-config` ConfigMap)
+- Use `kubectl create -f` (not `apply -f`) for the operator manifest — CRDs can fail with `apply` on first install
+- Calico pods run in `calico-system` namespace (not `kube-system`) when using the operator method
+- If nodes stay `NotReady` after CNI install, check `kubectl get pods -n calico-system` — calico-node pods must be `Running` on every node
+- Give it 30-60 seconds after applying — Calico takes time to initialize
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`installing a pod network add-on` · `networking and network policy` · `cluster networking` · `calico`
+
 ---
 
 ### Q3 — List cert-manager CRDs and Extract Field Documentation
@@ -235,6 +273,30 @@ kubectl api-resources | grep cert-manager
 cat /root/resources.yaml     # Should list cert-manager CRDs
 cat /root/subject.yaml       # Should show GROUP, VERSION, KIND, FIELD, DESCRIPTION for spec.subject
 ```
+
+**⚡ Imperative Command:**
+
+This question uses imperative commands directly:
+
+```bash
+# List CRDs
+kubectl get crd | grep cert-manager | tee /root/resources.yaml
+
+# Extract field docs
+kubectl explain certificate.spec.subject | tee /root/subject.yaml
+```
+
+**📝 Points to Remember:**
+
+- `kubectl explain` works on CRDs just like built-in resources — use `<resource>.<field>.<subfield>` dot notation
+- Use `kubectl api-resources | grep cert-manager` to find the correct resource name if `kubectl explain certificates` doesn't work (try singular: `certificate`)
+- Pay close attention to the output format requirement: if the question says "default output format" — do NOT add `-o yaml` or `-o json`, it will cost you points
+- `tee` is safer than `>` redirect — it shows output on screen AND writes to file so you can verify immediately
+- `kubectl explain --api-version=cert-manager.io/v1 certificate.spec.subject` can be used if multiple API versions exist
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`custom resource definitions` · `kubectl explain` · `viewing CRDs` · `api-resources`
 
 ---
 
@@ -318,6 +380,36 @@ kubectl auth can-i delete classes --as=jane -n <namespace>      # → yes
 kubectl auth can-i create pods --as=jane -n <namespace>         # → no
 ```
 
+**⚡ Imperative Command:**
+
+```bash
+# Create the Role
+kubectl create role school-admin \
+  --verb=get,list,create,update,delete \
+  --resource=students.school.example.com \
+  --resource=classes.school.example.com \
+  -n <namespace>
+
+# Create the RoleBinding
+kubectl create rolebinding school-admin-binding \
+  --role=school-admin \
+  --user=jane \
+  -n <namespace>
+```
+
+**📝 Points to Remember:**
+
+- For CRD resources, the `--resource` flag uses the format `<plural>.<apiGroup>` (e.g., `students.school.example.com`)
+- Always run `kubectl api-resources | grep <crd-name>` first to find the correct plural name and apiGroup
+- Use `Role + RoleBinding` for namespaced CRDs, `ClusterRole + ClusterRoleBinding` for cluster-scoped CRDs — check `spec.scope` in the CRD
+- `kubectl auth can-i` is the best way to verify RBAC — always test with `--as=<user>` flag
+- Don't confuse `apiGroups` (the CRD group like `school.example.com`) with `apiVersion` (like `v1`)
+- If binding to a ServiceAccount, use `--serviceaccount=<namespace>:<name>` format
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`RBAC` · `role based access control` · `role binding` · `kubectl create role` · `custom resources`
+
 ---
 
 ### Q5 — Create a PriorityClass and Patch Deployment
@@ -392,6 +484,30 @@ kubectl describe deployment busybox-logger -n priority | grep -i "Priority Class
 kubectl get pods -n priority          # Pods should be Running
 ```
 
+**⚡ Imperative Command:**
+
+```bash
+# Create PriorityClass
+kubectl create priorityclass high-priority --value=999 --description="high priority"
+
+# Patch deployment to use it
+kubectl patch deployment busybox-logger -n priority \
+  -p '{"spec":{"template":{"spec":{"priorityClassName":"high-priority"}}}}'
+```
+
+**📝 Points to Remember:**
+
+- **Ignore system PriorityClasses** when finding the highest value: `system-cluster-critical` (2000000000) and `system-node-critical` (2000001000) are system classes
+- `kubectl get pc` is the shorthand for `kubectl get priorityclasses`
+- Only ONE PriorityClass can have `globalDefault: true` cluster-wide — if creating a new one, set `globalDefault: false`
+- `priorityClassName` goes under `spec.template.spec` (pod spec level), NOT under `spec` directly
+- The `--preemption-policy` flag defaults to `PreemptLowerPriority` — set to `Never` only if you don't want preemption
+- After patching a deployment, pods will be recreated — watch with `kubectl get pods -n priority -w`
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`pod priority preemption` · `priorityclass` · `kubectl create priorityclass` · `preemption policy`
+
 ---
 
 ### Q6 — Helm Template ArgoCD with Custom Configuration
@@ -458,6 +574,30 @@ cat /root/argo-helm.yaml         # Should contain rendered K8s manifests
 grep "kind: CustomResourceDefinition" /root/argo-helm.yaml
 # Should return no results
 ```
+
+**⚡ Imperative Command:**
+
+Helm CLI commands are the imperative approach for this question:
+
+```bash
+helm repo add argocd https://argoproj.github.io/argo-helm
+helm repo update
+helm template argocd argocd/argo-cd --version 7.7.3 --namespace argocd --set crds.install=false > /root/argo-helm.yaml
+```
+
+**📝 Points to Remember:**
+
+- `helm template` renders YAML locally **without installing anything** to the cluster — don't confuse with `helm install`
+- `helm template` does NOT require the namespace to exist — but `helm install` does (use `--create-namespace`)
+- `helm show values <chart>` reveals all configurable options — use this to find the correct `--set` flag (e.g., `crds.install`)
+- Always run `helm repo update` after `helm repo add` to fetch the latest chart index
+- `--version` refers to the **chart version**, not the app version
+- If the exam asks to "install" (not template), use `helm install` instead and add `--create-namespace`
+- The output file from `helm template` can be applied manually with `kubectl apply -f` if needed
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`managing kubernetes objects using helm` · `helm` · `helm template` · `helm install`
 
 ---
 
@@ -557,6 +697,41 @@ kubectl describe hpa apache-server -n autoscale
 # TARGETS column should show current/target (e.g., 10%/50%)
 # Check behavior section shows stabilizationWindowSeconds: 30
 ```
+
+**⚡ Imperative Command:**
+
+In K8s v1.32, `kubectl autoscale` defaults to `autoscaling/v2`. Use it as a starting point, then edit to add the `behavior` field:
+
+```bash
+# Step 1: Create basic HPA imperatively
+kubectl autoscale deployment apache-deployment \
+  --name=apache-server \
+  --min=1 --max=4 --cpu-percent=50 \
+  -n autoscale
+
+# Step 2: Edit to add downscale stabilization (behavior field not settable via CLI)
+kubectl edit hpa apache-server -n autoscale
+# Add under spec:
+#   behavior:
+#     scaleDown:
+#       stabilizationWindowSeconds: 30
+```
+
+> **Note:** `kubectl autoscale` cannot set the `behavior` field — you must edit the HPA after creation or use the full declarative YAML above.
+
+**📝 Points to Remember:**
+
+- `autoscaling/v2` is **required** for the `behavior` field — `autoscaling/v1` does NOT support it
+- In K8s v1.32, `kubectl autoscale` creates HPAs using `autoscaling/v2` by default
+- If TARGETS shows `<unknown>/50%`, the deployment's containers are **missing `resources.requests.cpu`** — this is the #1 HPA gotcha
+- The default downscale stabilization window is 300 seconds (5 minutes) — questions often ask to change this
+- `scaleTargetRef.name` must exactly match the deployment name (case-sensitive)
+- HPA works on `averageUtilization` (percentage of request), NOT absolute CPU values
+- Always verify with `kubectl describe hpa` to check the `Metrics` and `Conditions` sections
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`horizontal pod autoscale walkthrough` · `HPA` · `autoscaling v2` · `stabilization window` · `kubectl autoscale`
 
 ---
 
@@ -681,6 +856,45 @@ kubectl describe pod <pod-name> | grep -A 3 "Requests"
 # Verify all containers show the same resource values
 ```
 
+**⚡ Imperative Command:**
+
+```bash
+# Scale down
+kubectl scale deployment wordpress --replicas=0
+
+# Edit resources (interactive)
+kubectl edit deployment wordpress
+
+# Scale back up
+kubectl scale deployment wordpress --replicas=3
+```
+
+> No imperative command to set resources directly — must use `kubectl edit` or `kubectl set resources`:
+
+```bash
+# Alternative: set resources imperatively (main container)
+kubectl set resources deployment wordpress \
+  -c wordpress --requests=cpu=300m,memory=600Mi --limits=cpu=400m,memory=700Mi
+
+# For init containers, kubectl set resources also works:
+kubectl set resources deployment wordpress \
+  -c init-db-check --requests=cpu=300m,memory=600Mi --limits=cpu=400m,memory=700Mi
+```
+
+**📝 Points to Remember:**
+
+- **Scale down to 0 first**, edit, then scale back up — this prevents scheduling conflicts during the edit
+- Init containers count toward **scheduling** (the scheduler considers the max of init container requests vs sum of regular container requests)
+- The question says "same resource requests and limits" for ALL containers (init + main) — don't forget the init containers
+- Formula: `Per_Pod = (Allocatable - Already_Used - 10-15% overhead) / replicas`
+- `kubectl describe node <name> | grep -A 5 Allocatable` shows total allocatable resources
+- `kubectl describe node <name> | grep -A 20 "Allocated resources"` shows current usage
+- Always verify with `kubectl get pods` that NO pods are in `Pending` state after scaling back
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`manage resources containers` · `resource requests limits` · `pod overhead` · `kubectl set resources`
+
 ---
 
 ### Q9 — Add a Sidecar Container to an Existing Deployment
@@ -735,6 +949,31 @@ kubectl get pods -l app=wordpress
 kubectl logs <pod-name> -c sidecar
 # Should show log output (or wait for logs to appear)
 ```
+
+**⚡ Imperative Command:**
+
+No imperative command available to add a sidecar container — use declarative YAML. You must export, edit, and re-apply:
+
+```bash
+kubectl get deployment wordpress -o yaml > wordpress-deploy.yaml
+# Edit the file to add sidecar container and shared volume
+vim wordpress-deploy.yaml
+kubectl apply -f wordpress-deploy.yaml
+```
+
+**📝 Points to Remember:**
+
+- Sidecar container shares the **same Pod lifecycle** — both containers must be in the same `containers[]` array
+- Use `emptyDir: {}` as the shared volume type — it's the simplest and most common for log sharing
+- Both containers must mount the **same named volume** at the same or different paths
+- The sidecar `command` array must be properly formatted: `["/bin/sh", "-c", "tail -f /var/log/wordpress.log"]`
+- After applying, check `READY` column shows `2/2` (not `1/2`) to confirm the sidecar is running
+- If the sidecar crashes, check `kubectl logs <pod> -c sidecar` and `kubectl describe pod <pod>` for errors
+- K8s 1.28+ has native sidecar support via `initContainers` with `restartPolicy: Always` — but the exam may test the traditional approach
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`sidecar containers` · `multi container pods` · `volumes emptyDir` · `init containers`
 
 ---
 
@@ -799,6 +1038,42 @@ kubectl run nginx-fail --image=nginx
 kubectl describe pod nginx-fail | grep -A 5 "Events"
 # Should show: node(s) had untolerated taint {PERMISSION: granted}
 ```
+
+**⚡ Imperative Command:**
+
+```bash
+# Add taint to node
+kubectl taint nodes node01 PERMISSION=granted:NoSchedule
+
+# Create pod with toleration using --overrides (fast exam shortcut)
+kubectl run nginx --image=nginx --overrides='{
+  "spec": {
+    "tolerations": [{
+      "key": "PERMISSION",
+      "operator": "Equal",
+      "value": "granted",
+      "effect": "NoSchedule"
+    }]
+  }
+}'
+
+# Remove taint (add trailing dash)
+kubectl taint nodes node01 PERMISSION=granted:NoSchedule-
+```
+
+**📝 Points to Remember:**
+
+- Taint format: `key=value:Effect` — all three parts must match in the toleration
+- `operator: Equal` requires BOTH `key` AND `value` to match; `operator: Exists` only needs the `key` (ignores value)
+- Three effects: `NoSchedule` (hard), `PreferNoSchedule` (soft), `NoExecute` (evicts existing pods too)
+- To **remove** a taint, append `-` at the end: `kubectl taint nodes node01 PERMISSION=granted:NoSchedule-`
+- A pod with a toleration is **allowed** on a tainted node but NOT guaranteed to land there — use `nodeSelector` or `nodeName` if you need to force placement
+- `NoExecute` with `tolerationSeconds` means the pod will be evicted after that many seconds if it tolerates the taint
+- Control plane taints: `node-role.kubernetes.io/control-plane:NoSchedule` — remove this to allow scheduling on master
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`taint and toleration` · `NoSchedule` · `NoExecute` · `kubectl taint` · `node affinity`
 
 ---
 
@@ -884,6 +1159,41 @@ curl http://<node-ip>:30080
 # Should return a response from the application
 ```
 
+**⚡ Imperative Command:**
+
+```bash
+# Expose deployment (cannot set specific nodePort — use declarative YAML for that)
+kubectl expose deployment nodeport-deployment \
+  --type=NodePort \
+  --port=80 \
+  --target-port=80 \
+  --name=nodeport-service \
+  -n <namespace>
+
+# Alternative: create service imperatively with specific nodePort
+kubectl create service nodeport nodeport-service \
+  --tcp=80:80 \
+  --node-port=30080 \
+  -n <namespace> $do > svc.yaml
+# Then edit svc.yaml to fix the selector to match pod labels
+kubectl apply -f svc.yaml
+```
+
+> **WARNING:** `kubectl expose` **cannot** set a specific `nodePort`. `kubectl create service nodeport` **can** set it but generates a default selector (`app=nodeport-service`) that may not match your pods — always verify/edit the selector.
+
+**📝 Points to Remember:**
+
+- NodePort range is **30000-32767** — any value outside this range will fail
+- Always check pod labels first: `kubectl get pods -n <namespace> --show-labels` — the service `selector` must match
+- `port` = the service port (what clients connect to), `targetPort` = the container port (what the app listens on)
+- If the question asks for a specific `nodePort`, you MUST use declarative YAML or `kubectl create service nodeport`
+- Adding `ports` to a deployment spec (containerPort) is optional for connectivity but may be required by the question
+- The container `name` in the patch must exactly match the existing container name
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`service` · `NodePort` · `kubectl expose` · `service types` · `connecting applications with services`
+
 ---
 
 ### Q12 — Create an Ingress Resource
@@ -953,6 +1263,32 @@ kubectl describe ingress echo -n echo-sound
 # Test via NodePort:
 curl http://<nodeIP>:<nodePort>/echo
 ```
+
+**⚡ Imperative Command:**
+
+```bash
+# Expose the deployment as NodePort service
+kubectl expose deployment echo -n echo-sound \
+  --name echo-service --type NodePort --port 8080 --target-port 8080
+
+# Create Ingress imperatively (K8s v1.32)
+kubectl create ingress echo \
+  --rule="example.org/echo=echo-service:8080" \
+  -n echo-sound
+```
+
+**📝 Points to Remember:**
+
+- `kubectl create ingress` format: `--rule="host/path=service:port[,tls[=secret]]"`
+- `pathType` defaults to `Exact` in imperative command — if the question needs `Prefix`, use declarative YAML or add `--rule="example.org/echo*=..."` (the `*` suffix sets `Prefix`)
+- Ingress requires an **IngressClass** — if there's only one in the cluster, it's auto-selected; otherwise specify with `--class=nginx`
+- Ingress ADDRESS may take time to populate — wait 30-60 seconds before verifying
+- For host-based routing, you may need to add the host to `/etc/hosts` on the exam node: `echo "<node-ip> example.org" | sudo tee -a /etc/hosts`
+- `pathType` is required in K8s v1.22+ — valid values: `Prefix`, `Exact`, `ImplementationSpecific`
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`ingress` · `ingress resource` · `kubectl create ingress` · `ingress controllers`
 
 ---
 
@@ -1069,6 +1405,25 @@ kubectl get gateway                      # Should show READY
 kubectl get httproute                    # Should show ACCEPTED
 ```
 
+**⚡ Imperative Command:**
+
+No imperative command available for Gateway or HTTPRoute — use declarative YAML above. These are CRD-based resources with no `kubectl create` shortcut.
+
+**📝 Points to Remember:**
+
+- **TLS config goes in the Gateway** (`listeners[].tls.certificateRefs`), **NOT in the HTTPRoute** — this is the #1 mistake
+- `certificateRefs` in Gateway references a **Secret** (type `kubernetes.io/tls`), not a Certificate resource
+- `parentRefs` in HTTPRoute must reference the Gateway by name — this links the route to the gateway
+- Gateway requires a `gatewayClassName` — check existing GatewayClasses: `kubectl get gatewayclass`
+- The `hostname` in Gateway listener and HTTPRoute should match (e.g., `gateway.web.k8s.local`)
+- When migrating from Ingress: extract `spec.tls[].secretName` for Gateway TLS, and `spec.rules[].http.paths[]` for HTTPRoute rules
+- Gateway API is the successor to Ingress — it's a CKA exam topic since K8s v1.29+
+- Key doc pages allowed in exam: `gateway-api.sigs.k8s.io/guides/tls/` and `gateway-api.sigs.k8s.io/guides/http-routing/`
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`gateway API` · `gateway resource model` · `HTTPRoute` · `gateway TLS` · `migrate ingress to gateway`
+
 ---
 
 ### Q14 — Select and Apply the Correct NetworkPolicy
@@ -1155,6 +1510,27 @@ kubectl apply -f /root/network-policies/network-policy-3.yaml
 kubectl get networkpolicy -n backend
 kubectl describe networkpolicy <policy-name> -n backend
 ```
+
+**⚡ Imperative Command:**
+
+No imperative command available for NetworkPolicy — use declarative YAML. NetworkPolicies must be written as YAML manifests.
+
+**📝 Points to Remember:**
+
+- **AND vs OR logic in `from` rules:**
+  - `namespaceSelector` + `podSelector` in the **same** `from` entry = **AND** (must match BOTH)
+  - `namespaceSelector` and `podSelector` as **separate** `from` entries = **OR** (either one matches)
+- `podSelector: {}` (empty) in `spec.podSelector` targets **ALL pods** in the namespace — very permissive
+- `from: []` or missing `from` allows **ALL traffic** — reject these for "least permissive" questions
+- `namespaceSelector: {}` (empty) matches **ALL namespaces** — too broad for most scenarios
+- NetworkPolicy applies in the **namespace where it's created** — for backend ingress rules, create the policy in the backend namespace
+- The CNI must support NetworkPolicies (Calico does, Flannel doesn't) — without support, policies are ignored silently
+- Always check pod and namespace labels first: `kubectl get pods -n <ns> --show-labels` and `kubectl get ns --show-labels`
+- `kubernetes.io/metadata.name` is an auto-label on every namespace — use it for namespace selectors
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`network policies` · `network policy` · `deny all ingress traffic` · `namespace selector`
 
 ---
 
@@ -1251,6 +1627,39 @@ kubectl get configmap nginx-config -n nginx-static -o yaml | grep immutable
 # kubectl edit configmap nginx-config -n nginx-static
 # → Error: "the object ... is invalid: data: Forbidden: field is immutable when `immutable` is set"
 ```
+
+**⚡ Imperative Command:**
+
+```bash
+# Edit ConfigMap (add TLSv1.2 to ssl_protocols line)
+kubectl edit configmap nginx-config -n nginx-static
+# Change: ssl_protocols TLSv1.3;
+# To:     ssl_protocols TLSv1.2 TLSv1.3;
+
+# Patch to make immutable
+kubectl patch configmap nginx-config -n nginx-static -p '{"immutable": true}'
+
+# Get service IP and add to /etc/hosts
+SVC_IP=$(kubectl get svc nginx-service -n nginx-static -o jsonpath='{.spec.clusterIP}')
+sudo sh -c "echo \"$SVC_IP ckaquestion.k8s.local\" >> /etc/hosts"
+
+# Restart deployment to pick up ConfigMap changes
+kubectl rollout restart deployment -n nginx-static
+```
+
+**📝 Points to Remember:**
+
+- **Order matters:** Edit the ConfigMap data FIRST, then set `immutable: true` — once immutable, you CANNOT change the data
+- The only way to undo `immutable: true` is to **delete and recreate** the ConfigMap
+- You can combine both edits (TLSv1.2 + immutable) in a single `kubectl edit` session to save time
+- NGINX does NOT auto-reload ConfigMap changes — you MUST `kubectl rollout restart` the deployment
+- `immutable` is a **top-level** field (same level as `data:`), not nested inside `metadata:`
+- `curl -vk` = verbose + skip TLS verification; `--tls-max 1.2` forces TLSv1.2 max; `--tlsv1.3` forces TLSv1.3 min
+- `kubectl get svc -o jsonpath='{.spec.clusterIP}'` is the fastest way to get the service IP for `/etc/hosts`
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`configmap` · `configmap immutable` · `configure pod configmap` · `immutable secrets configmaps`
 
 ---
 
@@ -1352,6 +1761,34 @@ kubectl get sc
 # No other SC should show (default)
 kubectl describe storageclass local-storage
 ```
+
+**⚡ Imperative Command:**
+
+No `kubectl create storageclass` command available — use declarative YAML. However, patching the default annotation is imperative:
+
+```bash
+# Make local-storage the default
+kubectl patch storageclass local-storage \
+  -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+# Remove default from old SC (e.g., local-path)
+kubectl patch storageclass local-path \
+  -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+
+**📝 Points to Remember:**
+
+- Only **ONE** StorageClass should be the default — if two are marked default, PVCs without `storageClassName` become ambiguous
+- The default annotation is `storageclass.kubernetes.io/is-default-class: "true"` (string, not boolean)
+- `WaitForFirstConsumer` delays volume binding until a Pod using the PVC is scheduled — better for topology-aware storage
+- `Immediate` binds the volume as soon as the PVC is created — good for pre-provisioned storage
+- `kubectl get sc` shows `(default)` next to the default StorageClass name
+- StorageClass is a **cluster-scoped** resource (no namespace)
+- The `provisioner` field must match an installed storage provider (e.g., `rancher.io/local-path`, `kubernetes.io/no-provisioner`)
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`storage classes` · `default storage class` · `volume binding mode` · `dynamic provisioning`
 
 ---
 
@@ -1465,6 +1902,35 @@ kubectl get pods -n mariadb              # Pod should be Running
 kubectl describe pod <pod-name> -n mariadb | grep -A 5 "Volumes"
 ```
 
+**⚡ Imperative Command:**
+
+No imperative command to create PVCs — use declarative YAML. However, clearing `claimRef` on a Released PV is imperative:
+
+```bash
+# Clear claimRef to make PV Available again
+kubectl patch pv <pv-name> -p '{"spec":{"claimRef": null}}'
+
+# Apply PVC YAML
+kubectl apply -f pvc.yaml
+
+# Apply deployment
+kubectl apply -f ~/mariadb-deploy.yaml
+```
+
+**📝 Points to Remember:**
+
+- If PV status is `Released`, you **must** clear `claimRef` to make it `Available` before a new PVC can bind
+- PVC must match the PV's `storageClassName`, `accessModes`, and have storage ≤ PV capacity — all three must match
+- If PV has no `storageClassName`, set `storageClassName: ""` (empty string) in the PVC, or omit it
+- `persistentVolumeReclaimPolicy: Retain` keeps the data after PVC deletion — this is why the PV is still available
+- `ReadWriteOnce` (RWO) means the volume can be mounted by a single node — it's the most common access mode
+- After applying the deployment, verify the pod is `Running` AND the PVC shows `Bound` — both must be true
+- Check the deployment's `volumes[].persistentVolumeClaim.claimName` matches the PVC name exactly
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`persistent volumes` · `persistent volume claims` · `reclaim policy` · `access modes` · `binding persistent volumes`
+
 ---
 
 # DOMAIN 5: Troubleshooting (30%)
@@ -1558,6 +2024,34 @@ kubectl get nodes                          # Should respond and show nodes
 kubectl get pods -n kube-system            # All control plane pods should be Running
 kubectl cluster-info                       # Should show control plane endpoints
 ```
+
+**⚡ Imperative Command:**
+
+No imperative kubectl command — this is a troubleshooting task. Edit the static pod manifest directly:
+
+```bash
+# Fix the etcd port in apiserver manifest
+sudo sed -i 's/--etcd-servers=https:\/\/127.0.0.1:2380/--etcd-servers=https:\/\/127.0.0.1:2379/' \
+  /etc/kubernetes/manifests/kube-apiserver.yaml
+
+# Wait for kubelet to detect the change (~30s), or force restart
+sudo systemctl restart kubelet
+```
+
+**📝 Points to Remember:**
+
+- **etcd ports:** 2379 = client (kube-apiserver connects here), 2380 = peer (etcd-to-etcd communication) — common exam trap
+- Static pod manifests are in `/etc/kubernetes/manifests/` — kubelet watches this directory and auto-restarts pods on file changes
+- After editing a manifest, wait 30-60 seconds for kubelet to detect the change — don't panic if it doesn't restart immediately
+- If `kubectl` doesn't work (apiserver is down), use `sudo crictl ps -a` to check container status and `sudo crictl logs <id>` for logs
+- Always check `journalctl -u kubelet --no-pager | tail -50` for kubelet-level errors
+- Common things to verify in `kube-apiserver.yaml`: `--etcd-servers`, `--etcd-cafile`, `--etcd-certfile`, `--etcd-keyfile`, `--advertise-address`
+- If kube-scheduler is also broken, check `/etc/kubernetes/manifests/kube-scheduler.yaml` for `--kubeconfig` path
+- Use the debugging flowchart: `kubelet status → crictl ps -a → crictl logs → check manifest`
+
+**🔍 Search Keywords (kubernetes.io):**
+
+`troubleshoot clusters` · `debug cluster` · `static pods` · `kube-apiserver` · `etcd`
 
 ---
 
