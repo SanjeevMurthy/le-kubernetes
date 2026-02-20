@@ -9,32 +9,33 @@
 1. [Q1 — Install cri-dockerd and Configure Sysctl Network Parameters](#q1--install-cri-dockerd-and-configure-sysctl-network-parameters)
 2. [Q2 — Install CNI Plugin (Calico) with NetworkPolicy Support](#q2--install-cni-plugin-calico-with-networkpolicy-support)
 3. [Q3 — List cert-manager CRDs and Extract Field Documentation](#q3--list-cert-manager-crds-and-extract-field-documentation)
-4. [Q4 — Create a PriorityClass and Patch Deployment](#q4--create-a-priorityclass-and-patch-deployment)
-5. [Q5 — Helm Template ArgoCD with Custom Configuration](#q5--helm-template-argocd-with-custom-configuration)
+4. [Q4 — RBAC for Custom Resources (CRDs)](#q4--rbac-for-custom-resources-crds)
+5. [Q5 — Create a PriorityClass and Patch Deployment](#q5--create-a-priorityclass-and-patch-deployment)
+6. [Q6 — Helm Template ArgoCD with Custom Configuration](#q6--helm-template-argocd-with-custom-configuration)
 
 ### Domain 2: Workloads & Scheduling (15%)
 
-6. [Q6 — Create a Horizontal Pod Autoscaler (HPA) with Downscale Stabilization](#q6--create-a-horizontal-pod-autoscaler-hpa-with-downscale-stabilization)
-7. [Q7 — Fix Pending Pods by Adjusting Resource Requests](#q7--fix-pending-pods-by-adjusting-resource-requests)
-8. [Q8 — Add a Sidecar Container to an Existing Deployment](#q8--add-a-sidecar-container-to-an-existing-deployment)
-9. [Q9 — Taints and Tolerations](#q9--taints-and-tolerations)
+7. [Q7 — Create a Horizontal Pod Autoscaler (HPA) with Downscale Stabilization](#q7--create-a-horizontal-pod-autoscaler-hpa-with-downscale-stabilization)
+8. [Q8 — Fix Pending Pods by Adjusting Resource Requests](#q8--fix-pending-pods-by-adjusting-resource-requests)
+9. [Q9 — Add a Sidecar Container to an Existing Deployment](#q9--add-a-sidecar-container-to-an-existing-deployment)
+10. [Q10 — Taints and Tolerations](#q10--taints-and-tolerations)
 
 ### Domain 3: Services & Networking (20%)
 
-10. [Q10 — Expose Deployment with NodePort Service](#q10--expose-deployment-with-nodeport-service)
-11. [Q11 — Create an Ingress Resource](#q11--create-an-ingress-resource)
-12. [Q12 — Migrate Ingress to Gateway API with TLS + HTTPRoute](#q12--migrate-ingress-to-gateway-api-with-tls--httproute)
-13. [Q13 — Select and Apply the Correct NetworkPolicy](#q13--select-and-apply-the-correct-networkpolicy)
-14. [Q14 — Update NGINX ConfigMap to Add TLSv1.2 Support and Make Immutable](#q14--update-nginx-configmap-to-add-tlsv12-support-and-make-immutable)
+11. [Q11 — Expose Deployment with NodePort Service](#q11--expose-deployment-with-nodeport-service)
+12. [Q12 — Create an Ingress Resource](#q12--create-an-ingress-resource)
+13. [Q13 — Migrate Ingress to Gateway API with TLS + HTTPRoute](#q13--migrate-ingress-to-gateway-api-with-tls--httproute)
+14. [Q14 — Select and Apply the Correct NetworkPolicy](#q14--select-and-apply-the-correct-networkpolicy)
+15. [Q15 — Update NGINX ConfigMap to Add TLSv1.2 Support and Make Immutable](#q15--update-nginx-configmap-to-add-tlsv12-support-and-make-immutable)
 
 ### Domain 4: Storage (10%)
 
-15. [Q15 — Create a StorageClass and Set as Default](#q15--create-a-storageclass-and-set-as-default)
-16. [Q16 — Create PVC to Bind an Existing PV and Restore MariaDB Deployment](#q16--create-pvc-to-bind-an-existing-pv-and-restore-mariadb-deployment)
+16. [Q16 — Create a StorageClass and Set as Default](#q16--create-a-storageclass-and-set-as-default)
+17. [Q17 — Create PVC to Bind an Existing PV and Restore MariaDB Deployment](#q17--create-pvc-to-bind-an-existing-pv-and-restore-mariadb-deployment)
 
 ### Domain 5: Troubleshooting (30%)
 
-17. [Q17 — Fix kube-apiserver After Cluster Migration (etcd Port Fix)](#q17--fix-kube-apiserver-after-cluster-migration-etcd-port-fix)
+18. [Q18 — Fix kube-apiserver After Cluster Migration (etcd Port Fix)](#q18--fix-kube-apiserver-after-cluster-migration-etcd-port-fix)
 
 ---
 
@@ -237,7 +238,89 @@ cat /root/subject.yaml       # Should show GROUP, VERSION, KIND, FIELD, DESCRIPT
 
 ---
 
-### Q4 — Create a PriorityClass and Patch Deployment
+### Q4 — RBAC for Custom Resources (CRDs)
+
+**Problem:** CRDs are already installed for custom objects (e.g., `students` and `classes`). Create a Role and RoleBinding that grants a user permission to create/manage these custom resources.
+
+**Reference Doc:** https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+**Solution Steps:**
+
+1. Discover the CRD details:
+
+```bash
+kubectl get crd | grep -E "students|classes"
+# e.g., students.school.example.com, classes.school.example.com
+
+kubectl api-resources | grep -E "students|classes"
+# Find: plural name, apiGroup, whether namespaced
+# e.g.: students   school.example.com/v1   true   Student
+```
+
+2. Create the Role imperatively:
+
+```bash
+kubectl create role school-admin \
+  --verb=get,list,create,update,delete \
+  --resource=students.school.example.com \
+  --resource=classes.school.example.com \
+  -n <namespace> $do > role.yaml
+
+kubectl apply -f role.yaml
+```
+
+3. Or declaratively:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: school-admin
+  namespace: default # use the namespace from the question
+rules:
+  - apiGroups: ["school.example.com"] # CRD's spec.group
+    resources: ["students", "classes"] # CRD's spec.names.plural
+    verbs: ["get", "list", "create", "update", "delete"]
+```
+
+4. Create the RoleBinding:
+
+```bash
+kubectl create rolebinding school-admin-binding \
+  --role=school-admin \
+  --user=jane \
+  -n <namespace>
+```
+
+Or for a ServiceAccount:
+
+```bash
+kubectl create rolebinding school-admin-binding \
+  --role=school-admin \
+  --serviceaccount=<namespace>:<sa-name> \
+  -n <namespace>
+```
+
+**Mapping Cheat Sheet:**
+
+| CRD Field                                 | RBAC Field                           |
+| ----------------------------------------- | ------------------------------------ |
+| `spec.group` (e.g., `school.example.com`) | `rules[].apiGroups[]`                |
+| `spec.names.plural` (e.g., `students`)    | `rules[].resources[]`                |
+| `spec.scope: Namespaced`                  | Use Role + RoleBinding               |
+| `spec.scope: Cluster`                     | Use ClusterRole + ClusterRoleBinding |
+
+**Verification:**
+
+```bash
+kubectl auth can-i create students --as=jane -n <namespace>     # → yes
+kubectl auth can-i delete classes --as=jane -n <namespace>      # → yes
+kubectl auth can-i create pods --as=jane -n <namespace>         # → no
+```
+
+---
+
+### Q5 — Create a PriorityClass and Patch Deployment
 
 **Problem:** You're working in a Kubernetes cluster with an existing deployment named `busybox-logger` running in the `priority` namespace. The cluster already has at least one user-defined PriorityClass.
 
@@ -311,7 +394,7 @@ kubectl get pods -n priority          # Pods should be Running
 
 ---
 
-### Q5 — Helm Template ArgoCD with Custom Configuration
+### Q6 — Helm Template ArgoCD with Custom Configuration
 
 **Problem:** Install Argo CD in a Kubernetes cluster using Helm while ensuring the CRDs are not installed (as they are pre-installed).
 
@@ -382,7 +465,7 @@ grep "kind: CustomResourceDefinition" /root/argo-helm.yaml
 
 ---
 
-### Q6 — Create a Horizontal Pod Autoscaler (HPA) with Downscale Stabilization
+### Q7 — Create a Horizontal Pod Autoscaler (HPA) with Downscale Stabilization
 
 **Problem:** Create a new HorizontalPodAutoscaler (HPA) named `apache-server` in the `autoscale` namespace.
 
@@ -477,7 +560,7 @@ kubectl describe hpa apache-server -n autoscale
 
 ---
 
-### Q7 — Fix Pending Pods by Adjusting Resource Requests
+### Q8 — Fix Pending Pods by Adjusting Resource Requests
 
 **Problem:** You are managing a WordPress application running in a Kubernetes cluster. Your task is to adjust the Pod resource requests and limits to ensure stable operation.
 
@@ -600,7 +683,7 @@ kubectl describe pod <pod-name> | grep -A 3 "Requests"
 
 ---
 
-### Q8 — Add a Sidecar Container to an Existing Deployment
+### Q9 — Add a Sidecar Container to an Existing Deployment
 
 **Problem:** Update the existing WordPress deployment by adding a sidecar container named `sidecar` using the `busybox:stable` image to the existing pod. The new sidecar container has to run the following command: `"/bin/sh -c tail -f /var/log/wordpress.log"`. Use a volume mounted at `/var/log` to make the log file `wordpress.log` available to the co-located container.
 
@@ -655,7 +738,7 @@ kubectl logs <pod-name> -c sidecar
 
 ---
 
-### Q9 — Taints and Tolerations
+### Q10 — Taints and Tolerations
 
 **Problem:**
 
@@ -723,7 +806,7 @@ kubectl describe pod nginx-fail | grep -A 5 "Events"
 
 ---
 
-### Q10 — Expose Deployment with NodePort Service
+### Q11 — Expose Deployment with NodePort Service
 
 **Problem:** There is a deployment named `nodeport-deployment` in the relevant namespace.
 
@@ -803,7 +886,7 @@ curl http://<node-ip>:30080
 
 ---
 
-### Q11 — Create an Ingress Resource
+### Q12 — Create an Ingress Resource
 
 **Problem:**
 
@@ -873,7 +956,7 @@ curl http://<nodeIP>:<nodePort>/echo
 
 ---
 
-### Q12 — Migrate Ingress to Gateway API with TLS + HTTPRoute
+### Q13 — Migrate Ingress to Gateway API with TLS + HTTPRoute
 
 **Problem:** You have an existing web application deployed in a Kubernetes cluster using an Ingress resource named `web`. You must migrate the existing Ingress configuration to the new Kubernetes Gateway API, maintaining the existing HTTPS access configuration.
 
@@ -988,7 +1071,7 @@ kubectl get httproute                    # Should show ACCEPTED
 
 ---
 
-### Q13 — Select and Apply the Correct NetworkPolicy
+### Q14 — Select and Apply the Correct NetworkPolicy
 
 **Problem:** There are two deployments: Frontend and Backend. Frontend is in the `frontend` namespace, Backend is in the `backend` namespace.
 
@@ -1075,7 +1158,7 @@ kubectl describe networkpolicy <policy-name> -n backend
 
 ---
 
-### Q14 — Update NGINX ConfigMap to Add TLSv1.2 Support and Make Immutable
+### Q15 — Update NGINX ConfigMap to Add TLSv1.2 Support and Make Immutable
 
 **Problem:** There is an existing deployment in the `nginx-static` namespace. The deployment contains a ConfigMap that currently only supports TLSv1.3, as well as a Secret for TLS. There is a service called `nginx-service` in the `nginx-static` namespace that is currently exposing the deployment.
 
@@ -1175,7 +1258,7 @@ kubectl get configmap nginx-config -n nginx-static -o yaml | grep immutable
 
 ---
 
-### Q15 — Create a StorageClass and Set as Default
+### Q16 — Create a StorageClass and Set as Default
 
 **Problem:**
 
@@ -1272,7 +1355,7 @@ kubectl describe storageclass local-storage
 
 ---
 
-### Q16 — Create PVC to Bind an Existing PV and Restore MariaDB Deployment
+### Q17 — Create PVC to Bind an Existing PV and Restore MariaDB Deployment
 
 **Problem:** A user accidentally deleted the MariaDB Deployment in the `mariadb` namespace. The deployment was configured with persistent storage. Your responsibility is to re-establish the deployment while ensuring data is preserved by reusing the available PersistentVolume.
 
@@ -1388,7 +1471,7 @@ kubectl describe pod <pod-name> -n mariadb | grep -A 5 "Volumes"
 
 ---
 
-### Q17 — Fix kube-apiserver After Cluster Migration (etcd Port Fix)
+### Q18 — Fix kube-apiserver After Cluster Migration (etcd Port Fix)
 
 **Problem:** After a cluster migration, the controlplane kube-apiserver is not coming up. Before the migration, the etcd was external and in HA. After migration, the kube-apiserver is pointing to the etcd **peer port 2380** instead of the client port.
 
@@ -1559,4 +1642,4 @@ Problem: Can't reach cluster
 
 ---
 
-_17 questions based on the actual CKA exam. Every solution verified against official Kubernetes documentation patterns. Trust your preparation and go claim that CKA._
+_18 questions based on the actual CKA exam. Every solution verified against official Kubernetes documentation patterns. Trust your preparation and go claim that CKA._
