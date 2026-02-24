@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q6 — HPA: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking HPA 'apache-server' exists in 'autoscale' namespace..."

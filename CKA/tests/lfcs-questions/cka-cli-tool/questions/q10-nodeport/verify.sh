@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q11 — NodePort: Verify
-set -e
 PASS=0; FAIL=0
 NS="relative"
 

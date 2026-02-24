@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q4 — RBAC for Custom Resources: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking Role 'school-admin' exists..."

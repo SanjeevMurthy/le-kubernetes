@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKA Exam Playground</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #21262d;
+    --border: #30363d; --text: #c9d1d9; --text-dim: #8b949e;
+    --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
+    --red: #f85149; --purple: #bc8cff; --orange: #f0883e;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 300px 1fr; grid-template-rows: 50px 1fr 200px; height: 100vh; }
+
+  /* Header */
+  .header { grid-column: 1 / -1; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 16px; }
+  .header h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
+  .header .stats { display: flex; gap: 12px; margin-left: auto; font-size: 12px; }
+  .stat { display: flex; align-items: center; gap: 4px; }
+  .stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-know { background: var(--green); }
+  .dot-fuzzy { background: var(--yellow); }
+  .dot-unknown { background: var(--red); }
+
+  /* Mode tabs */
+  .mode-tabs { display: flex; gap: 2px; margin-left: 20px; }
+  .mode-tab { padding: 6px 14px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; border-radius: 6px; transition: all .15s; }
+  .mode-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mode-tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  /* Sidebar */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 12px; }
+  .sidebar h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 12px 0 6px; }
+  .sidebar h3:first-child { margin-top: 0; }
+
+  .domain-group { margin-bottom: 4px; }
+  .domain-header { font-size: 12px; font-weight: 600; padding: 6px 8px; background: var(--surface2); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text); }
+  .domain-header:hover { background: var(--border); }
+  .domain-header .pct { font-size: 10px; color: var(--text-dim); }
+  .domain-items { padding: 2px 0; }
+
+  .q-item { font-size: 12px; padding: 5px 8px 5px 12px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 6px; transition: background .1s; }
+  .q-item:hover { background: var(--surface2); }
+  .q-item.active { background: var(--accent); color: #fff; }
+  .q-item .q-num { font-weight: 600; min-width: 24px; }
+  .q-item .q-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-item .knowledge-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 4px; margin-bottom: 8px; }
+  .filter-btn { font-size: 10px; padding: 3px 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); border-radius: 10px; cursor: pointer; }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Main content */
+  .main { overflow-y: auto; padding: 24px 32px; }
+
+  /* Study mode */
+  .study-view { max-width: 800px; }
+  .study-view .q-header { margin-bottom: 16px; }
+  .study-view .q-header h2 { font-size: 18px; color: var(--accent); margin-bottom: 4px; }
+  .study-view .q-header .domain-badge { font-size: 11px; background: var(--surface2); padding: 2px 8px; border-radius: 10px; color: var(--text-dim); }
+
+  .knowledge-toggle { display: flex; gap: 6px; margin: 12px 0 20px; }
+  .k-btn { padding: 5px 14px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); border-radius: 14px; cursor: pointer; transition: all .15s; }
+  .k-btn:hover { border-color: var(--text-dim); }
+  .k-btn.know { border-color: var(--green); color: var(--green); }
+  .k-btn.fuzzy { border-color: var(--yellow); color: var(--yellow); }
+  .k-btn.unknown { border-color: var(--red); color: var(--red); }
+  .k-btn.active.know { background: var(--green); color: #000; }
+  .k-btn.active.fuzzy { background: var(--yellow); color: #000; }
+  .k-btn.active.unknown { background: var(--red); color: #fff; }
+
+  .section { margin-bottom: 20px; }
+  .section-header { font-size: 13px; font-weight: 600; color: var(--purple); margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .section-header::before { content: ''; display: inline-block; width: 0; height: 0; border-left: 5px solid var(--purple); border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform .15s; }
+  .section-header.open::before { transform: rotate(90deg); }
+  .section-content { display: none; }
+  .section-content.open { display: block; }
+
+  .problem-text { font-size: 13px; line-height: 1.6; color: var(--text); margin-bottom: 12px; white-space: pre-wrap; }
+
+  pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; overflow-x: auto; margin: 8px 0; color: var(--text); position: relative; }
+  pre .copy-btn { position: absolute; top: 6px; right: 6px; font-size: 10px; padding: 2px 8px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  pre:hover .copy-btn { opacity: 1; }
+  pre .copy-btn:hover { background: var(--accent); color: #fff; }
+
+  .tip { background: #1a2332; border-left: 3px solid var(--accent); padding: 8px 12px; font-size: 12px; margin: 8px 0; border-radius: 0 4px 4px 0; }
+  .warning { background: #2d1f0f; border-left: 3px solid var(--orange); padding: 8px 12px; font-size: 12px; margin: 8px 0; border-radius: 0 4px 4px 0; }
+  .critical { background: #2d0f0f; border-left: 3px solid var(--red); padding: 8px 12px; font-size: 12px; margin: 8px 0; border-radius: 0 4px 4px 0; }
+
+  .points-list { list-style: none; padding: 0; }
+  .points-list li { font-size: 12px; padding: 4px 0; padding-left: 16px; position: relative; line-height: 1.5; }
+  .points-list li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+
+  .search-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .keyword { font-size: 11px; background: var(--surface2); padding: 2px 8px; border-radius: 10px; color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* Quiz mode */
+  .quiz-view { max-width: 800px; }
+  .quiz-question { margin-bottom: 24px; }
+  .quiz-question h2 { font-size: 16px; color: var(--accent); margin-bottom: 12px; }
+  .quiz-problem { font-size: 13px; line-height: 1.6; margin-bottom: 16px; background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap; }
+
+  .quiz-input { width: 100%; min-height: 120px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'SF Mono', monospace; font-size: 12px; padding: 12px; border-radius: 6px; resize: vertical; }
+  .quiz-input:focus { outline: none; border-color: var(--accent); }
+
+  .quiz-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { padding: 8px 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); border-radius: 6px; cursor: pointer; transition: all .15s; }
+  .btn:hover { background: var(--border); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: .9; }
+  .btn-success { background: var(--green); color: #000; border-color: var(--green); }
+
+  .quiz-answer { margin-top: 16px; display: none; }
+  .quiz-answer.shown { display: block; }
+  .quiz-answer h3 { font-size: 13px; color: var(--green); margin-bottom: 8px; }
+
+  /* Domain overview */
+  .overview-view { max-width: 900px; }
+  .domain-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .domain-card h3 { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+  .domain-card .weight { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .domain-questions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dq-item { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: var(--surface2); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .dq-item:hover { background: var(--border); }
+  .dq-item .mini-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Prompt output */
+  .prompt-area { grid-column: 1 / -1; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px; overflow-y: auto; }
+  .prompt-area h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .prompt-text { font-family: 'SF Mono', monospace; font-size: 12px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+  .copy-prompt { font-size: 11px; padding: 3px 10px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); border-radius: 4px; cursor: pointer; }
+  .copy-prompt:hover { background: var(--accent); color: #fff; }
+  .copy-prompt.copied { background: var(--green); color: #000; border-color: var(--green); }
+
+  /* Nav buttons */
+  .nav-btns { display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* Presets */
+  .presets { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .preset-btn { font-size: 10px; padding: 3px 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); border-radius: 10px; cursor: pointer; }
+  .preset-btn:hover { background: var(--surface2); color: var(--text); }
+  .preset-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <h1>CKA Exam Playground</h1>
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="overview" onclick="setMode('overview')">Overview</button>
+      <button class="mode-tab" data-mode="study" onclick="setMode('study')">Study</button>
+      <button class="mode-tab" data-mode="quiz" onclick="setMode('quiz')">Quiz</button>
+    </div>
+    <div class="stats">
+      <span class="stat"><span class="dot dot-know"></span> <span id="stat-know">0</span> Know</span>
+      <span class="stat"><span class="dot dot-fuzzy"></span> <span id="stat-fuzzy">0</span> Fuzzy</span>
+      <span class="stat"><span class="dot dot-unknown"></span> <span id="stat-unknown">20</span> Unknown</span>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>Presets</h3>
+    <div class="presets">
+      <button class="preset-btn" onclick="setPreset('all-unknown')">Reset All</button>
+      <button class="preset-btn" onclick="setPreset('troubleshoot')">Troubleshooting</button>
+      <button class="preset-btn" onclick="setPreset('networking')">Networking</button>
+      <button class="preset-btn" onclick="setPreset('storage')">Storage</button>
+      <button class="preset-btn" onclick="setPreset('workloads')">Workloads</button>
+    </div>
+
+    <h3>Filter by Knowledge</h3>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" data-filter="unknown" onclick="setFilter('unknown')">Unknown</button>
+      <button class="filter-btn" data-filter="fuzzy" onclick="setFilter('fuzzy')">Fuzzy</button>
+      <button class="filter-btn" data-filter="know" onclick="setFilter('know')">Know</button>
+    </div>
+
+    <h3>Questions</h3>
+    <div id="sidebar-questions"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main" id="main-content"></div>
+
+  <!-- Prompt Output -->
+  <div class="prompt-area">
+    <h4>
+      Prompt Output
+      <button class="copy-prompt" id="copy-prompt-btn" onclick="copyPrompt()">Copy</button>
+    </h4>
+    <div class="prompt-text" id="prompt-output">Select a question or mark your knowledge levels to generate a study prompt.</div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    id: 1, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "Install cri-dockerd & Configure Sysctl",
+    problem: "Set up cri-dockerd. Install the debian package ~/cri-dockerd.deb using dpkg. Enable and start the cri-docker service. Configure these sysctl parameters:\n\n1. net.bridge.bridge-nf-call-iptables = 1\n2. net.ipv6.conf.all.forwarding = 1\n3. net.ipv4.ip_forward = 1\n4. net.netfilter.nf_conntrack_max = 131072",
+    solution: `# 1. Install the .deb package
+sudo dpkg -i ~/cri-dockerd.deb
+sudo apt-get install -f  # Fix dependencies if needed
+
+# 2. Enable and start the service
+sudo systemctl enable --now cri-docker.service
+sudo systemctl status cri-docker.service
+
+# 3. Load required kernel module
+sudo modprobe br_netfilter
+
+# 4. Configure sysctl parameters persistently
+sudo tee /etc/sysctl.d/kube.conf >/dev/null <<'EOF'
+net.bridge.bridge-nf-call-iptables=1
+net.ipv6.conf.all.forwarding=1
+net.ipv4.ip_forward=1
+net.netfilter.nf_conntrack_max=131072
+EOF
+
+sudo sysctl --system`,
+    verification: `sudo systemctl status cri-docker.service    # active (running)
+sysctl net.bridge.bridge-nf-call-iptables   # = 1
+sysctl net.ipv6.conf.all.forwarding         # = 1
+sysctl net.ipv4.ip_forward                  # = 1
+sysctl net.netfilter.nf_conntrack_max       # = 131072`,
+    points: [
+      "sysctl --system applies ALL files in /etc/sysctl.d/ (better than sysctl -p)",
+      "br_netfilter module MUST be loaded BEFORE net.bridge.* params can be set",
+      "systemctl enable --now combines enable + start in one command",
+      "Service name is cri-docker.service (not cri-dockerd)",
+      "If dpkg -i fails with dependencies, follow up with sudo apt-get install -f"
+    ],
+    keywords: ["container runtimes prerequisites", "forwarding IPv4", "iptables bridged traffic", "cri-dockerd"],
+    imperative: "No imperative kubectl command — system-level task using dpkg, systemctl, sysctl.",
+    tips: ["Write to /etc/sysctl.d/ for persistence + sysctl --system for immediate apply — both needed for full marks"],
+    warnings: ["net.bridge.* params require br_netfilter module — load with modprobe br_netfilter first"]
+  },
+  {
+    id: 2, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "Install CNI Plugin (Calico)",
+    problem: "Install and configure a CNI that:\n1. Lets pods communicate\n2. Supports network policy enforcement\n3. Installs from manifest\n\nChoose Calico or Flannel. Key: Calico supports NetworkPolicies, Flannel does NOT.",
+    solution: `# 1. Find Pod CIDR
+kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
+kubectl -n kube-system get cm kubeadm-config -o yaml | grep podSubnet
+
+# 2. Install Calico operator
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/tigera-operator.yaml
+
+# 3. Download and configure custom resources
+curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.28.2/manifests/custom-resources.yaml
+# Edit cidr to match cluster's podCIDR
+kubectl apply -f custom-resources.yaml`,
+    verification: `kubectl get all -n tigera-operator    # operator Running
+kubectl get pods -n calico-system      # calico-node Running
+kubectl get nodes                      # All nodes Ready`,
+    points: [
+      "Calico supports NetworkPolicies, Flannel does NOT",
+      "Pod CIDR in custom-resources.yaml must match cluster's --pod-network-cidr",
+      "Use kubectl create -f (not apply) for operator manifest — CRDs can fail with apply on first install",
+      "Calico pods run in calico-system namespace (not kube-system) with operator method",
+      "Give 30-60 seconds after applying for Calico to initialize"
+    ],
+    keywords: ["pod network add-on", "networking and network policy", "calico"],
+    imperative: "kubectl create -f <calico-operator-url>",
+    tips: ["If nodes stay NotReady after CNI install, check kubectl get pods -n calico-system"],
+    warnings: ["If kubectl apply throws errors, wait 10-15s and retry — CRDs need time to register"]
+  },
+  {
+    id: 3, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "List cert-manager CRDs & Extract Field Docs",
+    problem: "1. Create a list of all cert-manager CRDs → save to /root/resources.yaml\n2. Extract documentation for the subject field of Certificate CR → save to /root/subject.yaml",
+    solution: `# List cert-manager CRDs
+kubectl get crd | grep cert-manager | tee /root/resources.yaml
+
+# Extract subject field docs
+kubectl explain certificate.spec.subject | tee /root/subject.yaml
+
+# If unsure of resource name:
+kubectl api-resources | grep cert-manager`,
+    verification: `cat /root/resources.yaml   # cert-manager CRDs listed
+cat /root/subject.yaml    # GROUP, VERSION, KIND, FIELD, DESCRIPTION`,
+    points: [
+      "kubectl explain works on CRDs — use <resource>.<field>.<subfield> dot notation",
+      "Use kubectl api-resources | grep cert-manager to find correct resource name",
+      "If question says 'default output format' — do NOT add -o yaml or -o json",
+      "tee is safer than > redirect — shows output AND writes to file",
+      "Try singular form (certificate) if plural (certificates) doesn't work with explain"
+    ],
+    keywords: ["custom resource definitions", "kubectl explain", "viewing CRDs", "api-resources"],
+    imperative: "kubectl get crd | grep cert-manager | tee /root/resources.yaml\nkubectl explain certificate.spec.subject | tee /root/subject.yaml",
+    tips: ["Use tee instead of > to see output on screen AND write to file simultaneously"],
+    warnings: []
+  },
+  {
+    id: 4, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "RBAC for Custom Resources (CRDs)",
+    problem: "CRDs are installed for custom objects (e.g., students and classes). Create a Role and RoleBinding that grants a user permission to create/manage these custom resources.",
+    solution: `# 1. Discover CRD details
+kubectl get crd | grep -E "students|classes"
+kubectl api-resources | grep -E "students|classes"
+
+# 2. Create Role
+kubectl create role school-admin \\
+  --verb=get,list,create,update,delete \\
+  --resource=students.school.example.com \\
+  --resource=classes.school.example.com \\
+  -n <namespace>
+
+# 3. Create RoleBinding
+kubectl create rolebinding school-admin-binding \\
+  --role=school-admin \\
+  --user=jane \\
+  -n <namespace>`,
+    verification: `kubectl auth can-i create students --as=jane -n <ns>   # yes
+kubectl auth can-i delete classes --as=jane -n <ns>    # yes
+kubectl auth can-i create pods --as=jane -n <ns>       # no`,
+    points: [
+      "For CRDs, --resource flag uses format: <plural>.<apiGroup> (e.g., students.school.example.com)",
+      "Always run kubectl api-resources | grep <name> to find plural name and apiGroup",
+      "Use Role + RoleBinding for namespaced CRDs, ClusterRole + ClusterRoleBinding for cluster-scoped",
+      "kubectl auth can-i is the best way to verify RBAC — always test with --as=<user>",
+      "Don't confuse apiGroups (CRD group) with apiVersion (like v1)"
+    ],
+    keywords: ["RBAC", "role based access control", "kubectl create role", "custom resources"],
+    imperative: "kubectl create role <name> --verb=... --resource=<plural>.<apiGroup>\nkubectl create rolebinding <name> --role=<role> --user=<user>",
+    tips: ["CRD Mapping: spec.group → apiGroups, spec.names.plural → resources, spec.scope → Role vs ClusterRole"],
+    warnings: []
+  },
+  {
+    id: 5, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "Create PriorityClass & Patch Deployment",
+    problem: "1. Create a PriorityClass named high-priority. Value = one less than the highest existing user-defined PriorityClass.\n2. Patch deployment busybox-logger in priority namespace to use it.",
+    solution: `# 1. Find highest user-defined PriorityClass
+kubectl get priorityclasses
+# Ignore system-cluster-critical (2000000000) and system-node-critical (2000001000)
+
+# 2. Create PriorityClass (if highest user value is 1000)
+kubectl create priorityclass high-priority --value=999 --description="high priority"
+
+# 3. Patch deployment
+kubectl patch deployment busybox-logger -n priority \\
+  -p '{"spec":{"template":{"spec":{"priorityClassName":"high-priority"}}}}'`,
+    verification: `kubectl get pc                        # high-priority with value 999
+kubectl describe deployment busybox-logger -n priority | grep -i "Priority Class"
+kubectl get pods -n priority          # Pods Running`,
+    points: [
+      "Ignore system PriorityClasses (system-cluster-critical, system-node-critical)",
+      "kubectl get pc is shorthand for kubectl get priorityclasses",
+      "Only ONE PriorityClass can have globalDefault: true — set to false for new ones",
+      "priorityClassName goes under spec.template.spec (pod spec), NOT spec directly",
+      "After patching, pods will be recreated — watch with kubectl get pods -w"
+    ],
+    keywords: ["pod priority preemption", "priorityclass", "kubectl create priorityclass"],
+    imperative: "kubectl create priorityclass <name> --value=<N> --description=\"...\"\nkubectl patch deployment <name> -n <ns> -p '{\"spec\":{\"template\":{\"spec\":{\"priorityClassName\":\"<name>\"}}}}'",
+    tips: [],
+    warnings: []
+  },
+  {
+    id: 6, domain: 1, domainName: "Cluster Architecture, Installation & Configuration", weight: "25%",
+    title: "Helm Template ArgoCD",
+    problem: "1. Add Argo CD Helm repo as 'argocd'\n2. Create namespace argocd\n3. Generate Helm template from chart version 7.7.3 for argocd namespace\n4. Ensure CRDs are NOT installed (--set crds.install=false)\n5. Save to /root/argo-helm.yaml",
+    solution: `# 1. Create namespace
+kubectl create namespace argocd
+
+# 2. Add Helm repo
+helm repo add argocd https://argoproj.github.io/argo-helm
+helm repo update
+
+# 3. Generate template with CRDs disabled
+helm template argocd argocd/argo-cd \\
+  --version 7.7.3 \\
+  --namespace argocd \\
+  --set crds.install=false \\
+  > /root/argo-helm.yaml`,
+    verification: `cat /root/argo-helm.yaml         # rendered K8s manifests
+grep "kind: CustomResourceDefinition" /root/argo-helm.yaml
+# Should return NO results`,
+    points: [
+      "helm template renders YAML locally WITHOUT installing — different from helm install",
+      "helm template does NOT require namespace to exist — helm install does",
+      "helm show values <chart> reveals all configurable options",
+      "Always run helm repo update after helm repo add",
+      "--version refers to chart version, not app version",
+      "If exam asks to 'install' (not template), use helm install + --create-namespace"
+    ],
+    keywords: ["managing kubernetes objects using helm", "helm template", "helm install"],
+    imperative: "helm repo add argocd <url>\nhelm template argocd argocd/argo-cd --version 7.7.3 --namespace argocd --set crds.install=false > /root/argo-helm.yaml",
+    tips: ["Use helm show values <chart> to find correct --set flags"],
+    warnings: []
+  },
+  {
+    id: 7, domain: 2, domainName: "Workloads & Scheduling", weight: "15%",
+    title: "HPA with Downscale Stabilization",
+    problem: "Create HPA named apache-server in autoscale namespace:\n1. Target apache-deployment\n2. 50% CPU usage target\n3. Min 1, Max 4 pods\n4. Downscale stabilization window: 30 seconds",
+    solution: `# Declarative YAML (required for behavior field)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: apache-server
+  namespace: autoscale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: apache-deployment
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30
+
+# OR: imperative + edit
+kubectl autoscale deployment apache-deployment \\
+  --name=apache-server --min=1 --max=4 --cpu-percent=50 -n autoscale
+kubectl edit hpa apache-server -n autoscale
+# Add behavior.scaleDown.stabilizationWindowSeconds: 30`,
+    verification: `kubectl get hpa -n autoscale
+kubectl describe hpa apache-server -n autoscale
+# TARGETS should show current/target (e.g., 10%/50%)`,
+    points: [
+      "autoscaling/v2 is REQUIRED for the behavior field — v1 does NOT support it",
+      "kubectl autoscale CANNOT set the behavior field — must edit after or use YAML",
+      "If TARGETS shows <unknown>/50%, deployment containers are missing resources.requests.cpu",
+      "Default downscale stabilization is 300s (5 min) — question asks for 30s",
+      "scaleTargetRef.name must exactly match deployment name (case-sensitive)",
+      "HPA uses averageUtilization (% of request), NOT absolute CPU"
+    ],
+    keywords: ["horizontal pod autoscale walkthrough", "HPA", "autoscaling v2", "stabilization window"],
+    imperative: "kubectl autoscale deployment <name> --name=<hpa> --min=1 --max=4 --cpu-percent=50 -n <ns>\n# Then kubectl edit to add behavior field",
+    tips: [],
+    warnings: ["Deployment MUST have resources.requests.cpu set for HPA to work"]
+  },
+  {
+    id: 8, domain: 2, domainName: "Workloads & Scheduling", weight: "15%",
+    title: "Fix Pending Pods (Resource Requests)",
+    problem: "WordPress deployment has 3 Pending pods due to oversized resource requests.\n1. Scale down to 0\n2. Divide node resources evenly across 3 pods\n3. Init and main containers must have identical resource values\n4. Scale back to 3",
+    solution: `# 1. Scale down
+kubectl scale deployment wordpress --replicas=0
+
+# 2. Check node capacity
+kubectl describe node <name> | grep -A 5 "Allocatable"
+kubectl describe node <name> | grep -A 20 "Allocated resources"
+
+# 3. Calculate: Per_Pod = (Allocatable - Used - 15% overhead) / 3
+
+# 4. Edit deployment — same values for ALL containers
+kubectl edit deployment wordpress
+# Set every container (init + main) to:
+#   resources:
+#     requests: { cpu: "300m", memory: "600Mi" }
+#     limits:   { cpu: "400m", memory: "700Mi" }
+
+# 5. Scale back
+kubectl scale deployment wordpress --replicas=3`,
+    verification: `kubectl get pods -l app=wordpress    # All 3 Running, none Pending
+kubectl describe pod <name> | grep -A 3 "Requests"`,
+    points: [
+      "Scale down to 0 FIRST, edit, then scale back — prevents scheduling conflicts",
+      "Init containers count toward scheduling (max of init vs sum of regular)",
+      "Question says 'same resource requests and limits' for ALL containers — don't forget init containers",
+      "Formula: Per_Pod = (Allocatable - Already_Used - 10-15% overhead) / replicas",
+      "kubectl set resources deployment <name> -c <container> --requests=... --limits=... also works"
+    ],
+    keywords: ["manage resources containers", "resource requests limits", "kubectl set resources"],
+    imperative: "kubectl scale deployment wordpress --replicas=0\nkubectl set resources deployment wordpress -c <container> --requests=cpu=300m,memory=600Mi --limits=cpu=400m,memory=700Mi\nkubectl scale deployment wordpress --replicas=3",
+    tips: [],
+    warnings: []
+  },
+  {
+    id: 9, domain: 2, domainName: "Workloads & Scheduling", weight: "15%",
+    title: "Add Sidecar Container",
+    problem: "Add a sidecar container named 'sidecar' using busybox:stable to the WordPress deployment.\nCommand: /bin/sh -c tail -f /var/log/wordpress.log\nUse emptyDir volume mounted at /var/log.",
+    solution: `# Export, edit, apply
+kubectl get deployment wordpress -o yaml > wordpress-deploy.yaml
+
+# Add to spec.template.spec:
+volumes:
+  - name: log
+    emptyDir: {}
+containers:
+  - name: wordpress    # existing
+    volumeMounts:
+      - name: log
+        mountPath: /var/log
+  - name: sidecar      # NEW
+    image: busybox:stable
+    command: ["/bin/sh", "-c", "tail -f /var/log/wordpress.log"]
+    volumeMounts:
+      - name: log
+        mountPath: /var/log
+
+kubectl apply -f wordpress-deploy.yaml`,
+    verification: `kubectl get pods -l app=wordpress    # 2/2 READY
+kubectl logs <pod> -c sidecar`,
+    points: [
+      "Sidecar shares same Pod lifecycle — both in containers[] array",
+      "Use emptyDir: {} for shared volume — simplest for log sharing",
+      "Both containers must mount the SAME named volume",
+      "Command array: [\"/bin/sh\", \"-c\", \"tail -f /var/log/wordpress.log\"]",
+      "Check READY shows 2/2 (not 1/2) to confirm sidecar is running",
+      "K8s 1.28+ has native sidecar via initContainers with restartPolicy: Always"
+    ],
+    keywords: ["sidecar containers", "multi container pods", "volumes emptyDir"],
+    imperative: "No imperative command — must use declarative YAML (export, edit, re-apply)",
+    tips: [],
+    warnings: []
+  },
+  {
+    id: 10, domain: 2, domainName: "Workloads & Scheduling", weight: "15%",
+    title: "Taints and Tolerations",
+    problem: "1. Add taint to node01: Key=PERMISSION, Value=granted, Effect=NoSchedule\n2. Schedule a Pod on node01 with the correct toleration",
+    solution: `# 1. Add taint
+kubectl taint nodes node01 PERMISSION=granted:NoSchedule
+
+# 2. Create pod with toleration
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+  tolerations:
+    - key: PERMISSION
+      operator: Equal
+      value: granted
+      effect: NoSchedule
+
+# OR imperative with --overrides:
+kubectl run nginx --image=nginx --overrides='{
+  "spec": {
+    "tolerations": [{
+      "key": "PERMISSION",
+      "operator": "Equal",
+      "value": "granted",
+      "effect": "NoSchedule"
+    }]
+  }
+}'`,
+    verification: `kubectl get pods -o wide    # nginx Running on node01
+# Remove taint: kubectl taint nodes node01 PERMISSION=granted:NoSchedule-`,
+    points: [
+      "Taint format: key=value:Effect — all three must match in toleration",
+      "operator: Equal requires BOTH key AND value match; operator: Exists needs only key",
+      "Three effects: NoSchedule (hard), PreferNoSchedule (soft), NoExecute (evicts existing)",
+      "Remove taint: append - at end: kubectl taint nodes node01 PERMISSION=granted:NoSchedule-",
+      "Toleration ALLOWS scheduling on tainted node but does NOT guarantee it — use nodeSelector/nodeName to force",
+      "NoExecute with tolerationSeconds = evict after N seconds"
+    ],
+    keywords: ["taint and toleration", "NoSchedule", "NoExecute", "kubectl taint"],
+    imperative: "kubectl taint nodes node01 PERMISSION=granted:NoSchedule\nkubectl run nginx --image=nginx --overrides='{...tolerations...}'",
+    tips: [],
+    warnings: []
+  },
+  {
+    id: 11, domain: 3, domainName: "Services & Networking", weight: "20%",
+    title: "Expose Deployment with NodePort",
+    problem: "1. Configure deployment with port 80, name=http, protocol TCP\n2. Create Service nodeport-service on port 80, NodePort 30080\n3. Expose pods using NodePort",
+    solution: `# 1. Patch deployment to add container port
+kubectl edit deployment nodeport-deployment -n <ns>
+# Add under containers[0]:
+#   ports:
+#     - name: http
+#       containerPort: 80
+#       protocol: TCP
+
+# 2. Create NodePort service (declarative for specific nodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodeport-service
+spec:
+  type: NodePort
+  selector:
+    app: nodeport-deployment  # Must match pod labels!
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      nodePort: 30080`,
+    verification: `kubectl get svc nodeport-service -o wide
+curl http://<node-ip>:30080`,
+    points: [
+      "NodePort range is 30000-32767",
+      "Always check pod labels: kubectl get pods --show-labels — selector must match",
+      "port = service port, targetPort = container port",
+      "kubectl expose CANNOT set specific nodePort — use declarative YAML",
+      "kubectl create service nodeport CAN set nodePort but generates wrong selector — verify",
+      "Container name in patch must exactly match existing container name"
+    ],
+    keywords: ["service", "NodePort", "kubectl expose", "service types"],
+    imperative: "kubectl expose deployment <name> --type=NodePort --port=80 --target-port=80 --name=<svc>\n# But cannot set specific nodePort — use YAML",
+    tips: [],
+    warnings: ["kubectl expose CANNOT set a specific nodePort"]
+  },
+  {
+    id: 12, domain: 3, domainName: "Services & Networking", weight: "20%",
+    title: "Create an Ingress Resource",
+    problem: "1. Expose deployment with echo-service using port 8080, type=NodePort\n2. Create Ingress named echo in echo-sound namespace for http://example.org/echo",
+    solution: `# 1. Expose deployment
+kubectl expose deployment echo -n echo-sound \\
+  --name echo-service --type NodePort --port 8080 --target-port 8080
+
+# 2. Create Ingress
+kubectl create ingress echo \\
+  --rule="example.org/echo=echo-service:8080" \\
+  -n echo-sound
+
+# OR declarative:
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo
+  namespace: echo-sound
+spec:
+  rules:
+    - host: example.org
+      http:
+        paths:
+          - path: /echo
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-service
+                port:
+                  number: 8080`,
+    verification: `kubectl get svc -n echo-sound echo-service
+kubectl get ingress -n echo-sound
+curl http://<nodeIP>:<nodePort>/echo`,
+    points: [
+      "kubectl create ingress format: --rule=\"host/path=service:port\"",
+      "pathType defaults to Exact in imperative — add * suffix for Prefix: --rule=\"host/path*=...\"",
+      "Ingress requires IngressClass — if only one exists, auto-selected",
+      "Ingress ADDRESS may take 30-60s to populate",
+      "pathType is required in K8s v1.22+ — values: Prefix, Exact, ImplementationSpecific"
+    ],
+    keywords: ["ingress", "ingress resource", "kubectl create ingress"],
+    imperative: "kubectl create ingress echo --rule=\"example.org/echo=echo-service:8080\" -n echo-sound",
+    tips: ["For host-based routing, may need to add host to /etc/hosts"],
+    warnings: []
+  },
+  {
+    id: 13, domain: 3, domainName: "Services & Networking", weight: "20%",
+    title: "Migrate Ingress to Gateway API (TLS + HTTPRoute)",
+    problem: "Migrate existing Ingress 'web' to Gateway API:\n1. Create Gateway web-gateway with hostname gateway.web.k8s.local + TLS\n2. Create HTTPRoute web-route with routing rules\n3. GatewayClass nginx-class is pre-installed",
+    solution: `# 1. Inspect existing Ingress
+kubectl describe ingress web
+
+# 2. Create Gateway (TLS goes HERE)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: web-gateway
+spec:
+  gatewayClassName: nginx-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: gateway.web.k8s.local
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: web-tls
+
+# 3. Create HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route
+spec:
+  parentRefs:
+    - name: web-gateway
+  hostnames:
+    - "gateway.web.k8s.local"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: web-service
+          port: 80`,
+    verification: `kubectl describe gateway web-gateway
+kubectl describe httproute web-route
+kubectl get gateway       # READY
+kubectl get httproute     # ACCEPTED`,
+    points: [
+      "TLS config goes in Gateway listeners[].tls.certificateRefs — NOT in HTTPRoute (#1 mistake)",
+      "certificateRefs references a Secret (type kubernetes.io/tls), not a Certificate",
+      "parentRefs in HTTPRoute must reference the Gateway by name",
+      "Gateway requires gatewayClassName — check existing: kubectl get gatewayclass",
+      "hostname in Gateway and HTTPRoute should match",
+      "Gateway API is CKA topic since K8s v1.29+"
+    ],
+    keywords: ["gateway API", "gateway resource model", "HTTPRoute", "gateway TLS"],
+    imperative: "No imperative command — must use declarative YAML (CRD-based resources)",
+    tips: ["When migrating: extract spec.tls[].secretName for Gateway TLS, spec.rules[].http.paths[] for HTTPRoute"],
+    warnings: ["TLS secret goes in Gateway, NOT HTTPRoute — this is the #1 mistake"]
+  },
+  {
+    id: 14, domain: 3, domainName: "Services & Networking", weight: "20%",
+    title: "Select & Apply Correct NetworkPolicy",
+    problem: "Frontend (frontend ns) and Backend (backend ns) deployments.\nChoose the LEAST permissive NetworkPolicy from /root/network-policies/ that allows frontend→backend communication.",
+    solution: `# 1. Check labels
+kubectl get pods -n frontend --show-labels
+kubectl get pods -n backend --show-labels
+kubectl get ns frontend --show-labels
+kubectl get ns backend --show-labels
+
+# 2. Review and compare policies
+ls /root/network-policies/
+cat /root/network-policies/*.yaml
+
+# 3. The correct (least permissive) policy:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: frontend
+          podSelector:
+            matchLabels:
+              app: frontend`,
+    verification: `kubectl get networkpolicy -n backend
+kubectl describe networkpolicy <name> -n backend`,
+    points: [
+      "AND vs OR: namespaceSelector + podSelector in SAME from entry = AND (both must match)",
+      "namespaceSelector and podSelector as SEPARATE from entries = OR (either matches)",
+      "podSelector: {} targets ALL pods — very permissive",
+      "from: [] or missing from allows ALL traffic — reject for 'least permissive'",
+      "namespaceSelector: {} matches ALL namespaces — too broad",
+      "NetworkPolicy applies in namespace where it's created",
+      "kubernetes.io/metadata.name is auto-label on every namespace"
+    ],
+    keywords: ["network policies", "deny all ingress traffic", "namespace selector"],
+    imperative: "No imperative command — must use declarative YAML",
+    tips: ["Always check pod and namespace labels first"],
+    warnings: []
+  },
+  {
+    id: 15, domain: 3, domainName: "Services & Networking", weight: "20%",
+    title: "Update NGINX ConfigMap (TLSv1.2 + Immutable)",
+    problem: "1. Edit ConfigMap to also support TLSv1.2 (change ssl_protocols TLSv1.3 → TLSv1.2 TLSv1.3)\n2. Make ConfigMap immutable\n3. Add service IP to /etc/hosts as ckaquestion.k8s.local\n4. Verify both TLS versions work",
+    solution: `# 1. Edit ConfigMap — add TLSv1.2
+kubectl edit configmap nginx-config -n nginx-static
+# Change: ssl_protocols TLSv1.3;
+# To:     ssl_protocols TLSv1.2 TLSv1.3;
+
+# 2. Make immutable (AFTER editing data!)
+kubectl patch configmap nginx-config -n nginx-static -p '{"immutable": true}'
+
+# 3. Add service IP to /etc/hosts
+SVC_IP=$(kubectl get svc nginx-service -n nginx-static -o jsonpath='{.spec.clusterIP}')
+sudo sh -c "echo \\"$SVC_IP ckaquestion.k8s.local\\" >> /etc/hosts"
+
+# 4. Restart deployment to pick up changes
+kubectl rollout restart deployment -n nginx-static`,
+    verification: `curl -vk --tls-max 1.2 https://ckaquestion.k8s.local   # works
+curl -vk --tlsv1.3 https://ckaquestion.k8s.local      # works
+kubectl get cm nginx-config -n nginx-static -o yaml | grep immutable`,
+    points: [
+      "ORDER MATTERS: Edit data FIRST, then set immutable — once immutable, CANNOT change data",
+      "Only way to undo immutable: delete and recreate the ConfigMap",
+      "Can combine both edits in a single kubectl edit session",
+      "NGINX does NOT auto-reload ConfigMap — must rollout restart",
+      "immutable is a TOP-LEVEL field (same level as data:), not in metadata:",
+      "kubectl get svc -o jsonpath='{.spec.clusterIP}' for service IP"
+    ],
+    keywords: ["configmap", "configmap immutable", "immutable secrets configmaps"],
+    imperative: "kubectl edit configmap <name>\nkubectl patch configmap <name> -p '{\"immutable\": true}'",
+    tips: [],
+    warnings: ["Once immutable: true is set, you CANNOT change data or remove the flag"]
+  },
+  {
+    id: 16, domain: 4, domainName: "Storage", weight: "10%",
+    title: "Create StorageClass & Set as Default",
+    problem: "1. Create StorageClass local-storage, provisioner rancher.io/local-path, VolumeBindingMode WaitForFirstConsumer\n2. Patch to make it default\n3. Ensure it's the ONLY default class",
+    solution: `# 1. Create StorageClass (declarative)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+
+# 2. Make it default
+kubectl patch storageclass local-storage \\
+  -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+# 3. Remove default from old SC
+kubectl get sc    # find other (default) class
+kubectl patch storageclass <old-sc> \\
+  -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'`,
+    verification: `kubectl get sc    # local-storage (default), no other default`,
+    points: [
+      "Only ONE StorageClass should be default — two defaults = ambiguous PVCs",
+      "Default annotation: storageclass.kubernetes.io/is-default-class: \"true\" (string, not boolean)",
+      "WaitForFirstConsumer delays binding until Pod is scheduled — better for topology-aware storage",
+      "kubectl get sc shows (default) next to default class name",
+      "StorageClass is cluster-scoped (no namespace)",
+      "No kubectl create storageclass command — must use YAML"
+    ],
+    keywords: ["storage classes", "default storage class", "volume binding mode"],
+    imperative: "kubectl patch storageclass <name> -p '{\"metadata\":{\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'",
+    tips: [],
+    warnings: []
+  },
+  {
+    id: 17, domain: 4, domainName: "Storage", weight: "10%",
+    title: "Create PVC to Bind Existing PV & Restore MariaDB",
+    problem: "MariaDB deployment accidentally deleted. PV exists with retained data.\n1. Create PVC named mariadb (ReadWriteOnce, 250Mi)\n2. Edit ~/mariadb-deploy.yaml to use the PVC\n3. Apply and verify",
+    solution: `# 1. Check PV status
+kubectl get pv
+kubectl describe pv <pv-name>
+# If Released (not Available), clear claimRef:
+kubectl patch pv <pv-name> -p '{"spec":{"claimRef": null}}'
+
+# 2. Create PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb
+  namespace: mariadb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Mi
+
+# 3. Edit deployment to use PVC
+# volumes:
+#   - name: mariadb-storage
+#     persistentVolumeClaim:
+#       claimName: mariadb
+
+kubectl apply -f ~/mariadb-deploy.yaml`,
+    verification: `kubectl get pvc -n mariadb   # Bound
+kubectl get pv               # Bound to mariadb/mariadb
+kubectl get pods -n mariadb  # Running`,
+    points: [
+      "If PV is Released, MUST clear claimRef to make it Available",
+      "PVC must match PV's storageClassName, accessModes, and storage ≤ PV capacity",
+      "If PV has no storageClassName, set storageClassName: \"\" in PVC or omit",
+      "persistentVolumeReclaimPolicy: Retain keeps data after PVC deletion",
+      "ReadWriteOnce (RWO) = volume mountable by single node",
+      "claimName in deployment volumes must exactly match PVC name"
+    ],
+    keywords: ["persistent volumes", "persistent volume claims", "reclaim policy", "binding"],
+    imperative: "kubectl patch pv <name> -p '{\"spec\":{\"claimRef\": null}}'\nkubectl apply -f pvc.yaml",
+    tips: [],
+    warnings: ["If PV status is Released, you MUST clear claimRef before new PVC can bind"]
+  },
+  {
+    id: 18, domain: 5, domainName: "Troubleshooting", weight: "30%",
+    title: "Fix kube-apiserver (etcd Port Fix)",
+    problem: "After cluster migration, kube-apiserver is not starting. It's pointing to etcd PEER port 2380 instead of CLIENT port 2379.",
+    solution: `# 1. Diagnose
+sudo systemctl status kubelet
+sudo crictl ps -a | grep apiserver
+sudo crictl logs $(sudo crictl ps -a | grep apiserver | awk '{print $1}')
+
+# 2. Inspect manifest
+sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep etcd-servers
+# Shows: --etcd-servers=https://127.0.0.1:2380  ← WRONG
+
+# 3. Fix: change 2380 → 2379
+sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+# Change: --etcd-servers=https://127.0.0.1:2380
+# To:     --etcd-servers=https://127.0.0.1:2379
+
+# 4. Wait ~30s for kubelet to detect change, or:
+sudo systemctl restart kubelet`,
+    verification: `kubectl get nodes          # responds
+kubectl get pods -n kube-system  # all Running
+kubectl cluster-info`,
+    points: [
+      "etcd ports: 2379 = CLIENT (apiserver connects here), 2380 = PEER (etcd-to-etcd) — common trap",
+      "Static pod manifests: /etc/kubernetes/manifests/ — kubelet watches and auto-restarts",
+      "After editing manifest, wait 30-60s for kubelet to detect change",
+      "If kubectl doesn't work, use: sudo crictl ps -a, sudo crictl logs <id>",
+      "Check journalctl -u kubelet --no-pager | tail -50 for kubelet errors",
+      "Also verify: --etcd-cafile, --etcd-certfile, --etcd-keyfile, --advertise-address"
+    ],
+    keywords: ["troubleshoot clusters", "debug cluster", "static pods", "kube-apiserver", "etcd"],
+    imperative: "sudo sed -i 's/2380/2379/' /etc/kubernetes/manifests/kube-apiserver.yaml",
+    tips: ["Debug flowchart: kubelet status → crictl ps -a → crictl logs → check manifest"],
+    warnings: []
+  },
+  {
+    id: 19, domain: 2, domainName: "Workloads & Scheduling", weight: "15%",
+    title: "Create a Static Pod on node01",
+    problem: "Create static pod my-static-pod on node01 using nginx:1.27.\nPod must run on node01 and be visible via kubectl get pods.",
+    solution: `# 1. Generate YAML on control plane
+kubectl run my-static-pod --image=nginx:1.27 --dry-run=client -o yaml > my-static-pod.yaml
+
+# 2. SSH into node01
+ssh node01
+
+# 3. CRITICAL: Find the actual staticPodPath
+cat /var/lib/kubelet/config.yaml | grep staticPodPath
+
+# 4. Copy manifest to the correct directory
+sudo cp /path/to/my-static-pod.yaml /etc/kubernetes/manifests/
+
+# 5. Exit
+exit`,
+    verification: `kubectl get pods -o wide
+# my-static-pod-node01  1/1  Running  ...  node01
+kubectl describe pod my-static-pod-node01
+# Controlled By: Node/node01`,
+    points: [
+      "ALWAYS check staticPodPath in /var/lib/kubelet/config.yaml — NEVER assume /etc/kubernetes/manifests/",
+      "Static pod names get suffixed with node name: my-static-pod → my-static-pod-node01",
+      "Mirror pods visible in kubectl but CANNOT be deleted via kubectl delete (recreated)",
+      "kubectl run --dry-run may NOT work on worker node (no kubeconfig) — generate on control plane",
+      "Pod names must be lowercase RFC 1123 compliant",
+      "To delete: remove manifest from staticPodPath directory"
+    ],
+    keywords: ["static pods", "create static pods", "staticPodPath", "mirror pods"],
+    imperative: "kubectl run my-static-pod --image=nginx:1.27 --dry-run=client -o yaml > pod.yaml\n# Then SSH + copy to staticPodPath",
+    tips: ["Exam may set staticPodPath to non-default directory like /etc/kubernetes/static-pods/"],
+    warnings: ["NEVER assume staticPodPath is /etc/kubernetes/manifests/ — always verify"]
+  },
+  {
+    id: 20, domain: 5, domainName: "Troubleshooting", weight: "30%",
+    title: "Troubleshoot Static Pod Not Starting",
+    problem: "Static pod web-server was created on node01 in /etc/kubernetes/manifests/ but doesn't appear in kubectl get pods. Troubleshoot and fix.",
+    solution: `# 1. SSH into node01
+ssh node01
+
+# 2. Check kubelet
+sudo systemctl status kubelet
+# If not running: sudo systemctl start kubelet
+
+# 3. KEY: Check actual staticPodPath
+cat /var/lib/kubelet/config.yaml | grep staticPodPath
+# If different from /etc/kubernetes/manifests/, MOVE the manifest
+
+sudo mv /etc/kubernetes/manifests/web-server.yaml /etc/kubernetes/static-pods/
+
+# 4. Validate YAML (from control plane)
+kubectl apply --dry-run=client -f web-server.yaml
+
+# 5. Check kubelet logs
+sudo journalctl -u kubelet | grep -i "static\\|error\\|web-server" | tail -30
+
+# 6. Restart kubelet if config changed
+sudo systemctl restart kubelet
+
+# 7. Exit and verify
+exit
+kubectl get pods -o wide | grep web-server`,
+    verification: `kubectl get pods -o wide
+# web-server-node01  1/1  Running
+kubectl describe pod web-server-node01
+# Controlled By: Node/node01`,
+    points: [
+      "Trap #1 (most common): staticPodPath different from where manifest was placed",
+      "Trap #2: Pod name must be lowercase RFC 1123",
+      "Trap #3: Manifest placed on control plane instead of target worker node",
+      "kubelet config at /var/lib/kubelet/config.yaml defines staticPodPath",
+      "crictl ps -a shows container status even when kubectl can't see the pod",
+      "If kubelet config file changed, must restart kubelet",
+      "Alternative: ps -ef | grep kubelet | grep config to find config file path"
+    ],
+    keywords: ["static pods", "troubleshoot kubelet", "staticPodPath", "debug cluster"],
+    imperative: "ssh node01\ngrep staticPodPath /var/lib/kubelet/config.yaml\n# Move manifest to correct directory",
+    tips: ["Debug flowchart: SSH → kubelet status → check staticPodPath → validate YAML → check logs"],
+    warnings: []
+  }
+];
+
+const DOMAINS = [
+  { id: 1, name: "Cluster Architecture, Installation & Configuration", weight: "25%", color: "#58a6ff" },
+  { id: 2, name: "Workloads & Scheduling", weight: "15%", color: "#bc8cff" },
+  { id: 3, name: "Services & Networking", weight: "20%", color: "#3fb950" },
+  { id: 4, name: "Storage", weight: "10%", color: "#d29922" },
+  { id: 5, name: "Troubleshooting", weight: "30%", color: "#f85149" }
+];
+
+// State
+const state = {
+  mode: 'overview',
+  selectedQ: null,
+  filter: 'all',
+  knowledge: {},
+  quizAnswers: {},
+  quizRevealed: {},
+  openSections: {}
+};
+
+// Initialize knowledge
+QUESTIONS.forEach(q => { state.knowledge[q.id] = 'unknown'; });
+
+function setMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  if (mode === 'study' && !state.selectedQ) state.selectedQ = QUESTIONS[0].id;
+  render();
+}
+
+function setFilter(f) {
+  state.filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  renderSidebar();
+}
+
+function setPreset(p) {
+  if (p === 'all-unknown') QUESTIONS.forEach(q => state.knowledge[q.id] = 'unknown');
+  else if (p === 'troubleshoot') QUESTIONS.forEach(q => state.knowledge[q.id] = q.domain === 5 ? 'unknown' : 'know');
+  else if (p === 'networking') QUESTIONS.forEach(q => state.knowledge[q.id] = q.domain === 3 ? 'unknown' : 'know');
+  else if (p === 'storage') QUESTIONS.forEach(q => state.knowledge[q.id] = q.domain === 4 ? 'unknown' : 'know');
+  else if (p === 'workloads') QUESTIONS.forEach(q => state.knowledge[q.id] = q.domain === 2 ? 'unknown' : 'know');
+  updateStats();
+  renderSidebar();
+  render();
+  updatePrompt();
+}
+
+function selectQuestion(id) {
+  state.selectedQ = id;
+  if (state.mode === 'overview') state.mode = 'study';
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
+  render();
+}
+
+function setKnowledge(id, level) {
+  state.knowledge[id] = level;
+  updateStats();
+  renderSidebar();
+  updatePrompt();
+  // Update buttons in main
+  document.querySelectorAll('.k-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.level === level);
+  });
+}
+
+function toggleSection(qid, section) {
+  const key = `${qid}-${section}`;
+  state.openSections[key] = !state.openSections[key];
+  const header = document.querySelector(`[data-section="${key}"]`);
+  const content = document.querySelector(`[data-content="${key}"]`);
+  if (header) header.classList.toggle('open', state.openSections[key]);
+  if (content) content.classList.toggle('open', state.openSections[key]);
+}
+
+function updateStats() {
+  const counts = { know: 0, fuzzy: 0, unknown: 0 };
+  Object.values(state.knowledge).forEach(k => counts[k]++);
+  document.getElementById('stat-know').textContent = counts.know;
+  document.getElementById('stat-fuzzy').textContent = counts.fuzzy;
+  document.getElementById('stat-unknown').textContent = counts.unknown;
+}
+
+function knowledgeColor(k) {
+  return k === 'know' ? 'var(--green)' : k === 'fuzzy' ? 'var(--yellow)' : 'var(--red)';
+}
+
+function renderSidebar() {
+  const container = document.getElementById('sidebar-questions');
+  let html = '';
+  DOMAINS.forEach(d => {
+    const qs = QUESTIONS.filter(q => q.domain === d.id);
+    const filtered = qs.filter(q => state.filter === 'all' || state.knowledge[q.id] === state.filter);
+    if (filtered.length === 0 && state.filter !== 'all') return;
+    html += `<div class="domain-group">
+      <div class="domain-header" style="border-left: 3px solid ${d.color}">
+        ${d.name.split(' ').slice(0, 3).join(' ')} <span class="pct">${d.weight}</span>
+      </div>
+      <div class="domain-items">`;
+    filtered.forEach(q => {
+      const active = state.selectedQ === q.id ? 'active' : '';
+      html += `<div class="q-item ${active}" onclick="selectQuestion(${q.id})">
+        <span class="q-num">Q${q.id}</span>
+        <span class="q-title">${q.title}</span>
+        <span class="knowledge-dot" style="background:${knowledgeColor(state.knowledge[q.id])}"></span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function codeBlock(code, id) {
+  return `<pre><code>${escapeHtml(code.trim())}</code><button class="copy-btn" onclick="copyCode(this, '${id}')">Copy</button></pre>`;
+}
+
+function renderOverview() {
+  const main = document.getElementById('main-content');
+  let html = '<div class="overview-view"><h2 style="font-size:20px;margin-bottom:20px;color:var(--accent)">CKA Exam Domains</h2>';
+
+  DOMAINS.forEach(d => {
+    const qs = QUESTIONS.filter(q => q.domain === d.id);
+    const know = qs.filter(q => state.knowledge[q.id] === 'know').length;
+    const fuzzy = qs.filter(q => state.knowledge[q.id] === 'fuzzy').length;
+    const pct = Math.round((know / qs.length) * 100);
+    const fuzzyPct = Math.round(((know + fuzzy * 0.5) / qs.length) * 100);
+
+    html += `<div class="domain-card">
+      <h3 style="color:${d.color}">${d.name}</h3>
+      <div class="weight">Weight: ${d.weight} | ${know}/${qs.length} confident | ${fuzzy} fuzzy</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${fuzzyPct}%;background:linear-gradient(90deg, var(--green) ${pct * 100 / Math.max(fuzzyPct, 1)}%, var(--yellow) 100%)"></div>
+      </div>
+      <div class="domain-questions">`;
+    qs.forEach(q => {
+      html += `<div class="dq-item" onclick="selectQuestion(${q.id})">
+        <span class="mini-dot" style="background:${knowledgeColor(state.knowledge[q.id])}"></span>
+        Q${q.id}: ${q.title}
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  html += '</div>';
+  main.innerHTML = html;
+}
+
+function renderStudy() {
+  const main = document.getElementById('main-content');
+  const q = QUESTIONS.find(q => q.id === state.selectedQ);
+  if (!q) { main.innerHTML = '<p>Select a question</p>'; return; }
+
+  const k = state.knowledge[q.id];
+  const domain = DOMAINS.find(d => d.id === q.domain);
+
+  let html = `<div class="study-view">
+    <div class="q-header">
+      <h2>Q${q.id} — ${q.title}</h2>
+      <span class="domain-badge" style="border-left: 2px solid ${domain.color}; padding-left: 6px">${q.domainName} (${q.weight})</span>
+    </div>
+
+    <div class="knowledge-toggle">
+      <button class="k-btn know ${k === 'know' ? 'active' : ''}" data-level="know" onclick="setKnowledge(${q.id}, 'know')">I Know This</button>
+      <button class="k-btn fuzzy ${k === 'fuzzy' ? 'active' : ''}" data-level="fuzzy" onclick="setKnowledge(${q.id}, 'fuzzy')">Fuzzy</button>
+      <button class="k-btn unknown ${k === 'unknown' ? 'active' : ''}" data-level="unknown" onclick="setKnowledge(${q.id}, 'unknown')">Don't Know</button>
+    </div>`;
+
+  // Problem
+  const probOpen = state.openSections[`${q.id}-problem`] !== false;
+  html += `<div class="section">
+    <div class="section-header ${probOpen ? 'open' : ''}" data-section="${q.id}-problem" onclick="toggleSection(${q.id}, 'problem')">Problem Statement</div>
+    <div class="section-content ${probOpen ? 'open' : ''}" data-content="${q.id}-problem">
+      <div class="problem-text">${escapeHtml(q.problem)}</div>
+    </div>
+  </div>`;
+
+  // Solution
+  const solOpen = state.openSections[`${q.id}-solution`] ?? false;
+  html += `<div class="section">
+    <div class="section-header ${solOpen ? 'open' : ''}" data-section="${q.id}-solution" onclick="toggleSection(${q.id}, 'solution')">Solution</div>
+    <div class="section-content ${solOpen ? 'open' : ''}" data-content="${q.id}-solution">
+      ${codeBlock(q.solution, 'sol-' + q.id)}
+    </div>
+  </div>`;
+
+  // Imperative shortcut
+  const impOpen = state.openSections[`${q.id}-imperative`] ?? false;
+  html += `<div class="section">
+    <div class="section-header ${impOpen ? 'open' : ''}" data-section="${q.id}-imperative" onclick="toggleSection(${q.id}, 'imperative')">Imperative Shortcut</div>
+    <div class="section-content ${impOpen ? 'open' : ''}" data-content="${q.id}-imperative">
+      ${codeBlock(q.imperative, 'imp-' + q.id)}
+    </div>
+  </div>`;
+
+  // Verification
+  const verOpen = state.openSections[`${q.id}-verify`] ?? false;
+  html += `<div class="section">
+    <div class="section-header ${verOpen ? 'open' : ''}" data-section="${q.id}-verify" onclick="toggleSection(${q.id}, 'verify')">Verification</div>
+    <div class="section-content ${verOpen ? 'open' : ''}" data-content="${q.id}-verify">
+      ${codeBlock(q.verification, 'ver-' + q.id)}
+    </div>
+  </div>`;
+
+  // Key points
+  const ptsOpen = state.openSections[`${q.id}-points`] ?? true;
+  html += `<div class="section">
+    <div class="section-header ${ptsOpen ? 'open' : ''}" data-section="${q.id}-points" onclick="toggleSection(${q.id}, 'points')">Key Points to Remember</div>
+    <div class="section-content ${ptsOpen ? 'open' : ''}" data-content="${q.id}-points">
+      <ul class="points-list">${q.points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
+    </div>
+  </div>`;
+
+  // Tips & Warnings
+  if (q.tips.length || q.warnings.length) {
+    const twOpen = state.openSections[`${q.id}-tips`] ?? true;
+    html += `<div class="section">
+      <div class="section-header ${twOpen ? 'open' : ''}" data-section="${q.id}-tips" onclick="toggleSection(${q.id}, 'tips')">Tips & Warnings</div>
+      <div class="section-content ${twOpen ? 'open' : ''}" data-content="${q.id}-tips">
+        ${q.tips.map(t => `<div class="tip">${escapeHtml(t)}</div>`).join('')}
+        ${q.warnings.map(w => `<div class="warning">${escapeHtml(w)}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Search keywords
+  html += `<div class="section">
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">Search on kubernetes.io:</div>
+    <div class="search-keywords">${q.keywords.map(k => `<span class="keyword">${escapeHtml(k)}</span>`).join('')}</div>
+  </div>`;
+
+  // Navigation
+  const idx = QUESTIONS.findIndex(x => x.id === q.id);
+  const prev = idx > 0 ? QUESTIONS[idx - 1] : null;
+  const next = idx < QUESTIONS.length - 1 ? QUESTIONS[idx + 1] : null;
+  html += `<div class="nav-btns">
+    ${prev ? `<button class="btn" onclick="selectQuestion(${prev.id})">← Q${prev.id}</button>` : ''}
+    <div style="flex:1"></div>
+    ${next ? `<button class="btn btn-primary" onclick="selectQuestion(${next.id})">Q${next.id} →</button>` : ''}
+  </div>`;
+
+  html += '</div>';
+  main.innerHTML = html;
+  main.scrollTop = 0;
+}
+
+function renderQuiz() {
+  const main = document.getElementById('main-content');
+  const q = QUESTIONS.find(q => q.id === state.selectedQ);
+  if (!q) { main.innerHTML = '<p>Select a question from the sidebar</p>'; return; }
+
+  const revealed = state.quizRevealed[q.id] || false;
+  const domain = DOMAINS.find(d => d.id === q.domain);
+
+  let html = `<div class="quiz-view">
+    <div class="quiz-question">
+      <h2>Q${q.id} — ${q.title}</h2>
+      <span class="domain-badge" style="border-left: 2px solid ${domain.color}; padding-left: 6px; font-size: 11px; color: var(--text-dim)">${q.domainName}</span>
+      <div class="quiz-problem">${escapeHtml(q.problem)}</div>
+
+      <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px">Your Answer (commands / YAML):</label>
+      <textarea class="quiz-input" id="quiz-input-${q.id}" placeholder="Type your solution here..."
+        oninput="state.quizAnswers[${q.id}] = this.value">${state.quizAnswers[q.id] || ''}</textarea>
+
+      <div class="quiz-actions">
+        <button class="btn btn-primary" onclick="revealAnswer(${q.id})">
+          ${revealed ? 'Hide Answer' : 'Reveal Answer'}
+        </button>
+        <button class="btn know" style="border-color:var(--green);color:var(--green)" onclick="setKnowledge(${q.id}, 'know'); nextQuizQuestion(${q.id})">Got It ✓</button>
+        <button class="btn fuzzy" style="border-color:var(--yellow);color:var(--yellow)" onclick="setKnowledge(${q.id}, 'fuzzy'); nextQuizQuestion(${q.id})">Needs Review</button>
+        <button class="btn unknown" style="border-color:var(--red);color:var(--red)" onclick="setKnowledge(${q.id}, 'unknown'); nextQuizQuestion(${q.id})">Don't Know</button>
+      </div>
+
+      <div class="quiz-answer ${revealed ? 'shown' : ''}">
+        <h3>Solution</h3>
+        ${codeBlock(q.solution, 'quiz-sol-' + q.id)}
+        <h3 style="margin-top:12px">Verification</h3>
+        ${codeBlock(q.verification, 'quiz-ver-' + q.id)}
+        <h3 style="margin-top:12px">Key Points</h3>
+        <ul class="points-list">${q.points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
+        ${q.warnings.length ? q.warnings.map(w => `<div class="warning">${escapeHtml(w)}</div>`).join('') : ''}
+      </div>
+    </div>`;
+
+  // Navigation
+  const idx = QUESTIONS.findIndex(x => x.id === q.id);
+  const prev = idx > 0 ? QUESTIONS[idx - 1] : null;
+  const next = idx < QUESTIONS.length - 1 ? QUESTIONS[idx + 1] : null;
+  html += `<div class="nav-btns">
+    ${prev ? `<button class="btn" onclick="selectQuestion(${prev.id})">← Q${prev.id}</button>` : ''}
+    <div style="flex:1"></div>
+    ${next ? `<button class="btn btn-primary" onclick="selectQuestion(${next.id})">Q${next.id} →</button>` : ''}
+  </div>`;
+
+  html += '</div>';
+  main.innerHTML = html;
+  main.scrollTop = 0;
+}
+
+function revealAnswer(id) {
+  state.quizRevealed[id] = !state.quizRevealed[id];
+  render();
+}
+
+function nextQuizQuestion(currentId) {
+  const idx = QUESTIONS.findIndex(q => q.id === currentId);
+  // Find next unknown/fuzzy question
+  for (let i = 1; i < QUESTIONS.length; i++) {
+    const nextIdx = (idx + i) % QUESTIONS.length;
+    const nq = QUESTIONS[nextIdx];
+    if (state.knowledge[nq.id] !== 'know') {
+      selectQuestion(nq.id);
+      return;
+    }
+  }
+  // All known — go to next
+  if (idx < QUESTIONS.length - 1) selectQuestion(QUESTIONS[idx + 1].id);
+}
+
+function render() {
+  renderSidebar();
+  if (state.mode === 'overview') renderOverview();
+  else if (state.mode === 'study') renderStudy();
+  else if (state.mode === 'quiz') renderQuiz();
+  updatePrompt();
+}
+
+function updatePrompt() {
+  const know = [], fuzzy = [], unknown = [];
+  QUESTIONS.forEach(q => {
+    const k = state.knowledge[q.id];
+    const label = `Q${q.id}: ${q.title}`;
+    if (k === 'know') know.push(label);
+    else if (k === 'fuzzy') fuzzy.push(label);
+    else unknown.push(label);
+  });
+
+  let parts = [];
+  parts.push("I'm preparing for the CKA (Certified Kubernetes Administrator) exam.");
+
+  if (know.length > 0) {
+    parts.push(`\nI'm confident on these topics:\n${know.map(k => `  - ${k}`).join('\n')}`);
+  }
+
+  if (fuzzy.length > 0) {
+    parts.push(`\nI'm fuzzy on these topics (need review):\n${fuzzy.map(f => `  - ${f}`).join('\n')}`);
+  }
+
+  if (unknown.length > 0) {
+    parts.push(`\nI don't know these topics yet:\n${unknown.map(u => `  - ${u}`).join('\n')}`);
+  }
+
+  if (fuzzy.length > 0 || unknown.length > 0) {
+    parts.push(`\nPlease help me understand the fuzzy and unknown topics. For each:`);
+    parts.push(`1. Explain the core concept in 2-3 sentences`);
+    parts.push(`2. Give me the key kubectl commands I need to memorize`);
+    parts.push(`3. Highlight the common exam traps/gotchas`);
+    parts.push(`4. Build on what I already know from the confident topics`);
+  } else {
+    parts.push(`\nI feel confident on all topics! Please quiz me with scenario-based questions that combine multiple domains, similar to the real CKA exam.`);
+  }
+
+  document.getElementById('prompt-output').textContent = parts.join('\n');
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-prompt-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function copyCode(btn, id) {
+  const code = btn.parentElement.querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+  });
+}
+
+// Init
+render();
+updateStats();
+</script>
+</body>
+</html>

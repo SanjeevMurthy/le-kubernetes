@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q2 — CNI Calico: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking Calico pods in calico-system..."

@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q10 — Taints and Tolerations: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking taint on node01..."

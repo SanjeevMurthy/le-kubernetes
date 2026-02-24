@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q1 — cri-dockerd: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking cri-docker service..."

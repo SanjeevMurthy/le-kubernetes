@@ -1,6 +1,5 @@
 #!/bin/bash
 # Q5 — PriorityClass: Verify
-set -e
 PASS=0; FAIL=0
 
 echo "🔍 Checking PriorityClass 'high-priority' exists..."
