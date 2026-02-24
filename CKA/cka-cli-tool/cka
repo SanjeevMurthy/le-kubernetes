@@ -222,13 +222,8 @@ run_verify() {
   chmod +x "$vscript"
   if bash "$vscript"; then
     echo ""
-    print_success "All checks passed!"
+    print_success "All checks passed! 🎉  Run [C] to cleanup, or [B] to go back."
     stop_timer
-    echo ""
-    echo -e "  ${GRAY}Press Enter to return to the main menu...${RESET}"
-    read -r
-    clear
-    return 100
   else
     echo ""
     print_error "Some checks failed. Review and try again."
@@ -290,10 +285,7 @@ question_loop() {
          echo -e "  ${GRAY}Press Enter to continue...${RESET}"
          read -r
          ;;
-      V) _rc=0; run_verify "$q" || _rc=$?
-         if [[ $_rc -eq 100 ]]; then
-           return
-         fi
+      V) run_verify "$q"
          echo ""
          echo -e "  ${GRAY}Press Enter to continue...${RESET}"
          read -r
