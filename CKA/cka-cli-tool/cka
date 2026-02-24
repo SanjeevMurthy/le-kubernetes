@@ -275,7 +275,11 @@ question_loop() {
     show_question_actions "$q"
     read -r action
     case "${action^^}" in
-      S) run_setup "$q" ;;
+      S) run_setup "$q"
+         echo ""
+         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+         read -r
+         ;;
       Q) show_question "$q"
          echo ""
          echo -e "  ${GRAY}Press Enter to continue...${RESET}"
