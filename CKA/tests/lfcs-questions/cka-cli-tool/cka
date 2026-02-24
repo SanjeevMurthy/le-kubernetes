@@ -87,6 +87,7 @@ run_setup() {
     return 1
   fi
 
+  clear
   echo ""
   echo -e "  ${ICON_GEAR}  ${BOLD}Setting up scenario...${RESET}"
   print_separator
@@ -223,6 +224,11 @@ run_verify() {
     echo ""
     print_success "All checks passed!"
     stop_timer
+    echo ""
+    echo -e "  ${GRAY}Press Enter to return to the main menu...${RESET}"
+    read -r
+    clear
+    return 100
   else
     echo ""
     print_error "Some checks failed. Review and try again."
@@ -271,7 +277,7 @@ question_loop() {
       S) run_setup "$q" ;;
       Q) show_question "$q" ;;
       H) show_solution "$q" ;;
-      V) run_verify "$q" ;;
+      V) _rc=0; run_verify "$q" || _rc=$?; [[ $_rc -eq 100 ]] && return ;;
       C) run_cleanup "$q" ;;
       B) return ;;
       *) print_warn "Invalid option. Try S/Q/H/V/C/B" ;;
