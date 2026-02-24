@@ -13,7 +13,7 @@ else
 fi
 
 echo "🔍 Checking shared emptyDir volume exists..."
-HAS_EMPTYDIR=$(kubectl get deployment wordpress -o jsonpath='{.spec.template.spec.volumes}' 2>/dev/null | grep -c "emptyDir" || echo "0")
+HAS_EMPTYDIR=$(kubectl get deployment wordpress -o jsonpath='{.spec.template.spec.volumes}' 2>/dev/null | grep -c "emptyDir" || true)
 if [[ "$HAS_EMPTYDIR" -gt 0 ]]; then
   echo "  ✅ Shared emptyDir volume found"
   ((PASS++))
