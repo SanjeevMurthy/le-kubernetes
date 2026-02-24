@@ -290,7 +290,14 @@ question_loop() {
          echo -e "  ${GRAY}Press Enter to continue...${RESET}"
          read -r
          ;;
-      V) _rc=0; run_verify "$q" || _rc=$?; [[ $_rc -eq 100 ]] && return ;;
+      V) _rc=0; run_verify "$q" || _rc=$?
+         if [[ $_rc -eq 100 ]]; then
+           return
+         fi
+         echo ""
+         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+         read -r
+         ;;
       C) run_cleanup "$q"
          echo ""
          echo -e "  ${GRAY}Press Enter to continue...${RESET}"
