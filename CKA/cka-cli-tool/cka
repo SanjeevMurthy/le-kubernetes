@@ -16,7 +16,7 @@ source "$SCRIPT_DIR/lib/menu.sh"
 source "$SCRIPT_DIR/lib/setup_map.sh"
 
 # Source of truth for questions and solutions
-RETAKE_GUIDE="$SCRIPT_DIR/../cka-retake-questions-final.md"
+RETAKE_GUIDE="$SCRIPT_DIR/../tests/lfcs-questions/cka-retake-questions-final.md"
 
 # ─── Timer ─────────────────────────────────────────────────────────
 TIMER_START=""
@@ -267,6 +267,7 @@ run_cleanup() {
 question_loop() {
   local q="$1"
   while true; do
+    clear
     # Reload timer from file if exists
     if [[ -f "$TIMER_FILE" ]]; then
       TIMER_START=$(cat "$TIMER_FILE")
@@ -275,24 +276,35 @@ question_loop() {
     read -r action
     case "${action^^}" in
       S) run_setup "$q" ;;
-      Q) show_question "$q" ;;
-      H) show_solution "$q" ;;
+      Q) show_question "$q"
+         echo ""
+         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+         read -r
+         ;;
+      H) show_solution "$q"
+         echo ""
+         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+         read -r
+         ;;
       V) _rc=0; run_verify "$q" || _rc=$?; [[ $_rc -eq 100 ]] && return ;;
-      C) run_cleanup "$q" ;;
+      C) run_cleanup "$q"
+         echo ""
+         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
+         read -r
+         ;;
       B) return ;;
-      *) print_warn "Invalid option. Try S/Q/H/V/C/B" ;;
+      *) print_warn "Invalid option. Try S/Q/H/V/C/B"
+         sleep 1
+         ;;
     esac
-    echo ""
-    echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-    read -r
   done
 }
 
 # ─── Main Loop ─────────────────────────────────────────────────────
 
 main() {
-  clear
   while true; do
+    clear
     show_main_menu
     read -r choice
     case "$choice" in
