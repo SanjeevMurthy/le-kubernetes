@@ -16,7 +16,7 @@ source "$SCRIPT_DIR/lib/menu.sh"
 source "$SCRIPT_DIR/lib/setup_map.sh"
 
 # Source of truth for questions and solutions
-RETAKE_GUIDE="$SCRIPT_DIR/../tests/lfcs-questions/cka-retake-questions-final.md"
+RETAKE_GUIDE="$SCRIPT_DIR/../practice-tests/lfcs-questions/cka-retake-questions-final.md"
 
 # ─── Timer ─────────────────────────────────────────────────────────
 TIMER_START=""
