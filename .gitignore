@@ -18,6 +18,9 @@ k8s-cluster-keys/
 *.kubeconfig
 kubeconfig
 
+# Claude Code
+.claude/
+
 # Local / Temporary / Repository Specific
 dropbox.sh
 dropbox.zip
