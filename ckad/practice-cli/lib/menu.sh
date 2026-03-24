@@ -39,7 +39,12 @@ show_question_list() {
       check="${GREEN}✓${RESET}"
     fi
 
-    printf "  ${check} ${dc}[Q%-2s]${RESET}  %-45s ${dfc}%-6s${RESET}\n" "$id" "$title" "$diff"
+    local plain_prefix="    [Q${id}]  "
+    local pad_len=$(( 60 - ${#plain_prefix} - ${#title} ))
+    [[ $pad_len -lt 2 ]] && pad_len=2
+    local padding
+    printf -v padding '%*s' "$pad_len" ''
+    printf "  %b %b[Q%-2s]%b  %s%s%b%s%b\n" "$check" "$dc" "$id" "$RESET" "$title" "$padding" "$dfc" "$diff" "$RESET"
   done
   echo ""
 }
