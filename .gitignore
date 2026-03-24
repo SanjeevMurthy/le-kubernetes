@@ -25,3 +25,4 @@ kubeconfig
 dropbox.sh
 dropbox.zip
 minikube/
+x-prompt/

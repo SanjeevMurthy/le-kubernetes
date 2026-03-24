@@ -25,7 +25,8 @@ le-kubernetes/
 │   ├── troubleshooting/    # Troubleshooting scenarios & study companion
 │   └── resources/          # PDFs and reference materials
 ├── ckad/                   # CKAD certification prep
-│   └── course-notes/       # Udemy course notes
+│   ├── course-notes/       # Udemy course notes
+│   └── practice-cli/       # Interactive CLI exam simulator (24 questions)
 ├── cks/                    # CKS certification prep (placeholder)
 ├── kcna/                   # KCNA certification prep (placeholder)
 ├── kcsa/                   # KCSA certification prep (placeholder)
@@ -65,6 +66,36 @@ chmod +x cka
 | **Networking** | ConfigMap TLS, Gateway API, Ingress, NodePort, NetworkPolicy |
 | **Storage** | StorageClass defaults, PVC + PV |
 | **Troubleshooting** | Control plane fix, CNI troubleshoot, cluster repair |
+
+## CKAD Practice CLI
+
+An interactive CLI tool for practicing real CKAD exam questions, with progress tracking and random question mode.
+
+### Quick Start
+
+```bash
+cd ckad/practice-cli
+chmod +x ckad
+./ckad
+```
+
+### Features
+
+- **24 exam-style questions** across all 5 CKAD domains (sourced from 12+ candidate reports)
+- **Automated lab setup/verify/cleanup** with expected vs actual output on failures
+- **Progress tracking** — per-domain completion stats, checkmarks in question list
+- **Random question mode** — picks an incomplete question for exam simulation
+- **Built-in timer** with pace feedback
+
+### Questions Covered
+
+| Domain | Topics |
+|--------|--------|
+| **Design & Build** | Podman image build, CronJob, Job from CronJob, PVC mount |
+| **Deployment** | Canary deployment, rolling update/rollback, fix deprecated API |
+| **Config & Security** | Secrets, ConfigMap mount, RBAC, ServiceAccount, SecurityContext, ResourceQuota |
+| **Networking** | NodePort, service selector fix, Ingress, NetworkPolicy (labels/pod-to-pod/CIDR) |
+| **Observability** | Readiness probe, CrashLoopBackOff debug |
 
 ## Cheatsheets
 
