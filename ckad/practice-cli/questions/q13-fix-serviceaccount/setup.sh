@@ -9,54 +9,54 @@ while kubectl get namespace monitoring &>/dev/null 2>&1; do sleep 1; done
 # Create namespace
 kubectl create namespace monitoring &>/dev/null
 
-# Create ServiceAccount: metrics-reader (has get,list on pods — close but not enough)
-kubectl create serviceaccount metrics-reader -n monitoring &>/dev/null
+# Create ServiceAccount: admin-sa (has get,list on pods — close but not enough)
+kubectl create serviceaccount admin-sa -n monitoring &>/dev/null
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: metrics-reader-role
+  name: admin-sa-role
   namespace: monitoring
 rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list"]
 EOF
-kubectl create rolebinding metrics-reader-binding \
-  --role=metrics-reader-role \
-  --serviceaccount=monitoring:metrics-reader \
+kubectl create rolebinding admin-sa-binding \
+  --role=admin-sa-role \
+  --serviceaccount=monitoring:admin-sa \
   -n monitoring &>/dev/null
 
-# Create ServiceAccount: log-reader (no permissions)
-kubectl create serviceaccount log-reader -n monitoring &>/dev/null
+# Create ServiceAccount: wrong-sa (no permissions)
+kubectl create serviceaccount wrong-sa -n monitoring &>/dev/null
 
-# Create ServiceAccount: monitoring-sa (correct — get,list,watch on pods)
-kubectl create serviceaccount monitoring-sa -n monitoring &>/dev/null
+# Create ServiceAccount: monitor-sa (correct — get,list,watch on pods)
+kubectl create serviceaccount monitor-sa -n monitoring &>/dev/null
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: monitoring-sa-role
+  name: monitor-sa-role
   namespace: monitoring
 rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
 EOF
-kubectl create rolebinding monitoring-sa-binding \
-  --role=monitoring-sa-role \
-  --serviceaccount=monitoring:monitoring-sa \
+kubectl create rolebinding monitor-sa-binding \
+  --role=monitor-sa-role \
+  --serviceaccount=monitoring:monitor-sa \
   -n monitoring &>/dev/null
 
-# Create Pod with WRONG serviceAccount (log-reader)
+# Create Pod with WRONG serviceAccount (wrong-sa)
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
-  name: monitor-pod
+  name: metrics-pod
   namespace: monitoring
 spec:
-  serviceAccountName: log-reader
+  serviceAccountName: wrong-sa
   containers:
   - name: monitor
     image: nginx

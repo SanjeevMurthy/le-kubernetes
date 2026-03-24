@@ -13,7 +13,7 @@ else
 fi
 
 echo "Checking image my-app:1.0 exists..."
-if $RUNTIME images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep -q '^my-app:1.0$'; then
+if $RUNTIME images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null | grep -qE '^(localhost/)?my-app:1.0$'; then
   echo "  PASS: Image my-app:1.0 exists"
   ((PASS++))
 else

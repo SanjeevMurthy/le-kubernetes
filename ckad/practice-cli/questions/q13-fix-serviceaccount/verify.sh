@@ -2,18 +2,18 @@
 # Q13 — Fix ServiceAccount Assignment: Verify
 PASS=0; FAIL=0
 
-echo "Checking pod monitor-pod uses serviceAccount monitoring-sa..."
-SA=$(kubectl get pod monitor-pod -n monitoring -o jsonpath='{.spec.serviceAccountName}' 2>/dev/null)
-if [[ "$SA" == "monitoring-sa" ]]; then
-  echo "  PASS: Pod uses serviceAccount monitoring-sa"
+echo "Checking pod metrics-pod uses serviceAccount monitor-sa..."
+SA=$(kubectl get pod metrics-pod -n monitoring -o jsonpath='{.spec.serviceAccountName}' 2>/dev/null)
+if [[ "$SA" == "monitor-sa" ]]; then
+  echo "  PASS: Pod uses serviceAccount monitor-sa"
   ((PASS++))
 else
-  echo "  FAIL: Pod serviceAccountName is '$SA', expected 'monitoring-sa'"
+  echo "  FAIL: Pod serviceAccountName is '$SA', expected 'monitor-sa'"
   ((FAIL++))
 fi
 
-echo "Checking pod monitor-pod is Running..."
-STATUS=$(kubectl get pod monitor-pod -n monitoring -o jsonpath='{.status.phase}' 2>/dev/null)
+echo "Checking pod metrics-pod is Running..."
+STATUS=$(kubectl get pod metrics-pod -n monitoring -o jsonpath='{.status.phase}' 2>/dev/null)
 if [[ "$STATUS" == "Running" ]]; then
   echo "  PASS: Pod is Running"
   ((PASS++))

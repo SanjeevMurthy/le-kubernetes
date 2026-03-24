@@ -3,27 +3,27 @@ set -e
 # Q18 — Create Ingress with Host Rule: Setup
 
 # Clean prior state
-kubectl delete ingress webapp-ingress &>/dev/null || true
-kubectl delete service webapp-svc &>/dev/null || true
-kubectl delete deployment webapp &>/dev/null || true
+kubectl delete ingress web-ingress &>/dev/null || true
+kubectl delete service web-svc &>/dev/null || true
+kubectl delete deployment web-deploy &>/dev/null || true
 
 # Create deployment
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webapp
+  name: web-deploy
   labels:
-    app: webapp
+    app: web-deploy
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: webapp
+      app: web-deploy
   template:
     metadata:
       labels:
-        app: webapp
+        app: web-deploy
     spec:
       containers:
       - name: nginx
@@ -37,11 +37,11 @@ kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: webapp-svc
+  name: web-svc
 spec:
   type: ClusterIP
   selector:
-    app: webapp
+    app: web-deploy
   ports:
   - port: 8080
     targetPort: 80

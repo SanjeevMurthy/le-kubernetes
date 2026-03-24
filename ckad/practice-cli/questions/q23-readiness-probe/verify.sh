@@ -2,28 +2,28 @@
 # Q23 — Readiness Probe: Verify
 PASS=0; FAIL=0
 
-echo "Checking deployment 'health-app' exists..."
-if kubectl get deployment health-app &>/dev/null; then
-  echo "  PASS: Deployment health-app exists"
+echo "Checking deployment 'api-deploy' exists..."
+if kubectl get deployment api-deploy &>/dev/null; then
+  echo "  PASS: Deployment api-deploy exists"
   ((PASS++))
 else
-  echo "  FAIL: Deployment health-app not found"
+  echo "  FAIL: Deployment api-deploy not found"
   ((FAIL++))
 fi
 
 echo "Checking readinessProbe is configured with httpGet..."
-PROBE_PATH=$(kubectl get deployment health-app -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.httpGet.path}' 2>/dev/null)
-PROBE_PORT=$(kubectl get deployment health-app -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.httpGet.port}' 2>/dev/null)
-if [[ "$PROBE_PATH" == "/" && "$PROBE_PORT" == "80" ]]; then
-  echo "  PASS: readinessProbe httpGet on port 80 path /"
+PROBE_PATH=$(kubectl get deployment api-deploy -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.httpGet.path}' 2>/dev/null)
+PROBE_PORT=$(kubectl get deployment api-deploy -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.httpGet.port}' 2>/dev/null)
+if [[ "$PROBE_PATH" == "/ready" && "$PROBE_PORT" == "8080" ]]; then
+  echo "  PASS: readinessProbe httpGet on port 8080 path /ready"
   ((PASS++))
 else
-  echo "  FAIL: readinessProbe httpGet is path='$PROBE_PATH' port='$PROBE_PORT', expected path='/' port='80'"
+  echo "  FAIL: readinessProbe httpGet is path='$PROBE_PATH' port='$PROBE_PORT', expected path='/ready' port='8080'"
   ((FAIL++))
 fi
 
 echo "Checking initialDelaySeconds is 5..."
-INITIAL_DELAY=$(kubectl get deployment health-app -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.initialDelaySeconds}' 2>/dev/null)
+INITIAL_DELAY=$(kubectl get deployment api-deploy -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.initialDelaySeconds}' 2>/dev/null)
 if [[ "$INITIAL_DELAY" == "5" ]]; then
   echo "  PASS: initialDelaySeconds is 5"
   ((PASS++))
@@ -33,7 +33,7 @@ else
 fi
 
 echo "Checking periodSeconds is 10..."
-PERIOD=$(kubectl get deployment health-app -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.periodSeconds}' 2>/dev/null)
+PERIOD=$(kubectl get deployment api-deploy -o jsonpath='{.spec.template.spec.containers[0].readinessProbe.periodSeconds}' 2>/dev/null)
 if [[ "$PERIOD" == "10" ]]; then
   echo "  PASS: periodSeconds is 10"
   ((PASS++))

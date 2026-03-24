@@ -3,7 +3,7 @@ set -e
 # Q19 — Fix Ingress Backend: Setup
 
 # Clean prior state
-kubectl delete ingress store-ingress --ignore-not-found &>/dev/null || true
+kubectl delete ingress api-ingress --ignore-not-found &>/dev/null || true
 kubectl delete service store-svc --ignore-not-found &>/dev/null || true
 kubectl delete deployment store-app --ignore-not-found &>/dev/null || true
 
@@ -18,7 +18,7 @@ kubectl apply -f - &>/dev/null <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: store-ingress
+  name: api-ingress
 spec:
   rules:
   - host: store.example.com

@@ -19,8 +19,6 @@ metadata:
 spec:
   hard:
     pods: "10"
-    requests.cpu: "4"
-    requests.memory: 8Gi
-    limits.cpu: "8"
-    limits.memory: 16Gi
+    limits.cpu: "2"
+    limits.memory: 4Gi
 EOF

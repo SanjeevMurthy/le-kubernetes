@@ -12,16 +12,16 @@ kind: Deployment
 metadata:
   name: api-server
   labels:
-    app: api-server
+    app: api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: api-server
+      app: api
   template:
     metadata:
       labels:
-        app: api-server
+        app: api
     spec:
       containers:
       - name: nginx

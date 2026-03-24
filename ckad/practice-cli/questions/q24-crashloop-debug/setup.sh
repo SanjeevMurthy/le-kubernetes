@@ -5,7 +5,7 @@ set -e
 # Clean prior state
 kubectl delete namespace debug-ns --ignore-not-found &>/dev/null || true
 while kubectl get namespace debug-ns &>/dev/null 2>&1; do sleep 1; done
-rm -f /root/crash-events.txt &>/dev/null || true
+rm -f /root/error_events.txt &>/dev/null || true
 
 # Create namespace
 kubectl create namespace debug-ns &>/dev/null

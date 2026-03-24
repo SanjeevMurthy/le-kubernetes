@@ -3,29 +3,29 @@ set -e
 # Q23 — Readiness Probe: Setup
 
 # Clean prior state
-kubectl delete deployment health-app --ignore-not-found &>/dev/null || true
+kubectl delete deployment api-deploy --ignore-not-found &>/dev/null || true
 
 # Create deployment without probes
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: health-app
+  name: api-deploy
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: health-app
+      app: api-deploy
   template:
     metadata:
       labels:
-        app: health-app
+        app: api-deploy
     spec:
       containers:
-      - name: nginx
+      - name: api
         image: nginx
         ports:
-        - containerPort: 80
+        - containerPort: 8080
 EOF
 
 echo "Setup complete."
