@@ -39,7 +39,7 @@ show_question_list() {
       check="${GREEN}✓${RESET}"
     fi
 
-    printf "  %b %b[Q%-2s]%b  %s  %b%s%b\n" "$check" "$dc" "$id" "$RESET" "$title" "$dfc" "$diff" "$RESET"
+    printf "  %b %b[Q%-2s]%b %b%-6s%b  %s\n" "$check" "$dc" "$id" "$RESET" "$dfc" "$diff" "$RESET" "$title"
   done
   echo ""
 }
