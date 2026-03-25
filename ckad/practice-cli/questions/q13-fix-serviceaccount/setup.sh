@@ -2,8 +2,8 @@
 set -e
 # Q13 — Fix ServiceAccount Assignment: Setup
 #
-# Scenario: A Pod tries to list pods in the monitoring namespace via the K8s API.
-# It uses "wrong-sa" which has NO permissions, so the API returns 403 Forbidden.
+# Scenario: A Pod tries to list pods in the monitoring namespace via kubectl.
+# It uses "wrong-sa" which has NO permissions, so kubectl returns Forbidden.
 # The user must investigate the existing SAs/Roles/RoleBindings to find "monitor-sa"
 # which has the correct get/list/watch permissions, then recreate the Pod with it.
 
@@ -53,7 +53,7 @@ kubectl create rolebinding monitor-sa-binding \
   --serviceaccount=monitoring:monitor-sa \
   -n monitoring &>/dev/null
 
-# --- Create Pod using wrong-sa — it tries to list pods and gets 403 ---
+# --- Create Pod using wrong-sa — kubectl get pods fails with Forbidden ---
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Pod
@@ -64,23 +64,20 @@ spec:
   serviceAccountName: wrong-sa
   containers:
   - name: monitor
-    image: busybox:1.36
+    image: bitnami/kubectl:latest
     command:
     - sh
     - -c
     - |
       while true; do
         echo "\$(date): Attempting to list pods in monitoring namespace..."
-        TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-        wget -qO- --header="Authorization: Bearer \$TOKEN" \
-          --no-check-certificate \
-          https://kubernetes.default.svc/api/v1/namespaces/monitoring/pods 2>&1 || true
+        kubectl get pods -n monitoring 2>&1
         echo ""
         sleep 10
       done
 EOF
 
-# Wait for pod to start and produce at least one error log
+# Wait for pod to start
 echo "Waiting for metrics-pod to start..."
-kubectl wait --for=condition=Ready pod/metrics-pod -n monitoring --timeout=60s &>/dev/null || true
-sleep 12
+kubectl wait --for=condition=Ready pod/metrics-pod -n monitoring --timeout=90s &>/dev/null || true
+sleep 5
