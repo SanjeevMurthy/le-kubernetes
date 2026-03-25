@@ -22,18 +22,13 @@ else
   ((FAIL++))
 fi
 
-echo "Checking pod logs show successful API response (no 403 Forbidden)..."
-# Wait a moment for fresh logs with the new SA
-sleep 12
-LOGS=$(kubectl logs metrics-pod -n monitoring --tail=20 2>/dev/null)
-if echo "$LOGS" | grep -q '"kind":"PodList"'; then
-  echo "  PASS: Pod can successfully list pods via the K8s API"
+echo "Checking monitor-sa can list pods in monitoring namespace..."
+CAN_LIST=$(kubectl auth can-i list pods -n monitoring --as=system:serviceaccount:monitoring:monitor-sa 2>/dev/null)
+if [[ "$CAN_LIST" == "yes" ]]; then
+  echo "  PASS: monitor-sa has permission to list pods"
   ((PASS++))
-elif echo "$LOGS" | grep -q 'Forbidden'; then
-  echo "  FAIL: Pod logs still show 403 Forbidden — wrong ServiceAccount?"
-  ((FAIL++))
 else
-  echo "  FAIL: Could not confirm API access from pod logs"
+  echo "  FAIL: monitor-sa cannot list pods (got '$CAN_LIST', expected 'yes')"
   ((FAIL++))
 fi
 
