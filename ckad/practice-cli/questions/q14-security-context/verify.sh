@@ -17,6 +17,17 @@ if [[ -z "$POD" ]]; then
   POD=$(kubectl get pods --selector="$(kubectl get deployment secure-app -o jsonpath='{.spec.selector.matchLabels}' 2>/dev/null | tr -d '{}' | sed 's/:/=/g; s/"//g')" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
 fi
 
+echo "Checking Pod is Running..."
+POD_STATUS=$(kubectl get pod "$POD" -o jsonpath='{.status.phase}' 2>/dev/null)
+if [[ "$POD_STATUS" == "Running" ]]; then
+  echo "  PASS: Pod is Running"
+  ((PASS++))
+else
+  echo "  FAIL: Pod status is '$POD_STATUS' (expected: Running)"
+  echo "        Hint: standard nginx image crashes with runAsUser: 1000. Use nginxinc/nginx-unprivileged instead."
+  ((FAIL++))
+fi
+
 echo "Checking pod securityContext runAsUser=1000..."
 RUN_AS_USER=$(kubectl get pod "$POD" -o jsonpath='{.spec.securityContext.runAsUser}' 2>/dev/null)
 if [[ "$RUN_AS_USER" == "1000" ]]; then

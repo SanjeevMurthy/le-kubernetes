@@ -1104,7 +1104,7 @@ Create a Deployment named `secure-app` with the following security requirements:
 
 - Pod-level: `runAsUser: 1000`
 - Container-level (container name `app`): add Linux capability `NET_ADMIN`
-- Image: `nginx`
+- Image: `nginxinc/nginx-unprivileged`
 
 #### Concept
 
@@ -1131,12 +1131,14 @@ spec:
         runAsUser: 1000
       containers:
       - name: app
-        image: nginx
+        image: nginxinc/nginx-unprivileged
         securityContext:
           capabilities:
             add:
             - NET_ADMIN
 ```
+
+> **Note:** The standard `nginx` image requires root to bind to port 80 and write to `/var/cache/nginx/`. With `runAsUser: 1000`, it crashes. Use `nginxinc/nginx-unprivileged` which is designed to run as non-root (listens on 8080, writable directories for non-root users).
 
 ```bash
 kubectl apply -f secure-app.yaml
