@@ -19,10 +19,12 @@ spec:
   selector:
     matchLabels:
       app: webapp
+      version: v1
   template:
     metadata:
       labels:
         app: webapp
+        version: v1
     spec:
       containers:
       - name: nginx
