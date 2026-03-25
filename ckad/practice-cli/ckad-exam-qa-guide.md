@@ -1174,10 +1174,10 @@ kubectl exec deployment/secure-app -- cat /proc/1/status | grep Cap
 
 #### Question
 
-The namespace `prod` has a ResourceQuota with `limits.cpu: "2"` and `limits.memory: "4Gi"`. Create a Pod named `resource-pod` using the `nginx:latest` image with:
+The namespace `prod` has a ResourceQuota with `limits.cpu: "1"` and `limits.memory: "1Gi"`. Create a Pod named `resource-pod` using the `nginx:latest` image with:
 
-- CPU limit: half the namespace quota limit (i.e., `1` CPU)
-- Memory limit: half the namespace quota limit (i.e., `2Gi`)
+- CPU limit: half the namespace quota limit (i.e., `500m`)
+- Memory limit: half the namespace quota limit (i.e., `512Mi`)
 - CPU request: `100m`
 - Memory request: `128Mi`
 
@@ -1217,8 +1217,8 @@ spec:
         cpu: "100m"
         memory: "128Mi"
       limits:
-        cpu: "1"
-        memory: "2Gi"
+        cpu: "500m"
+        memory: "512Mi"
 ```
 
 ```bash
