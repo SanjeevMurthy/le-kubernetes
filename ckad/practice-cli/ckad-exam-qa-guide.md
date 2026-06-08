@@ -1104,7 +1104,7 @@ Create a Deployment named `secure-app` with the following security requirements:
 
 - Pod-level: `runAsUser: 1000`
 - Container-level (container name `app`): add Linux capability `NET_ADMIN`
-- Image: `nginx`
+- Image: `nginxinc/nginx-unprivileged`
 
 #### Concept
 
@@ -1131,12 +1131,14 @@ spec:
         runAsUser: 1000
       containers:
       - name: app
-        image: nginx
+        image: nginxinc/nginx-unprivileged
         securityContext:
           capabilities:
             add:
             - NET_ADMIN
 ```
+
+> **Note:** The standard `nginx` image requires root to bind to port 80 and write to `/var/cache/nginx/`. With `runAsUser: 1000`, it crashes. Use `nginxinc/nginx-unprivileged` which is designed to run as non-root (listens on 8080, writable directories for non-root users).
 
 ```bash
 kubectl apply -f secure-app.yaml
@@ -1172,10 +1174,10 @@ kubectl exec deployment/secure-app -- cat /proc/1/status | grep Cap
 
 #### Question
 
-The namespace `prod` has a ResourceQuota with `limits.cpu: "2"` and `limits.memory: "4Gi"`. Create a Pod named `resource-pod` using the `nginx:latest` image with:
+The namespace `prod` has a ResourceQuota with `limits.cpu: "1"` and `limits.memory: "1Gi"`. Create a Pod named `resource-pod` using the `nginx:latest` image with:
 
-- CPU limit: half the namespace quota limit (i.e., `1` CPU)
-- Memory limit: half the namespace quota limit (i.e., `2Gi`)
+- CPU limit: half the namespace quota limit (i.e., `500m`)
+- Memory limit: half the namespace quota limit (i.e., `512Mi`)
 - CPU request: `100m`
 - Memory request: `128Mi`
 
@@ -1215,8 +1217,8 @@ spec:
         cpu: "100m"
         memory: "128Mi"
       limits:
-        cpu: "1"
-        memory: "2Gi"
+        cpu: "500m"
+        memory: "512Mi"
 ```
 
 ```bash

@@ -21,8 +21,12 @@ kubeconfig
 # Claude Code
 .claude/
 
+# Binary / Large Files
+*.pdf
+
 # Local / Temporary / Repository Specific
 dropbox.sh
 dropbox.zip
 minikube/
 x-prompt/
+*todo*.md

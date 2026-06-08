@@ -2,12 +2,12 @@
 # Q12 — RBAC from Pod Logs: Verify
 PASS=0; FAIL=0
 
-echo "Checking ServiceAccount log-collector-sa exists in audit namespace..."
-if kubectl get serviceaccount log-collector-sa -n audit &>/dev/null; then
-  echo "  PASS: ServiceAccount log-collector-sa exists"
+echo "Checking ServiceAccount log-sa exists in audit namespace..."
+if kubectl get serviceaccount log-sa -n audit &>/dev/null; then
+  echo "  PASS: ServiceAccount log-sa exists"
   ((PASS++))
 else
-  echo "  FAIL: ServiceAccount log-collector-sa not found in audit namespace"
+  echo "  FAIL: ServiceAccount log-sa not found in audit namespace"
   ((FAIL++))
 fi
 
@@ -33,33 +33,33 @@ else
   ((FAIL++))
 fi
 
-echo "Checking RoleBinding exists binding role to log-collector-sa..."
+echo "Checking RoleBinding exists binding role to log-sa..."
 BINDING_OK=$(kubectl get rolebindings -n audit -o json 2>/dev/null | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 for rb in data.get('items', []):
     subjects = rb.get('subjects', [])
     for s in subjects:
-        if s.get('kind') == 'ServiceAccount' and s.get('name') == 'log-collector-sa':
+        if s.get('kind') == 'ServiceAccount' and s.get('name') == 'log-sa':
             print('found')
             sys.exit(0)
 print('missing')
 " 2>/dev/null || echo "error")
 if [[ "$BINDING_OK" == "found" ]]; then
-  echo "  PASS: RoleBinding binds to log-collector-sa"
+  echo "  PASS: RoleBinding binds to log-sa"
   ((PASS++))
 else
-  echo "  FAIL: No RoleBinding found binding to log-collector-sa (expected: RoleBinding for log-collector-sa)"
+  echo "  FAIL: No RoleBinding found binding to log-sa (expected: RoleBinding for log-sa)"
   ((FAIL++))
 fi
 
-echo "Checking Pod log-collector uses serviceAccount log-collector-sa..."
+echo "Checking Pod log-collector uses serviceAccount log-sa..."
 SA_NAME=$(kubectl get pod log-collector -n audit -o jsonpath='{.spec.serviceAccountName}' 2>/dev/null || echo "")
-if [[ "$SA_NAME" == "log-collector-sa" ]]; then
-  echo "  PASS: Pod log-collector uses serviceAccount log-collector-sa"
+if [[ "$SA_NAME" == "log-sa" ]]; then
+  echo "  PASS: Pod log-collector uses serviceAccount log-sa"
   ((PASS++))
 else
-  echo "  FAIL: Pod serviceAccountName is '$SA_NAME' (expected: log-collector-sa)"
+  echo "  FAIL: Pod serviceAccountName is '$SA_NAME' (expected: log-sa)"
   ((FAIL++))
 fi
 

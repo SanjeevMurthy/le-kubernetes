@@ -3,29 +3,29 @@ set -e
 # Q17 — Fix Service Selector Mismatch: Setup
 
 # Clean prior state
-kubectl delete service backend-svc &>/dev/null || true
-kubectl delete deployment backend &>/dev/null || true
+kubectl delete service web-svc &>/dev/null || true
+kubectl delete deployment web-app &>/dev/null || true
 
-# Create deployment with labels app=backend, tier=api
+# Create deployment with labels app=webapp, tier=frontend
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: web-app
   labels:
-    app: backend
-    tier: api
+    app: webapp
+    tier: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
-      tier: api
+      app: webapp
+      tier: frontend
   template:
     metadata:
       labels:
-        app: backend
-        tier: api
+        app: webapp
+        tier: frontend
     spec:
       containers:
       - name: nginx
@@ -34,15 +34,15 @@ spec:
         - containerPort: 80
 EOF
 
-# Create service with WRONG selector (app=backend-app instead of app=backend)
+# Create service with WRONG selector (app=wrongapp instead of app=webapp)
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-svc
+  name: web-svc
 spec:
   selector:
-    app: backend-app
+    app: wrongapp
   ports:
   - port: 80
     targetPort: 80

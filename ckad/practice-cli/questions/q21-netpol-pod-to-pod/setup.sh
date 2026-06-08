@@ -3,11 +3,11 @@ set -e
 # Q21 — NetworkPolicy Pod-to-Pod: Setup
 
 # Clean prior state
-kubectl delete namespace app-ns --ignore-not-found &>/dev/null || true
-while kubectl get namespace app-ns &>/dev/null 2>&1; do sleep 1; done
+kubectl delete namespace backend --ignore-not-found &>/dev/null || true
+while kubectl get namespace backend &>/dev/null 2>&1; do sleep 1; done
 
 # Create namespace
-kubectl create namespace app-ns &>/dev/null
+kubectl create namespace backend &>/dev/null
 
 # Create api-pod
 kubectl apply -f - &>/dev/null <<EOF
@@ -15,7 +15,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: api-pod
-  namespace: app-ns
+  namespace: backend
   labels:
     app: api
 spec:
@@ -32,7 +32,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: database-pod
-  namespace: app-ns
+  namespace: backend
   labels:
     app: database
 spec:

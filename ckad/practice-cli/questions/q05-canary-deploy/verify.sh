@@ -41,8 +41,8 @@ else
   ((FAIL++))
 fi
 
-echo "Checking service web-app-svc selects app=webapp..."
-SVC_SELECTOR=$(kubectl get svc web-app-svc -o jsonpath='{.spec.selector.app}' 2>/dev/null || echo "")
+echo "Checking service web-service selects app=webapp..."
+SVC_SELECTOR=$(kubectl get svc web-service -o jsonpath='{.spec.selector.app}' 2>/dev/null || echo "")
 if [[ "$SVC_SELECTOR" == "webapp" ]]; then
   echo "  PASS: Service selects app=webapp"
   ((PASS++))
@@ -52,7 +52,7 @@ else
 fi
 
 echo "Checking service endpoints include pods from both deployments..."
-ENDPOINT_COUNT=$(kubectl get endpoints web-app-svc -o jsonpath='{.subsets[0].addresses}' 2>/dev/null | grep -o '"ip"' | wc -l | tr -d ' ')
+ENDPOINT_COUNT=$(kubectl get endpoints web-service -o jsonpath='{.subsets[0].addresses}' 2>/dev/null | grep -o '"ip"' | wc -l | tr -d ' ')
 EXPECTED_TOTAL=10  # 8 + 2
 if [[ "$ENDPOINT_COUNT" -ge 2 ]]; then
   echo "  PASS: Service has $ENDPOINT_COUNT endpoints (from both deployments)"

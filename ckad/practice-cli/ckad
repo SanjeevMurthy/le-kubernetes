@@ -187,7 +187,7 @@ show_question() {
   local id=$(get_question_id "$q")
   echo ""
   print_separator
-  echo -e "  ${BOLD}${CYAN}${ICON_BOOK} Question${RESET}"
+  echo -e "  ${BOLD}${CYAN}${ICON_BOOK} Question ${id}${RESET}"
   print_separator
   echo ""
   extract_section "$RETAKE_GUIDE" "$id" "question" | while IFS= read -r line; do

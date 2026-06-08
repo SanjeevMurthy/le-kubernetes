@@ -5,7 +5,7 @@ set -e
 # Clean prior state
 kubectl delete deployment web-app-canary --ignore-not-found &>/dev/null || true
 kubectl delete deployment web-app --ignore-not-found &>/dev/null || true
-kubectl delete svc web-app-svc --ignore-not-found &>/dev/null || true
+kubectl delete svc web-service --ignore-not-found &>/dev/null || true
 
 # Create Deployment web-app with 5 replicas
 cat <<EOF | kubectl apply -f - &>/dev/null
@@ -19,10 +19,12 @@ spec:
   selector:
     matchLabels:
       app: webapp
+      version: v1
   template:
     metadata:
       labels:
         app: webapp
+        version: v1
     spec:
       containers:
       - name: nginx
@@ -36,7 +38,7 @@ cat <<EOF | kubectl apply -f - &>/dev/null
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-app-svc
+  name: web-service
   namespace: default
 spec:
   selector:
@@ -49,4 +51,4 @@ EOF
 # Wait for deployment rollout
 kubectl rollout status deployment web-app --timeout=60s &>/dev/null
 
-echo "Setup complete. Deployment web-app (5 replicas) and Service web-app-svc created."
+echo "Setup complete. Deployment web-app (5 replicas) and Service web-service created."

@@ -13,15 +13,15 @@ kind: Deployment
 metadata:
   name: broken-app
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
-        app: broken-app
+        app: myapp
     spec:
       containers:
       - name: nginx
-        image: nginx:stable
+        image: nginx
         ports:
         - containerPort: 80
 EOF

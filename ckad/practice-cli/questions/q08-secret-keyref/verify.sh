@@ -23,16 +23,16 @@ fi
 
 echo "Checking Secret has key DB_PASS..."
 DB_PASS_VAL=$(kubectl get secret db-credentials -o jsonpath='{.data.DB_PASS}' 2>/dev/null | base64 -d 2>/dev/null || echo "")
-if [[ "$DB_PASS_VAL" == "supersecret" ]]; then
+if [[ "$DB_PASS_VAL" == "Secret123!" ]]; then
   echo "  PASS: Secret key DB_PASS has correct value"
   ((PASS++))
 else
-  echo "  FAIL: Secret key DB_PASS value is '$DB_PASS_VAL' (expected: supersecret)"
+  echo "  FAIL: Secret key DB_PASS value is '$DB_PASS_VAL' (expected: Secret123!)"
   ((FAIL++))
 fi
 
-echo "Checking deployment db-app uses secretKeyRef for DB_USER..."
-USER_REF=$(kubectl get deployment db-app -o json 2>/dev/null | python3 -c "
+echo "Checking deployment api-server uses secretKeyRef for DB_USER..."
+USER_REF=$(kubectl get deployment api-server -o json 2>/dev/null | python3 -c "
 import sys, json
 spec = json.load(sys.stdin)
 containers = spec['spec']['template']['spec']['containers']
@@ -53,8 +53,8 @@ else
   ((FAIL++))
 fi
 
-echo "Checking deployment db-app uses secretKeyRef for DB_PASS..."
-PASS_REF=$(kubectl get deployment db-app -o json 2>/dev/null | python3 -c "
+echo "Checking deployment api-server uses secretKeyRef for DB_PASS..."
+PASS_REF=$(kubectl get deployment api-server -o json 2>/dev/null | python3 -c "
 import sys, json
 spec = json.load(sys.stdin)
 containers = spec['spec']['template']['spec']['containers']

@@ -3,22 +3,22 @@ set -e
 # Q20 — Fix NetworkPolicy Labels: Setup
 
 # Clean prior state
-kubectl delete namespace netpol-test --ignore-not-found &>/dev/null || true
-while kubectl get namespace netpol-test &>/dev/null 2>&1; do sleep 1; done
+kubectl delete namespace network-demo --ignore-not-found &>/dev/null || true
+while kubectl get namespace network-demo &>/dev/null 2>&1; do sleep 1; done
 
 # Create namespace
-kubectl create namespace netpol-test &>/dev/null
+kubectl create namespace network-demo &>/dev/null
 
-# Create web pod with wrong labels (tier=frontend instead of role=frontend)
+# Create frontend pod with WRONG labels (role=wrong-frontend instead of role=frontend)
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
-  name: web
-  namespace: netpol-test
+  name: frontend
+  namespace: network-demo
   labels:
-    app: web
-    tier: frontend
+    app: frontend
+    role: wrong-frontend
 spec:
   containers:
   - name: nginx
@@ -27,16 +27,16 @@ spec:
     - containerPort: 80
 EOF
 
-# Create api pod with wrong labels (tier=backend instead of role=backend)
+# Create backend pod with WRONG labels (role=wrong-backend instead of role=backend)
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
-  name: api
-  namespace: netpol-test
+  name: backend
+  namespace: network-demo
   labels:
-    app: api
-    tier: backend
+    app: backend
+    role: wrong-backend
 spec:
   containers:
   - name: nginx
@@ -45,13 +45,45 @@ spec:
     - containerPort: 80
 EOF
 
-# Create NetworkPolicy that uses role= labels (pods don't match yet)
+# Create database pod with WRONG labels (role=wrong-db instead of role=db)
+kubectl apply -f - &>/dev/null <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: database
+  namespace: network-demo
+  labels:
+    app: database
+    role: wrong-db
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 80
+EOF
+
+# Create deny-all NetworkPolicy
 kubectl apply -f - &>/dev/null <<EOF
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-web-to-api
-  namespace: netpol-test
+  name: deny-all
+  namespace: network-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+EOF
+
+# Create NetworkPolicy: allow-frontend-to-backend (uses role= labels)
+kubectl apply -f - &>/dev/null <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: network-demo
 spec:
   podSelector:
     matchLabels:
@@ -63,6 +95,29 @@ spec:
     - podSelector:
         matchLabels:
           role: frontend
+    ports:
+    - protocol: TCP
+      port: 80
+EOF
+
+# Create NetworkPolicy: allow-backend-to-db (uses role= labels)
+kubectl apply -f - &>/dev/null <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-db
+  namespace: network-demo
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: backend
     ports:
     - protocol: TCP
       port: 80
