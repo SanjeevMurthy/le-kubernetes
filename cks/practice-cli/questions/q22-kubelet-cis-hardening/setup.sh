@@ -30,6 +30,7 @@ CONF=/var/lib/kubelet/config.yaml
 # authentication.anonymous.enabled and not on authentication.webhook.enabled.
 # awk is used rather than yq because the two yq implementations in the wild take
 # different expressions and a wrong guess corrupts the kubelet config.
+rc=0
 awk '
   /^[A-Za-z]/       { top = $0; sub(/:.*/, "", top); sub2 = "" }
   /^  [A-Za-z]/     { sub2 = $0; sub(/^  /, "", sub2); sub(/:.*/, "", sub2) }
@@ -42,13 +43,13 @@ awk '
     if (!anon) exit 3
     if (!mode) exit 4
   }
-' "$CONF.q22bak" > "$CONF.q22new" || {
-  rc=$?
+' "$CONF.q22bak" > "$CONF.q22new" || rc=$?
+if [ "${rc:-0}" -ne 0 ]; then
   rm -f "$CONF.q22new"
-  [ "$rc" = 3 ] && echo "no authentication.anonymous.enabled key in $CONF; this is not a kubeadm kubelet config"
-  [ "$rc" = 4 ] && echo "no authorization.mode key in $CONF; this is not a kubeadm kubelet config"
+  if [ "$rc" -eq 3 ]; then echo "no authentication.anonymous.enabled key in $CONF; this is not a kubeadm kubelet config"; fi
+  if [ "$rc" -eq 4 ]; then echo "no authorization.mode key in $CONF; this is not a kubeadm kubelet config"; fi
   exit 1
-}
+fi
 
 grep -q '^readOnlyPort: 10255$' "$CONF.q22new" || { echo "edit did not take"; rm -f "$CONF.q22new"; exit 1; }
 cat "$CONF.q22new" > "$CONF"

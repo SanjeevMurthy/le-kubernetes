@@ -22,6 +22,11 @@ QUESTIONS=(
   "18|Immutable Containers (readOnlyRootFilesystem)|Monitoring, Logging and Runtime Security|D6|Easy|q18-immutable-containers|kubectl|4|5|6|any"
   "19|Falco: change the output format and save the alerts|Monitoring, Logging and Runtime Security|D6|Hard|q19-falco-output-format|node-root tool:falco|8|10|15|worker"
   "20|Audit log forensics: who deleted the Secret|Monitoring, Logging and Runtime Security|D6|Medium|q20-audit-log-forensics|linux|6|8|13|linux"
+  "21|ImagePolicyWebhook: complete the config and deny unverified images|Supply Chain Security|D5|Hard|q21-imagepolicywebhook-broken-kubeconfig|node-root|9|10|12|control-plane"
+  "22|kube-bench: fix the kubelet findings|Cluster Setup|D1|Medium|q22-kubelet-cis-hardening|node-root tool:kube-bench|7|8|12|worker"
+  "23|The API server is down: find and fix the manifest|Cluster Hardening|D2|Medium|q23-apiserver-crash-recovery|node-root|7|8|9|control-plane"
+  "25|Read a Secret straight from etcd|Minimize Microservice Vulnerabilities|D4|Medium|q25-read-secret-from-etcd|node-root tool:etcdctl|5|6|8|control-plane"
+  "26|Encryption at rest: add a new key and re-encrypt|Minimize Microservice Vulnerabilities|D4|Hard|q26-reencrypt-existing-secrets|node-root tool:etcdctl|8|10|8|control-plane"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

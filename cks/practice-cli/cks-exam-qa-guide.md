@@ -30,6 +30,11 @@
 | Q18 | D6 | [Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem) | 6 sources | `kubectl` |
 | Q19 | D6 | [Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts) | 15 sources | `node-root tool:falco` |
 | Q20 | D6 | [Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret) | 13 sources | `linux` |
+| Q21 | D5 | [ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images) | 12 sources | `node-root` |
+| Q22 | D1 | [kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings) | 12 sources | `node-root tool:kube-bench` |
+| Q23 | D2 | [The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest) | 9 sources | `node-root` |
+| Q25 | D4 | [Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd) | 8 sources | `node-root tool:etcdctl` |
+| Q26 | D4 | [Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt) | 8 sources | `node-root tool:etcdctl` |
 
 ---
 
@@ -1431,3 +1436,622 @@ grep '"verb":"delete"' "$LOG" | grep '"name":"db-creds"' | grep -c '"namespace":
 None needed, and none would help. This is a text-processing task under time pressure. What matters is knowing the audit event field names by heart, which is why they are in the `## Memorise` section of `../../study-notes/06-monitoring-logging-runtime.md`.
 
 Note the contrast worth remembering: a kube-apiserver **audit log** is compact JSON, so `grep '"verb":"delete"'` matches. The output of `kubectl -o json` is pretty-printed, so the same pattern never matches there. Use `-o jsonpath` against the API and line tools against the log.
+
+---
+
+### Q21. ImagePolicyWebhook: complete the config and deny unverified images
+
+**Domain:** Supply Chain Security. **Difficulty:** Hard. **Weight:** 9. **Target:** 10 min. **Host:** control-plane. **Needs:** `node-root`.
+
+**Question**
+
+
+`ssh` to the control-plane node and work as root.
+
+This cluster is meant to admit only images that an external image bouncer has verified. Someone prepared the admission files under `/etc/kubernetes/admission-controllers/` and then stopped half way:
+
+- `admission-config.yaml` names the `ImagePolicyWebhook` plugin, but it is currently fail-open, so a webhook that cannot be reached lets everything through.
+- `kubeconfig.yaml` describes the backend and its certificate authority, but it is incomplete.
+- Service `image-bouncer` in namespace `default` is the backend. It listens on port 1323 and the policy path is `/image_policy`. It has no endpoints in this lab, which is exactly what makes fail-closed behaviour visible.
+
+The `kube-apiserver` static pod at `/etc/kubernetes/manifests/kube-apiserver.yaml` does not use any of this yet.
+
+1. Complete `/etc/kubernetes/admission-controllers/kubeconfig.yaml` so that the webhook backend is reached at `https://image-bouncer.default.svc:1323/image_policy`.
+2. Change `/etc/kubernetes/admission-controllers/admission-config.yaml` so that a webhook that cannot be reached denies the request instead of allowing it.
+3. Wire the API server up: enable the `ImagePolicyWebhook` plugin, point it at `/etc/kubernetes/admission-controllers/admission-config.yaml`, and make the directory `/etc/kubernetes/admission-controllers` readable inside the static pod.
+4. Bring the API server back to ready and confirm that `kubectl run ipw-probe --image=nginx --dry-run=server` is now rejected.
+
+Read the kubeconfig before you wire it in. An API server started against an admission configuration it cannot load does not come up at all, and once it is down there is no `kubectl` left to tell you why.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+**1. Read what is already there before changing anything.**
+
+```bash
+cd /etc/kubernetes/admission-controllers
+cat admission-config.yaml
+cat kubeconfig.yaml
+```
+
+The `cluster` entry has a `certificate-authority` but no `server`, so the API server has no address to call. Wiring this file in as it stands kills the API server.
+
+**2. Add the missing `server` line to the cluster entry.**
+
+```bash
+cat > /etc/kubernetes/admission-controllers/kubeconfig.yaml <<'EOF'
+apiVersion: v1
+kind: Config
+clusters:
+- name: bouncer_webhook
+  cluster:
+    certificate-authority: /etc/kubernetes/admission-controllers/webhook-ca.crt
+    server: https://image-bouncer.default.svc:1323/image_policy
+contexts:
+- name: bouncer_validator
+  context:
+    cluster: bouncer_webhook
+    user: api-server
+current-context: bouncer_validator
+preferences: {}
+users:
+- name: api-server
+  user: {}
+EOF
+```
+
+**3. Make the plugin fail closed.**
+
+```bash
+sed -i 's/defaultAllow: true/defaultAllow: false/' /etc/kubernetes/admission-controllers/admission-config.yaml
+grep defaultAllow /etc/kubernetes/admission-controllers/admission-config.yaml
+```
+
+The file should now read:
+
+```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: ImagePolicyWebhook
+  configuration:
+    imagePolicy:
+      kubeConfigFile: /etc/kubernetes/admission-controllers/kubeconfig.yaml
+      allowTTL: 50
+      denyTTL: 50
+      retryBackoff: 500
+      defaultAllow: false
+```
+
+**4. Take a copy of the manifest before editing it.**
+
+```bash
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
+```
+
+**5. Edit the static pod manifest.** Three separate edits are needed, and missing any one of them is the usual way this question is lost.
+
+```bash
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+Add `ImagePolicyWebhook` to the existing plugin list, or add the flag if there is none:
+
+```yaml
+    - --enable-admission-plugins=NodeRestriction,ImagePolicyWebhook
+    - --admission-control-config-file=/etc/kubernetes/admission-controllers/admission-config.yaml
+```
+
+Mount the directory into the container:
+
+```yaml
+    volumeMounts:
+    - name: admission-config
+      mountPath: /etc/kubernetes/admission-controllers
+      readOnly: true
+```
+
+And declare the volume next to the other `hostPath` volumes:
+
+```yaml
+  volumes:
+  - name: admission-config
+    hostPath:
+      path: /etc/kubernetes/admission-controllers
+      type: DirectoryOrCreate
+```
+
+**6. Watch it restart.** The kubelet notices the changed manifest within about 20 seconds. Until the new pod is up, `kubectl` returns a connection error, which is normal.
+
+```bash
+watch crictl ps
+```
+
+When the container stays in `Running` rather than cycling, the API server accepted the configuration:
+
+```bash
+curl -sk https://127.0.0.1:6443/readyz
+kubectl get nodes
+```
+
+If it never comes back, read the logs of the exited container and undo the change:
+
+```bash
+crictl ps -a | grep kube-apiserver
+crictl logs <container-id>
+cp /root/kube-apiserver.yaml.bak /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+**7. Test the effect.**
+
+```bash
+kubectl run ipw-probe --image=nginx --dry-run=server
+```
+
+The request is refused, and the message names the webhook URL. A namespace still creates normally, because the plugin only inspects pods:
+
+```bash
+kubectl create namespace ipw-control --dry-run=server
+```
+
+## Why
+
+`ImagePolicyWebhook` is a built-in admission plugin, not a `ValidatingWebhookConfiguration` object. It is configured entirely on the API server through a file, which is why three things have to line up: the plugin has to be enabled, `--admission-control-config-file` has to point at the `AdmissionConfiguration` document, and the directory holding that document has to be visible inside the static pod. The API server runs as a container, so a path that exists on the node means nothing until a `hostPath` volume and a `volumeMount` put it inside.
+
+`defaultAllow` decides what happens when the backend does not answer. With `true` the plugin fails open and an outage silently disables the control, which is the same as not having it. With `false` it fails closed, and a backend that is down stops all pod creation. That trade is the whole point of the setting, and an exam question that says "unverified images must be denied" is asking for `false`.
+
+The missing `server` line is the reason this question is on the list of ways candidates lose a cluster. The kubeconfig looks complete, `kubectl` never reads it, and no validation runs until the API server itself parses it during plugin initialisation. At that moment the process exits, the static pod crash-loops, and every diagnostic that relies on `kubectl` is gone. The only tools left are the ones that talk to the container runtime directly, `crictl ps -a` and `crictl logs`, or the kubelet journal. Checking the file first costs ten seconds and skipping the check can cost the whole question.
+
+## Verify
+
+```bash
+grep server: /etc/kubernetes/admission-controllers/kubeconfig.yaml
+grep defaultAllow /etc/kubernetes/admission-controllers/admission-config.yaml
+grep -E 'admission-control-config-file|ImagePolicyWebhook|admission-controllers' /etc/kubernetes/manifests/kube-apiserver.yaml
+curl -sk --max-time 5 https://127.0.0.1:6443/readyz
+kubectl create namespace ipw-control --dry-run=server   # still admitted
+kubectl run ipw-probe --image=nginx --dry-run=server     # rejected
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/`. The `ImagePolicyWebhook` section carries a complete `AdmissionConfiguration` example and the kubeconfig layout, including the note that the `server` field is where the remote service goes. Search the page for "imagePolicy".
+
+The static pod flags themselves are on `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/`.
+
+---
+
+### Q22. kube-bench: fix the kubelet findings
+
+**Domain:** Cluster Setup. **Difficulty:** Medium. **Weight:** 7. **Target:** 8 min. **Host:** worker. **Needs:** `node-root tool:kube-bench`.
+
+**Question**
+
+
+`ssh` to the worker node and work as root. The kubelet on that node is configured from `/var/lib/kubelet/config.yaml`.
+
+An audit ran `kube-bench` against the node and three kubelet checks in section 4.2 came back `[FAIL]`:
+
+- **4.2.1** the kubelet accepts anonymous requests
+- **4.2.2** the kubelet authorizes every request without asking the API server
+- **4.2.4** the kubelet serves an unauthenticated read-only port
+
+1. Re-run the audit yourself to see the findings and the remediation text:
+
+   ```
+   kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4
+   ```
+
+2. Fix all three findings in `/var/lib/kubelet/config.yaml`. Set anonymous authentication to `false`, set the authorization mode to `Webhook`, and set `readOnlyPort` to `0` explicitly rather than deleting the key.
+
+3. Restart the kubelet so the changes take effect.
+
+4. The node must go back to `Ready`, and re-running the same `kube-bench` command must report `[PASS]` for all three checks.
+
+Do not edit anything under `/etc/kubernetes/manifests/` for this question. Everything is in the kubelet configuration file.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the worker node, as root.
+
+```bash
+ssh <worker>
+sudo -i
+```
+
+**1. Run the audit and read the remediation.** kube-bench prints the fix for every finding, so there is no need to remember the CIS wording.
+
+```bash
+kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4
+```
+
+The three findings map onto three keys in one file. Confirm which file the kubelet actually uses before editing anything:
+
+```bash
+systemctl status kubelet | grep -i config
+grep config /var/lib/kubelet/kubeadm-flags.env /etc/systemd/system/kubelet.service.d/*.conf
+```
+
+**2. Back the file up.** A kubelet that cannot parse its configuration does not start, and the node goes `NotReady`.
+
+```bash
+cp /var/lib/kubelet/config.yaml /root/kubelet-config.yaml.bak
+```
+
+**3. Edit the three keys.**
+
+```bash
+vim /var/lib/kubelet/config.yaml
+```
+
+The relevant parts of the file should end up like this:
+
+```yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 2m0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 5m0s
+    cacheUnauthorizedTTL: 30s
+readOnlyPort: 0
+```
+
+Three points that decide the outcome:
+
+- `authentication.anonymous.enabled: false` is what closes 4.2.1. The nearby `authentication.webhook.enabled` is a different key and must stay `true`.
+- `authorization.mode: Webhook` is what closes 4.2.2. `AlwaysAllow` means the kubelet never asks the API server whether the caller may do what it is asking for.
+- `readOnlyPort: 0` is what closes 4.2.4. Write the `0` rather than removing the line, so the intent is visible to the next person reading the file.
+
+**4. Restart the kubelet and watch that it comes back.**
+
+```bash
+systemctl restart kubelet
+systemctl is-active kubelet
+journalctl -u kubelet -n 20 --no-pager
+```
+
+If the unit is not active, the file did not parse. Put the backup back and try again:
+
+```bash
+cp /root/kubelet-config.yaml.bak /var/lib/kubelet/config.yaml
+systemctl restart kubelet
+```
+
+**5. Confirm the effect, not just the file.**
+
+```bash
+curl -s --max-time 3 http://127.0.0.1:10255/pods    # connection refused now
+curl -sk --max-time 3 https://127.0.0.1:10250/pods  # 401 Unauthorized, so the kubelet is up
+kubectl get nodes
+```
+
+**6. Re-run the audit.**
+
+```bash
+kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4
+```
+
+All three lines should now start with `[PASS]`.
+
+## Why
+
+The kubelet is a second API surface on every node, and by default it is a weaker one than the API server. Port 10250 carries `exec`, `logs`, `run` and the full pod listing. If anonymous authentication is on, anyone who can reach that port is admitted as `system:anonymous`. If the authorization mode is `AlwaysAllow`, that anonymous caller is then permitted to do anything the kubelet can do, which includes running a command inside any container on the node. The two settings are only dangerous together, and that is why CIS lists them as separate checks.
+
+`Webhook` mode makes the kubelet forward every request to the API server as a `SubjectAccessReview`, so node RBAC decides the outcome instead of the kubelet. That is the only mode that ties kubelet access back to cluster identity. It requires `authentication.webhook.enabled: true` as well, which is why that key must not be turned off while fixing the anonymous one.
+
+The read-only port on 10255 is different in kind. It serves no writes, but it serves the whole pod list without any authentication at all, which hands an attacker the container images, the mounted secret names, the namespaces and the node layout. There is no way to authenticate it, so the only remediation is to close it.
+
+The reason to check the effect rather than the file is that a kubelet reads its configuration once at start. An edited file with no restart passes a `grep` and changes nothing on the node. Checking that 10255 refuses the connection while 10250 still answers proves both halves: the port is really closed, and the kubelet is really running.
+
+## Verify
+
+```bash
+grep -A2 anonymous /var/lib/kubelet/config.yaml
+grep -A1 '^authorization' /var/lib/kubelet/config.yaml
+grep '^readOnlyPort' /var/lib/kubelet/config.yaml
+systemctl is-active kubelet
+curl -s --max-time 3 http://127.0.0.1:10255/pods            # must fail
+curl -sk --max-time 3 https://127.0.0.1:10250/healthz        # must connect
+kubectl get nodes                                            # the node is Ready
+kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4 | grep -c '\[PASS\]'   # 3
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/` for the exact spelling and nesting of `authentication.anonymous.enabled`, `authorization.mode` and `readOnlyPort`. The kubelet page under `https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/` gives the equivalent command line flags for clusters that do not use a config file.
+
+The CIS benchmark itself is not an allowed source, and it does not need to be. `kube-bench` prints the remediation for every finding it reports, so the tool is the reference during the exam. What has to be memorised is the command shape, `kube-bench run --targets node --check <ids>`, and the fact that the fix goes in `/var/lib/kubelet/config.yaml`.
+
+---
+
+### Q23. The API server is down: find and fix the manifest
+
+**Domain:** Cluster Hardening. **Difficulty:** Medium. **Weight:** 7. **Target:** 8 min. **Host:** control-plane. **Needs:** `node-root`.
+
+**Question**
+
+
+`ssh` to the control-plane node and work as root.
+
+A change was made to the `kube-apiserver` static pod and the cluster has been unreachable since. Every `kubectl` command now returns a connection error:
+
+```
+The connection to the server 127.0.0.1:6443 was refused - did you specify the right host or port?
+```
+
+The kubelet is running and it keeps trying to start the pod. Nothing else on the node was touched.
+
+1. Diagnose the failure without `kubectl`. The container runtime and the kubelet journal are the only sources of truth while the API server is down:
+
+   ```
+   crictl ps -a | grep kube-apiserver
+   crictl logs <container-id>
+   journalctl -u kubelet -n 50 --no-pager
+   ```
+
+   You can also read the container's own output under `/var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/`.
+
+2. Repair `/etc/kubernetes/manifests/kube-apiserver.yaml`. Change nothing except what is broken, and keep the authorization modes the cluster had before, `Node` and `RBAC`.
+
+3. Wait for the static pod to come back and confirm that the cluster is usable again:
+
+   ```
+   crictl ps | grep kube-apiserver
+   kubectl get nodes
+   ```
+
+The kubelet rescans `/etc/kubernetes/manifests/` roughly every 20 seconds, so give it up to a minute after saving before deciding the fix did not work.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+**1. Confirm the API server is really the problem.**
+
+```bash
+kubectl get nodes
+curl -sk --max-time 3 https://127.0.0.1:6443/readyz ; echo "exit=$?"
+systemctl is-active kubelet
+```
+
+The kubelet is active and port 6443 refuses the connection, so the static pod is not running. That already rules out a network or certificate problem.
+
+**2. Find the container, including the ones that have exited.** `crictl ps` on its own hides a container that keeps crashing, which is exactly the case here. `-a` is what makes it visible.
+
+```bash
+crictl ps -a | grep kube-apiserver
+```
+
+The output shows an `Exited` container with a rising attempt count.
+
+**3. Read its output.**
+
+```bash
+crictl logs <container-id>
+```
+
+```
+Error: unknown flag: --authorization-modes
+```
+
+That one line is the whole diagnosis. If `crictl logs` returns nothing because the container was already garbage collected, the same text is on disk and in the kubelet journal:
+
+```bash
+ls -t /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/
+tail -20 /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/*.log
+journalctl -u kubelet -n 50 --no-pager | grep -i apiserver
+```
+
+**4. Fix the flag.** The correct spelling is singular, `--authorization-mode`, and it takes a comma-separated list.
+
+```bash
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.broken
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+```yaml
+    - --authorization-mode=Node,RBAC
+```
+
+`sed` does the same edit in one line:
+
+```bash
+sed -i 's|--authorization-modes=|--authorization-mode=|' /etc/kubernetes/manifests/kube-apiserver.yaml
+grep authorization /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+**5. Wait for the kubelet to pick the change up.** It rescans the manifest directory about every 20 seconds. Nothing needs restarting.
+
+```bash
+watch crictl ps
+```
+
+When the container stops cycling and stays `Running`, the cluster is back:
+
+```bash
+curl -sk https://127.0.0.1:6443/readyz
+kubectl get nodes
+kubectl -n kube-system get pod -l component=kube-apiserver
+```
+
+If it still does not start, the manifest has a second problem. Read the logs again rather than guessing, and remember that a manifest which is not valid YAML produces no container at all, so `crictl ps -a` shows nothing new and the parse error appears only in the kubelet journal.
+
+## Why
+
+The API server on a kubeadm cluster is a static pod. No controller manages it. The kubelet reads `/etc/kubernetes/manifests/`, and whatever is in there is what runs, which is why a single wrong character in that file takes the entire control plane down and why nothing repairs it automatically.
+
+This creates the diagnostic problem the question is really about. Every tool normally used to inspect a cluster goes through the API server, so when the API server is the thing that is broken, all of them are gone at once. The tools that still work are the ones that talk to the container runtime directly. `crictl ps -a` lists containers from containerd without involving Kubernetes at all, and `crictl logs` reads their output the same way. The kubelet journal is the other independent source, because the kubelet writes there whether or not it can reach the API server.
+
+`crictl ps` without `-a` is the trap. A crash-looping container is exited by the time the command runs, so the listing comes back empty and the natural conclusion is that the pod was never created. The container is there, it has simply already died, and `-a` shows it along with the attempt count that says it is looping rather than merely stopped.
+
+The failure mode itself is worth recognising by shape rather than by content. `unknown flag` means the process started and rejected its arguments, so the fault is in the command line in the manifest. A file-not-found error means a path is wrong or a `hostPath` volume is missing, so the fault is in the mounts. A YAML parse error in the kubelet journal with no container at all means the manifest itself does not load. Those three shapes cover almost every way a control plane is lost during this exam, and the recovery in every case is to read the log before touching the file.
+
+## Verify
+
+```bash
+grep -- '--authorization-mode' /etc/kubernetes/manifests/kube-apiserver.yaml
+grep -c -- '--authorization-modes' /etc/kubernetes/manifests/kube-apiserver.yaml   # 0
+curl -sk --max-time 5 https://127.0.0.1:6443/readyz
+kubectl get nodes
+kubectl -n kube-system get pod -l component=kube-apiserver
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/` lists every API server flag with its exact spelling, which settles `--authorization-mode` against `--authorization-modes` in a few seconds.
+
+The recovery procedure itself has to be memorised, because no page will help while the API server is down. Three commands are enough: `crictl ps -a` to find the container including exited ones, `crictl logs <id>` to read why it exited, and `journalctl -u kubelet` when there is no container to inspect. Know the manifest path `/etc/kubernetes/manifests/kube-apiserver.yaml` and the log path `/var/log/pods/` by heart, and copy the manifest before editing it so an unsuccessful attempt can be undone.
+
+---
+
+### Q25. Read a Secret straight from etcd
+
+**Domain:** Minimize Microservice Vulnerabilities. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** control-plane. **Needs:** `node-root tool:etcdctl`.
+
+**Question**
+
+
+**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+
+Namespace `etcd-lab` holds the Secret `vault-token`, which has a single key `token`. Encryption at rest is not configured on this cluster, so etcd stores the value in the clear.
+
+Show that anyone with read access to etcd owns that value, without going through the API server for the first half of the task.
+
+1. Read the key `/registry/secrets/etcd-lab/vault-token` directly from etcd with `etcdctl`, using the client certificates under `/etc/kubernetes/pki/etcd/`. Write the plain-text value of `token`, and nothing else, to `/opt/course/25/etcd.txt` (or `$COURSE_DIR/25/etcd.txt` on this lab).
+
+2. Read the same value the ordinary way, through `kubectl`, and write it to `/opt/course/25/kubectl.txt` (or `$COURSE_DIR/25/kubectl.txt` on this lab).
+
+The two files must hold the same string. Do not change or delete the Secret.
+
+The value is generated fresh every time this question is set up, so it cannot be memorised.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+```bash
+ssh <control-plane>
+sudo -i
+mkdir -p /opt/course/25
+```
+
+**1. Build the etcdctl command once.** etcd only accepts mutually authenticated clients, so all three certificate flags are required. Put them in a shell function so the rest of the task is short.
+
+```bash
+e() {
+  ETCDCTL_API=3 etcdctl \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/etcd/server.crt \
+    --key=/etc/kubernetes/pki/etcd/server.key "$@"
+}
+e endpoint health
+```
+
+The certificate paths are in the etcd static pod manifest if the names differ on your cluster:
+
+```bash
+grep -E 'cert-file|key-file|trusted-ca-file' /etc/kubernetes/manifests/etcd.yaml
+```
+
+**2. Read the key.** Every object lives under `/registry/<resource>/<namespace>/<name>`.
+
+```bash
+e get /registry/secrets/etcd-lab/vault-token > /tmp/25.raw
+```
+
+**3. Pull the value out.** The stored value is a protobuf-encoded Secret. The Secret's data is held as raw bytes, not base64, so the token appears verbatim in the middle of the binary. `strings` is the quickest way to see it.
+
+```bash
+strings /tmp/25.raw
+```
+
+The output shows the key name `token` and, next to it, the 16-character value. `hexdump -C /tmp/25.raw | head -40` shows the same thing with the surrounding bytes if the `strings` output is ambiguous.
+
+Write it down, exactly as printed:
+
+```bash
+echo '<the 16 characters you just read>' > /opt/course/25/etcd.txt
+```
+
+**4. Read the same value through the API.** Here the value *is* base64, because that is how the API represents `data`.
+
+```bash
+kubectl -n etcd-lab get secret vault-token -o jsonpath='{.data.token}' \
+  | base64 -d > /opt/course/25/kubectl.txt
+echo >> /opt/course/25/kubectl.txt
+```
+
+**5. Compare.**
+
+```bash
+cat /opt/course/25/etcd.txt /opt/course/25/kubectl.txt
+```
+
+If the token is alphanumeric, as it is here, the extraction can also be done without reading the dump by hand:
+
+```bash
+e get /registry/secrets/etcd-lab/vault-token | strings | grep -A1 -w token | tail -1 \
+  > /opt/course/25/etcd.txt
+```
+
+Check the result before trusting it. Reading the dump is the reliable method under exam conditions.
+
+## Why
+
+A Secret is not encrypted. It is base64-encoded, and base64 is an encoding, not a cipher. Unless the API server runs with `--encryption-provider-config`, every Secret sits in etcd exactly as it was written, which is why the raw bytes in step 3 are readable text.
+
+That makes etcd read access equivalent to holding every credential in the cluster. It is the reason the CIS benchmark insists on client certificate authentication for etcd, file permissions of 0600 on the etcd data directory, and encryption at rest for the `secrets` resource.
+
+The contrast between the two halves of this task is the lesson. Through the API you need RBAC on `secrets` in one namespace, and the request is audited. Through etcd you need one client certificate and there is no audit trail at all, for any namespace.
+
+`/registry/<resource>/<namespace>/<name>` is worth memorising. `e get /registry --prefix --keys-only` lists everything etcd holds, which is a fast way to find the path when the resource name is not obvious.
+
+## Verify
+
+```bash
+cat /opt/course/25/etcd.txt
+cat /opt/course/25/kubectl.txt
+kubectl -n etcd-lab get secret vault-token -o jsonpath='{.data.token}' | base64 -d; echo
+```
+
+All three print the same 16 characters.
+
+## Docs
+
+**Allowed:** `https://etcd.io/docs/` for `etcdctl get` and the transport security flags, and `https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/` for the fix, which is Q10 and Q26.
+
+Worth memorising instead of looking up: the three certificate flags, `ETCDCTL_API=3`, and the `/registry/<resource>/<namespace>/<name>` key layout.
+
+---
+
+### Q26. Encryption at rest: add a new key and re-encrypt
+
+**Domain:** Minimize Microservice Vulnerabilities. **Difficulty:** Hard. **Weight:** 8. **Target:** 10 min. **Host:** control-plane. **Needs:** `node-root tool:etcdctl`.
+
+**Question**
+
+
+**Solution**
+
