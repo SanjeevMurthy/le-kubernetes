@@ -102,7 +102,7 @@ sysctl --system 2>&1 | grep -c 90-lab.conf                          # file is re
 
 **Goal.** Identify the process consuming the most CPU or disk I/O, record its PID, and lower its scheduling priority without killing it.
 
-**Frequency.** 1 exam report, process and I/O monitoring (research section 3, process management row; KodeKloud Mock 1 Q15 writes the highest-read PID to a file). Drill: Q2 (planned).
+**Frequency.** 1 exam report, process and I/O monitoring (research section 3, process management row; a KodeKloud mock writes the highest-read PID to a file). Drill: Q2 (planned).
 
 **Commands.**
 ```bash

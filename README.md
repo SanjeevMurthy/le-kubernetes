@@ -9,7 +9,7 @@ Kubernetes certification preparation repository for the **Kubestronaut** program
 | **CKA** — Certified Kubernetes Administrator | Performance-based | Passed | [`cka/`](cka/) |
 | **CKAD** — Certified Kubernetes Application Developer | Performance-based | Passed | [`ckad/`](ckad/) |
 | **CKS** — Certified Kubernetes Security Specialist | Performance-based | In progress, exam 12 Dec 2026 | [`cks/`](cks/) |
-| **LFCS** — Linux Foundation Certified System Administrator | Performance-based | Planned, exam 6 Feb 2027 | `lfcs/` (built Dec 2026) |
+| **LFCS** — Linux Foundation Certified System Administrator | Performance-based | In progress, exam 6 Feb 2027 | [`lfcs/`](lfcs/) |
 | **KCNA** — Kubernetes and Cloud Native Associate | Multiple choice | Planned | [`kcna/`](kcna/) |
 | **KCSA** — Kubernetes and Cloud Native Security Associate | Multiple choice | Planned | [`kcsa/`](kcsa/) |
 
@@ -38,67 +38,34 @@ le-kubernetes/
 └── roadmap.md              # CKS and LFCS on one page
 ```
 
-## CKA Practice CLI
+## Practice CLIs
 
-An interactive CLI tool for practicing real CKA exam questions on any Kubernetes playground (Killercoda, minikube, kind, etc.).
+Four interactive harnesses. CKA and CKAD are the originals, which got their exams passed. CKS is the current design and LFCS follows it.
 
-### Quick Start
-
-```bash
-# On your K8s playground, clone the repo then:
-cd cka/practice-cli/v2
-chmod +x cka
-./cka
-```
-
-### Features
-
-- **22 exam-style questions** covering all CKA domains
-- **Automated lab setup** — creates K8s resources for each scenario
-- **Solution verification** — automated kubectl checks with pass/fail
-- **Built-in timer** — tracks time per question with performance feedback
-- **Solutions on demand** — view step-by-step answers when stuck
-- **Cleanup** — removes all lab resources when done
-
-### Questions Covered
-
-| Domain | Topics |
-|--------|--------|
-| **Cluster Setup** | Helm, CNI (Calico), CRDs, container runtime, kubeadm init, Kustomize |
-| **Workloads** | HPA, sidecar containers, PriorityClass, resource requests, run pod, pod security |
-| **Networking** | ConfigMap TLS, Gateway API, Ingress, NodePort, NetworkPolicy |
-| **Storage** | StorageClass defaults, PVC + PV |
-| **Troubleshooting** | Control plane fix, CNI troubleshoot, cluster repair |
-
-## CKAD Practice CLI
-
-An interactive CLI tool for practicing real CKAD exam questions, with progress tracking and random question mode.
-
-### Quick Start
+| Cert | Entry point | Questions | Runs on |
+|---|---|---|---|
+| CKA | `cka/practice-cli/v2/cka` | 22 | any cluster |
+| CKAD | `ckad/practice-cli/ckad` | 24 | any cluster |
+| CKS | `cks/practice-cli/cks` | see `--list` | minikube with Calico, plus Killercoda for node-level work |
+| LFCS | `lfcs/practice-cli/lfcs` | see `--list` | as root inside the lab VMs |
 
 ```bash
-cd ckad/practice-cli
-chmod +x ckad
-./ckad
+cd cks/practice-cli && ./cks --env      # what this host can run
+cd cks/practice-cli && ./cks            # interactive
+cd cks/practice-cli && ./cks --mock 1   # a scored 120-minute paper
 ```
 
-### Features
+The CKS and LFCS harnesses build every question from a self-contained folder holding a `meta` file, the question, the solution, and setup, verify and cleanup scripts. Verifiers test effect rather than file text: a NetworkPolicy question runs a DNS lookup, an encryption question reads the raw value out of etcd, and every LFCS question checks that the change survives a reboot.
 
-- **24 exam-style questions** across all 5 CKAD domains (sourced from 12+ candidate reports)
-- **Automated lab setup/verify/cleanup** with expected vs actual output on failures
-- **Progress tracking** — per-domain completion stats, checkmarks in question list
-- **Random question mode** — picks an incomplete question for exam simulation
-- **Built-in timer** with pace feedback
+Both refuse to run where they could do damage. CKS rejects any kubectl context matching `aks`, `eks`, `gke` or `prod`; LFCS requires root and a lab marker file.
 
-### Questions Covered
+## Verification
 
-| Domain | Topics |
-|--------|--------|
-| **Design & Build** | Podman image build, CronJob, Job from CronJob, PVC mount |
-| **Deployment** | Canary deployment, rolling update/rollback, fix deprecated API |
-| **Config & Security** | Secrets, ConfigMap mount, RBAC, ServiceAccount, SecurityContext, ResourceQuota |
-| **Networking** | NodePort, service selector fix, Ingress, NetworkPolicy (labels/pod-to-pod/CIDR) |
-| **Observability** | Readiness probe, CrashLoopBackOff debug |
+```bash
+bash scripts/check-docs.sh          # must print: check-docs: ALL OK
+```
+
+It runs `bash -n` and shellcheck over every script, resolves every relative link and heading anchor, verifies every table of contents is current, and lints and renders every mermaid diagram. Run it before each commit.
 
 ## Cheatsheets
 
