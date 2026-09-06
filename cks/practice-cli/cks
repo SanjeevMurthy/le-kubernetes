@@ -1,346 +1,335 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
 #  CKS Exam Practice CLI
-#  18 exam-style CKS questions (security-focused), curriculum v1.34
-#  Interactive tool for any Kubernetes playground (kubeadm recommended)
+#  Per-question labs with automated setup, verification and cleanup,
+#  a timer, progress tracking, and a scored 120-minute mock mode.
+#
+#  Menu code is bash 3.2 compatible so --list and --env run on macOS.
+#  Question scripts run on Linux nodes and may use bash 4 features.
 # ═══════════════════════════════════════════════════════════════════
-set -euo pipefail
+set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 source "$SCRIPT_DIR/lib/colors.sh"
+source "$SCRIPT_DIR/lib/env.sh"
 source "$SCRIPT_DIR/lib/questions.sh"
+source "$SCRIPT_DIR/lib/progress.sh"
 source "$SCRIPT_DIR/lib/menu.sh"
-source "$SCRIPT_DIR/lib/setup_map.sh"
 
-RETAKE_GUIDE="$SCRIPT_DIR/cks-exam-qa-guide.md"
+MOCK_DIR="$SCRIPT_DIR/../mock-exams"
+TIMER_FILE="$CKS_STATE_DIR/.timer"
 
-# ─── Timer ─────────────────────────────────────────────────────────
-TIMER_START=""
-TIMER_FILE="$SCRIPT_DIR/.timer"
-
-start_timer() {
-  TIMER_START=$(date +%s)
-  echo "$TIMER_START" > "$TIMER_FILE"
-  echo ""
-  print_success "${ICON_CLOCK}  Timer started!"
+qdir()  { echo "$SCRIPT_DIR/questions/$(get_question_folder "$1")"; }
+upper() { echo "$1" | tr '[:lower:]' '[:upper:]'; }
+pause() { echo ""; echo -e "  ${GRAY}Press Enter to continue...${RESET}"; read -r; }
+select_question() {
+  local n
+  n=$(printf "%02d" "$1" 2>/dev/null) || n="$1"
+  get_question_by_num "$n"
 }
 
-stop_timer() {
-  if [[ -f "$TIMER_FILE" ]]; then
-    TIMER_START=$(cat "$TIMER_FILE")
-  fi
-  if [[ -z "${TIMER_START:-}" ]]; then
-    print_warn "No timer running"
-    return
-  fi
-  local end=$(date +%s)
-  local elapsed=$(( end - TIMER_START ))
-  local mins=$(( elapsed / 60 ))
-  local secs=$(( elapsed % 60 ))
+# ─── timer ─────────────────────────────────────────────────────────
+start_timer()  { date +%s > "$TIMER_FILE"; print_success "${ICON_CLOCK}  Timer started"; }
+elapsed_secs() { [[ -f "$TIMER_FILE" ]] || { echo 0; return; }; echo $(( $(date +%s) - $(cat "$TIMER_FILE") )); }
+fmt_elapsed()  { local s; s=$(elapsed_secs); echo "$(( s / 60 ))m $(( s % 60 ))s"; }
 
-  echo ""
+stop_timer() {   # stop_timer target_minutes
+  local target="$1" m
+  m=$(( $(elapsed_secs) / 60 ))
   print_separator
-  if (( mins < 5 )); then
-    echo -e "  ${GREEN}${ICON_MEDAL} Time: ${BOLD}${mins}m ${secs}s${RESET}${GREEN} — Excellent pace!${RESET}"
-  elif (( mins < 8 )); then
-    echo -e "  ${YELLOW}${ICON_CLOCK}  Time: ${BOLD}${mins}m ${secs}s${RESET}${YELLOW} — Good, but aim for under 8 min${RESET}"
+  if (( m < target - 2 )); then
+    echo -e "  ${GREEN}${ICON_MEDAL} Time: $(fmt_elapsed). Excellent pace.${RESET}"
+  elif (( m < target )); then
+    echo -e "  ${YELLOW}${ICON_CLOCK}  Time: $(fmt_elapsed). On target (${target} min).${RESET}"
   else
-    echo -e "  ${RED}${ICON_CLOCK}  Time: ${BOLD}${mins}m ${secs}s${RESET}${RED} — Over 8 min. Practice this one more!${RESET}"
+    echo -e "  ${RED}${ICON_CLOCK}  Time: $(fmt_elapsed). Over the ${target} min target. Drill this one again.${RESET}"
   fi
   print_separator
-
-  TIMER_START=""
   rm -f "$TIMER_FILE"
 }
 
-get_elapsed() {
-  if [[ -f "$TIMER_FILE" ]]; then
-    local start=$(cat "$TIMER_FILE")
-    local now=$(date +%s)
-    local elapsed=$(( now - start ))
-    local mins=$(( elapsed / 60 ))
-    local secs=$(( elapsed % 60 ))
-    echo "${mins}m ${secs}s"
-  else
-    echo "not running"
-  fi
-}
-
-# ─── Guide Section Extraction ─────────────────────────────────────
-
-extract_section() {
-  local guide="$1"
-  local qid="$2"
-  local section="$3"
-
-  if [[ ! -f "$guide" ]]; then
-    echo "Guide not found: $guide"
-    return 1
-  fi
-
-  local qnum=$((10#$qid))
-  local header="### Q${qnum}."
-  local in_section=false
-  local found=false
-  local past_solution=false
-
+# ─── display ───────────────────────────────────────────────────────
+show_md() {
+  [[ -f "$1" ]] || { print_error "Missing $1"; return 1; }
+  local line
   while IFS= read -r line; do
-    if [[ "$line" == ${header}* ]] && [[ "$found" == false ]]; then
-      found=true
-      in_section=true
-      if [[ "$section" == "question" ]]; then
-        echo "$line"
-      fi
-      continue
-    fi
-
-    # Stop at next question header
-    if $in_section && [[ "$line" =~ ^###\ Q[0-9] ]]; then
-      break
-    fi
-
-    if $in_section; then
-      if [[ "$section" == "question" ]]; then
-        if [[ "$line" == *"**Solution"* ]] || [[ "$line" == *"**Concept"* ]]; then
-          break
-        fi
-        echo "$line"
-      elif [[ "$section" == "solution" ]]; then
-        if [[ "$line" == *"**Solution"* ]]; then
-          past_solution=true
-        fi
-        if $past_solution; then
-          if [[ "$line" == *"**Key Points"* ]]; then
-            break
-          fi
-          echo "$line"
-        fi
-      fi
-    fi
-  done < "$guide"
-
-  if [[ "$found" == false ]]; then
-    echo "Question Q${qid} not found in guide"
-  fi
-}
-
-# ─── Actions ───────────────────────────────────────────────────────
-
-run_setup() {
-  local q="$1"
-  local folder=$(get_question_folder "$q")
-
-  local setup="$SCRIPT_DIR/questions/$folder/setup.sh"
-  if [[ ! -f "$setup" ]]; then
-    setup=$(get_setup_path "$folder")
-  fi
-
-  if [[ -z "$setup" ]] || [[ ! -f "$setup" ]]; then
-    print_error "Setup script not found for $folder"
-    return 1
-  fi
-
-  clear
-  echo ""
-  echo -e "  ${ICON_GEAR}  ${BOLD}Setting up scenario, please wait...${RESET}"
-  print_separator
-  echo ""
-
-  chmod +x "$setup"
-  if bash "$setup" > /dev/null 2>&1; then
-    echo ""
-    print_success "Scenario ready!"
-    start_timer
-    show_question "$q"
-  else
-    print_error "Setup failed! Run setup again or check cluster state."
-  fi
+    case "$line" in
+      '#'*) echo -e "  ${BOLD}${WHITE}${line}${RESET}" ;;
+      '>'*) echo -e "  ${YELLOW}${line}${RESET}" ;;
+      *)    echo "  $line" ;;
+    esac
+  done < "$1"
 }
 
 show_question() {
-  local q="$1"
-  local id=$(get_question_id "$q")
-  echo ""
-  print_separator
+  echo ""; print_separator
   echo -e "  ${BOLD}${CYAN}${ICON_BOOK} Question${RESET}"
-  print_separator
-  echo ""
-  extract_section "$RETAKE_GUIDE" "$id" "question" | while IFS= read -r line; do
-    if [[ "$line" =~ ^#\  ]]; then
-      echo -e "  ${BOLD}${WHITE}${line}${RESET}"
-    elif [[ "$line" =~ ^\>\  ]]; then
-      echo -e "  ${YELLOW}${line}${RESET}"
-    else
-      echo "  $line"
-    fi
-  done
+  print_separator; echo ""
+  show_md "$(qdir "$1")/question.md"
   echo ""
 }
 
 show_solution() {
-  local q="$1"
-  local id=$(get_question_id "$q")
+  confirm_action "Show the solution?" || return 0
+  echo ""; print_separator
+  echo -e "  ${BOLD}${CYAN}${ICON_HINT} Solution${RESET}"
+  print_separator; echo ""
+  show_md "$(qdir "$1")/solution.md"
+  echo ""
+}
 
-  if confirm_action "Are you sure you want to see the solution?"; then
-    echo ""
-    print_separator
-    echo -e "  ${BOLD}${CYAN}${ICON_HINT} Solution${RESET}"
-    print_separator
-    echo ""
-    extract_section "$RETAKE_GUIDE" "$id" "solution" | while IFS= read -r line; do
-      if [[ "$line" =~ ^#\  ]]; then
-        echo -e "  ${BOLD}${WHITE}${line}${RESET}"
-      elif [[ "$line" =~ ^\>\  ]]; then
-        echo -e "  ${YELLOW}${line}${RESET}"
-      else
-        echo "  $line"
-      fi
-    done
-    echo ""
+# ─── actions ───────────────────────────────────────────────────────
+run_setup() {
+  local q="$1" dir needs
+  dir=$(qdir "$q"); needs=$(get_question_needs "$q")
+  if ! has_needs "$needs"; then
+    print_error "This environment does not satisfy: $needs"
+    print_info "Run [E] for the full environment report."
+    return 1
+  fi
+  clear; echo ""
+  echo -e "  ${ICON_GEAR}  ${BOLD}Setting up the scenario...${RESET}"
+  print_separator; echo ""
+  # Setup output is shown, not swallowed: it carries the scenario facts.
+  bash "$dir/setup.sh" 2>&1 | sed 's/^/  /'
+  if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+    echo ""; print_success "Scenario ready."
+    start_timer
+    show_question "$q"
+  else
+    print_error "Setup failed. Fix the environment and run [S] again."
   fi
 }
 
 run_verify() {
   local q="$1"
-  local folder=$(get_question_folder "$q")
-  local vscript="$SCRIPT_DIR/questions/$folder/verify.sh"
-
-  if [[ ! -f "$vscript" ]]; then
-    print_warn "No verification script for this question"
-    print_info "Manual verification: check the solution and compare"
-    return
-  fi
-
   echo ""
-  echo -e "  ${ICON_CHECK}  ${BOLD}Verifying your solution...${RESET}"
-  print_separator
-  echo ""
-
-  chmod +x "$vscript"
-  if bash "$vscript"; then
-    echo ""
-    print_success "All checks passed! Run [C] to cleanup, or [B] to go back."
-    stop_timer
+  echo -e "  ${ICON_CHECK}  ${BOLD}Verifying...${RESET}"
+  print_separator; echo ""
+  if bash "$(qdir "$q")/verify.sh"; then
+    echo ""; print_success "All checks passed."
+    stop_timer "$(get_question_minutes "$q")"
+    mark_complete "$(get_question_id "$q")"
   else
-    echo ""
-    print_error "Some checks failed. Review and try again."
-    if [[ -f "$TIMER_FILE" ]]; then
-      echo -e "  ${GRAY}${ICON_CLOCK}  Timer still running: $(get_elapsed)${RESET}"
-    fi
+    echo ""; print_error "Some checks failed. Review the FAIL lines and try again."
+    [[ -f "$TIMER_FILE" ]] && echo -e "  ${GRAY}${ICON_CLOCK}  Timer still running: $(fmt_elapsed)${RESET}"
   fi
 }
 
 run_cleanup() {
   local q="$1"
-  local folder=$(get_question_folder "$q")
-  local cscript="$SCRIPT_DIR/questions/$folder/cleanup.sh"
-
-  if [[ ! -f "$cscript" ]]; then
-    print_warn "No cleanup script for this question"
-    return
-  fi
-
-  if confirm_action "Clean up all resources for this question?"; then
-    echo ""
-    echo -e "  ${ICON_BROOM}  ${BOLD}Cleaning up...${RESET}"
-    chmod +x "$cscript"
-    if bash "$cscript" > /dev/null 2>&1; then
-      print_success "Cleanup complete!"
-      rm -f "$TIMER_FILE"
-      TIMER_START=""
-    else
-      print_error "Cleanup encountered errors. Check manually."
-    fi
+  confirm_action "Clean up all resources for this question?" || return 0
+  echo ""
+  echo -e "  ${ICON_BROOM}  ${BOLD}Cleaning up...${RESET}"
+  bash "$(qdir "$q")/cleanup.sh" 2>&1 | sed 's/^/  /'
+  if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+    print_success "Cleanup complete."
+    rm -f "$TIMER_FILE"
+  else
+    print_error "Cleanup reported errors. Check the cluster manually."
   fi
 }
 
-# ─── Question Action Loop ─────────────────────────────────────────
-
 question_loop() {
-  local q="$1"
+  local q="$1" action
   while true; do
     clear
-    if [[ -f "$TIMER_FILE" ]]; then
-      TIMER_START=$(cat "$TIMER_FILE")
-    fi
     show_question_actions "$q"
     read -r action
-    case "${action^^}" in
-      S) run_setup "$q"
-         echo ""
-         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-         read -r
-         ;;
-      Q) show_question "$q"
-         echo ""
-         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-         read -r
-         ;;
-      H) show_solution "$q"
-         echo ""
-         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-         read -r
-         ;;
-      V) run_verify "$q"
-         echo ""
-         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-         read -r
-         ;;
-      C) run_cleanup "$q"
-         echo ""
-         echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-         read -r
-         ;;
+    case "$(upper "$action")" in
+      S) run_setup "$q"; pause ;;
+      Q) show_question "$q"; pause ;;
+      H) show_solution "$q"; pause ;;
+      V) run_verify "$q"; pause ;;
+      C) run_cleanup "$q"; pause ;;
       B) return ;;
-      *) print_warn "Invalid option. Try S/Q/H/V/C/B"
-         sleep 1
-         ;;
+      *) print_warn "Invalid option. Try S/Q/H/V/C/B"; sleep 1 ;;
     esac
   done
 }
 
-# ─── Main Loop ─────────────────────────────────────────────────────
+# ─── environment report ────────────────────────────────────────────
+show_env() {
+  print_header "${ICON_GEAR} Environment"
+  local ctx ok q id needs runnable=0 t
+  ctx=$(kubectl config current-context 2>/dev/null || echo none)
+  echo -e "  context:      $ctx"
+  if require_context_allowed >/dev/null 2>&1; then ok=yes; else ok="NO (guard)"; fi
+  echo -e "  allowed:      $ok"
+  echo -e "  state dir:    $CKS_STATE_DIR"
+  echo -e "  deliverables: $COURSE_DIR"
+  if [[ "$ok" == yes ]]; then
+    echo -e "  CNI:          $(detect_cni)"
+  else
+    echo -e "  CNI:          (skipped, context not allowed)"
+  fi
+  if is_node_root; then
+    echo -e "  node root:    yes ($(hostname))"
+  else
+    echo -e "  node root:    no (node-level questions need Killercoda or a KodeKloud lab)"
+  fi
+  echo ""
+  for t in trivy kube-bench falco runsc kubesec bom apparmor_parser strace etcdctl crictl yq; do
+    if command -v "$t" >/dev/null 2>&1; then
+      printf "  tool %-16s ${GREEN}present${RESET}\n" "$t"
+    else
+      printf "  tool %-16s ${GRAY}missing${RESET}\n" "$t"
+    fi
+  done
+  echo ""
+  echo -e "  ${BOLD}Runnable here:${RESET}"
+  for q in "${QUESTIONS[@]}"; do
+    id=$(get_question_id "$q"); needs=$(get_question_needs "$q")
+    if [[ "$ok" == yes ]] && has_needs "$needs"; then
+      echo -e "  ${GREEN}Q$id${RESET} $(get_question_title "$q")"
+      runnable=$(( runnable + 1 ))
+    else
+      echo -e "  ${GRAY}Q$id needs: $needs${RESET}"
+    fi
+  done
+  echo ""
+  echo -e "  $runnable of ${#QUESTIONS[@]} questions runnable in this environment."
+}
 
+# ─── mock mode ─────────────────────────────────────────────────────
+mock_each() {   # mock_each N callback   -> callback id weight question
+  local set_file="$MOCK_DIR/mock-$1.set" id w q
+  while IFS='|' read -r id w; do
+    id="${id%%[[:space:]]*}"
+    [[ -z "$id" || "$id" == \#* ]] && continue
+    if q=$(select_question "$id"); then
+      "$2" "$id" "$w" "$q"
+    else
+      print_warn "unknown question id '$id' in mock-$1.set"
+    fi
+  done < "$set_file"
+}
+
+mock_setup_one() {
+  if has_needs "$(get_question_needs "$3")"; then
+    bash "$(qdir "$3")/setup.sh" >/dev/null 2>&1 || print_warn "setup failed for Q$1"
+  else
+    MOCK_SKIPPED="$MOCK_SKIPPED Q$1"
+  fi
+}
+
+mock_list_one() {
+  printf "  ${CYAN}[Q%s]${RESET} %-46s ${GRAY}%s pts  %s  %s${RESET}\n" \
+    "$1" "$(get_question_title "$3")" "$2" "$(get_question_domain_short "$3")" "$(get_question_host "$3")"
+}
+
+mock_score_one() {
+  MOCK_TOTAL=$(( MOCK_TOTAL + $2 ))
+  if bash "$(qdir "$3")/verify.sh" >/dev/null 2>&1; then
+    MOCK_EARNED=$(( MOCK_EARNED + $2 ))
+    echo "$1|$2|PASS|$(get_question_domain_short "$3")" >> "$MOCK_RESULTS"
+    echo -e "  ${GREEN}PASS${RESET} Q$1 ($2 pts)"
+    mark_complete "$1"
+  else
+    echo "$1|$2|FAIL|$(get_question_domain_short "$3")" >> "$MOCK_RESULTS"
+    echo -e "  ${RED}FAIL${RESET} Q$1 ($2 pts)"
+  fi
+}
+
+mock_cleanup_one() { bash "$(qdir "$3")/cleanup.sh" >/dev/null 2>&1; }
+
+mock_domain_report() {
+  local d earned total
+  for d in D1 D2 D3 D4 D5 D6; do
+    earned=$(awk -F'|' -v d="$d" '$4==d && $3=="PASS" {s+=$2} END {print s+0}' "$MOCK_RESULTS")
+    total=$(awk -F'|' -v d="$d" '$4==d {s+=$2} END {print s+0}' "$MOCK_RESULTS")
+    [[ "$total" -gt 0 ]] && printf "  %s %3d / %3d\n" "$d" "$earned" "$total"
+  done
+}
+
+run_mock() {
+  local n="$1" action id q pct started left
+  [[ -f "$MOCK_DIR/mock-$n.set" ]] || { print_error "No such mock: mock-$n.set"; return 1; }
+  MOCK_SKIPPED=""; MOCK_TOTAL=0; MOCK_EARNED=0
+  MOCK_RESULTS="$CKS_STATE_DIR/mock-$n.results"; : > "$MOCK_RESULTS"
+
+  print_header "${ICON_TARGET} Mock exam $n"
+  echo -e "  $(grep -c '|' "$MOCK_DIR/mock-$n.set") tasks, 120 minutes, pass mark 67 percent."
+  echo -e "  Setups run now. Scoring runs when you press F."
+  confirm_action "Start the mock now?" || return 0
+
+  mock_each "$n" mock_setup_one
+  [[ -n "$MOCK_SKIPPED" ]] && print_warn "Skipped, environment cannot run:$MOCK_SKIPPED"
+  started=$(date +%s); echo "$started" > "$TIMER_FILE"
+
+  while true; do
+    left=$(( (7200 - ($(date +%s) - started)) / 60 ))
+    clear
+    print_header "${ICON_TARGET} Mock exam $n: ${left} min left"
+    mock_each "$n" mock_list_one
+    echo ""
+    echo -e "  ${CYAN}[N]${RESET} show a task   ${MAGENTA}[F]${RESET} finish and score   ${RED}[C]${RESET} cleanup all   ${GRAY}[B]${RESET} back"
+    echo -ne "  ${BOLD}> ${RESET}"
+    read -r action
+    case "$(upper "$action")" in
+      N) echo -ne "  Task number: Q"; read -r id
+         if q=$(select_question "$id"); then show_question "$q"; else print_warn "No question Q$id"; fi
+         pause ;;
+      F) echo ""; : > "$MOCK_RESULTS"; MOCK_TOTAL=0; MOCK_EARNED=0
+         mock_each "$n" mock_score_one
+         pct=0; [[ $MOCK_TOTAL -gt 0 ]] && pct=$(( MOCK_EARNED * 100 / MOCK_TOTAL ))
+         print_separator
+         echo -e "  ${BOLD}Score: $MOCK_EARNED / $MOCK_TOTAL points = ${pct}% (pass mark 67%). Time: $(fmt_elapsed)${RESET}"
+         mock_domain_report
+         print_separator
+         echo "$(date '+%F %T') mock-$n $MOCK_EARNED/$MOCK_TOTAL ${pct}% $(fmt_elapsed)" >> "$CKS_STATE_DIR/mock-results.log"
+         rm -f "$TIMER_FILE"
+         pause ;;
+      C) if confirm_action "Clean up every task in this mock?"; then
+           mock_each "$n" mock_cleanup_one
+           print_success "Mock cleaned up."
+         fi
+         pause ;;
+      B) return 0 ;;
+      *) print_warn "Invalid option."; sleep 1 ;;
+    esac
+  done
+}
+
+# ─── main ──────────────────────────────────────────────────────────
 main() {
+  local choice qnum q
   while true; do
     clear
     show_main_menu
     read -r choice
-    case "$choice" in
-      1)
-        show_question_list
-        echo -e "  ${GRAY}Press Enter to continue...${RESET}"
-        read -r
-        ;;
-      2)
-        show_question_list
-        show_question_selector
-        read -r qnum
-        if [[ "$qnum" =~ ^[Bb]$ ]]; then
-          continue
-        fi
-        qnum=$(printf "%02d" "$qnum" 2>/dev/null || echo "$qnum")
-        local q
-        if q=$(get_question_by_num "$qnum"); then
-          question_loop "$q"
-        else
-          print_error "Question Q${qnum} not found. Enter 1-${#QUESTIONS[@]}."
-          sleep 1
-        fi
-        ;;
-      3|q|Q)
-        echo ""
-        echo -e "  ${ICON_ROCKET} ${BOLD}Good luck on your CKS! Secure those clusters.${RESET}"
-        echo ""
-        exit 0
-        ;;
-      *)
-        print_warn "Invalid option. Enter 1, 2, or 3."
-        sleep 1
-        ;;
+    case "$(upper "$choice")" in
+      1) show_question_list; pause ;;
+      2) show_question_list; show_question_selector; read -r qnum
+         [[ "$qnum" =~ ^[Bb]$ ]] && continue
+         if q=$(select_question "$qnum"); then
+           question_loop "$q"
+         else
+           print_error "Question Q${qnum} not found."; sleep 1
+         fi ;;
+      3) if qnum=$(get_random_incomplete); then
+           q=$(select_question "$qnum"); question_loop "$q"
+         else
+           print_success "Every question is complete."; sleep 1
+         fi ;;
+      4) show_progress; pause ;;
+      5) echo -ne "  Mock number (1-3): "; read -r qnum; run_mock "$qnum" ;;
+      E) show_env; pause ;;
+      Q) echo ""
+         echo -e "  ${ICON_ROCKET} ${BOLD}Good luck on your CKS. Secure those clusters.${RESET}"
+         echo ""
+         exit 0 ;;
+      *) print_warn "Invalid option."; sleep 1 ;;
     esac
   done
 }
 
-main "$@"
+case "${1:-}" in
+  --list) show_question_list; exit 0 ;;
+  --env)  show_env; exit 0 ;;
+  --mock) require_context_allowed || exit 1; run_mock "${2:-1}"; exit 0 ;;
+  -h|--help) echo "usage: cks [--list | --env | --mock N]"; exit 0 ;;
+esac
+
+require_context_allowed || exit 1
+main

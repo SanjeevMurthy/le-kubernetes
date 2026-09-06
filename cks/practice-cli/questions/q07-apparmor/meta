@@ -1,0 +1,10 @@
+id=07
+title="AppArmor Profile on a Pod"
+domain="System Hardening"
+domain_short=D3
+difficulty=Medium
+needs="node-root tool:apparmor_parser"
+weight=7
+minutes=8
+sources=12
+host=worker

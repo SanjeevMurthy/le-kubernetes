@@ -1,0 +1,10 @@
+id=13
+title="Scan Images with Trivy and Remediate"
+domain="Supply Chain Security"
+domain_short=D5
+difficulty=Medium
+needs="kubectl tool:trivy"
+weight=5
+minutes=6
+sources=9
+host=any

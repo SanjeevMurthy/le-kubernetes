@@ -1,0 +1,10 @@
+id=09
+title="Enforce Pod Security Admission (restricted)"
+domain="Minimize Microservice Vulnerabilities"
+domain_short=D4
+difficulty=Medium
+needs="kubectl"
+weight=4
+minutes=5
+sources=6
+host=any
