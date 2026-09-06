@@ -119,8 +119,8 @@ Weekend-anchored, dated. Both exams should be booked as soon as the plan is appr
 
 | Phase | Dates | Pace | Content |
 |---|---|---|---|
-| CKS foundation | Sat 26 Sep to Sun 1 Nov | 6 h/wk | One domain per weekend in curriculum order, System Hardening and Runtime Security front-loaded; KodeKloud CKS lessons mapped to each note; kubectl-level CLI questions on minikube; Killercoda scenarios for node-level topics; Anki daily |
-| CKS drills | Mon 2 Nov to Sun 29 Nov | 10 to 12 h/wk | Every CLI question timed and interleaved; node-level questions on Killercoda; KodeKloud mock 1 to 3; repo mocks on Sat 14 Nov and Sat 21 Nov; apiserver crash-recovery drill weekly; killer.sh session 1 on Sat 28 Nov with gap review on Sun 29 Nov |
+| CKS foundation | Sat 26 Sep to Sun 8 Nov | 6 h/wk until 1 Nov, then 10 to 12 h/wk | One domain per weekend, Runtime Security and System Hardening front-loaded; KodeKloud CKS lessons mapped to each note; kubectl-level CLI questions on minikube; Killercoda for node-level questions; Anki daily; close-out weekend 7 to 8 Nov for kube-bench, TLS, upgrade, CSR, Cilium and Istio |
+| CKS drills | Mon 9 Nov to Sun 29 Nov | 10 to 12 h/wk | Every CLI question timed and interleaved; node-level questions on Killercoda; KodeKloud mock 1 to 3; repo mocks on Sat 14 Nov and Sat 21 Nov; apiserver crash-recovery drill weekly; killer.sh session 1 on Sat 28 Nov with gap review on Sun 29 Nov |
 | CKS simulation | Mon 30 Nov to Sat 12 Dec | 10 to 12 h/wk | Weak-area drills from session 1; repo mock 3 on Sat 5 Dec; killer.sh session 2 on Wed 9 Dec; exam Sat 12 Dec |
 | LFCS lab and foundation | Sun 13 Dec to Sun 10 Jan | 10 to 12 h/wk | VM build on 13 Dec; KodeKloud LFCS course mapped to the five domain notes; CLI questions per domain; Rocky flavour for SELinux, firewalld, nmcli; repo mock 1 as a baseline on Sun 10 Jan |
 | LFCS drills | Mon 11 Jan to Sun 31 Jan | 8 to 10 h/wk | All questions timed on both distros; KodeKloud mocks; repo mock 2 on Sat 16 Jan; killer.sh session 1 on Sat 23 Jan; two-host and persistence drills; repo mock 3 on Sun 31 Jan |
