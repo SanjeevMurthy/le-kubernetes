@@ -1,102 +1,51 @@
-# CKS Study Notes — Cluster Setup (15%)
+# CKS Cluster Setup (15%)
 
-> Part of the CKS study-notes set; order follows the official CKS curriculum (v1.34, Kubernetes 1.34).
-> Goal: understand each topic well enough to do the task fast under exam time pressure — not exhaustively.
+Cluster Setup is 15 percent of the CKS exam. The exam environment runs Kubernetes v1.35, so every manifest below uses APIs that are GA there. The published curriculum document is still labelled v1.34; nothing in this domain depends on the difference.
 
-**What the examiner tests here:** Creating and applying NetworkPolicies (including the DNS egress trap), running kube-bench and remediating findings, configuring Ingress TLS, blocking cloud metadata endpoints, and verifying binary checksums.
+Graders score the end state, not the method. Every recipe ends with a command that proves the end state, because a hardening change that silently broke DNS or the API server scores zero.
 
----
+<!-- toc -->
+## Table of Contents
 
-## NetworkPolicy: Default-Deny + Selective Allow
+- [What the exam asks](#what-the-exam-asks)
+- [Recipe 1: Default-deny ingress and egress without breaking DNS](#recipe-1-default-deny-ingress-and-egress-without-breaking-dns)
+- [Recipe 2: Selective allow with podSelector, namespaceSelector and ipBlock](#recipe-2-selective-allow-with-podselector-namespaceselector-and-ipblock)
+- [Recipe 3: Block the cloud metadata endpoint](#recipe-3-block-the-cloud-metadata-endpoint)
+- [Recipe 4: Fix kube-bench CIS findings on the control plane and kubelet](#recipe-4-fix-kube-bench-cis-findings-on-the-control-plane-and-kubelet)
+- [Recipe 5: Restrict TLS versions and ciphers on the API server and etcd](#recipe-5-restrict-tls-versions-and-ciphers-on-the-api-server-and-etcd)
+- [Recipe 6: Serve an Ingress over TLS and force the redirect](#recipe-6-serve-an-ingress-over-tls-and-force-the-redirect)
+- [Recipe 7: Verify platform binaries with sha512sum](#recipe-7-verify-platform-binaries-with-sha512sum)
+- [Recipe 8: Reduce Dashboard and GUI exposure](#recipe-8-reduce-dashboard-and-gui-exposure)
+- [Quick reference](#quick-reference)
+- [Memorise](#memorise)
 
-**Why it matters:** By default all pod-to-pod traffic is allowed. A default-deny policy is the CKS baseline; selective-allow policies are how you then open only what's needed. Expect 1–2 tasks requiring you to write or fix a policy under time pressure.
+<!-- toc stop -->
 
-**Concepts**
-- Policies are additive and namespace-scoped; there is no "global" deny built in
-- `policyTypes: [Ingress, Egress]` — if omitted, only the direction(s) with rules are enforced
-- Selectors: `podSelector` (empty `{}` = all pods in namespace), `namespaceSelector`, `ipBlock`
-- A policy with empty `spec.ingress` / `spec.egress` blocks ALL traffic for that direction
-- Ports in a rule are **OR** within the rule; rules themselves are **OR** across the list
+## What the exam asks
 
-**Commands & examples**
+| Task type | Sources | Drill |
+|---|---|---|
+| NetworkPolicy: default deny, selectors, DNS egress | 12 | Q1 |
+| kube-bench and CIS remediation | 12 | Q2, Q22 (planned) |
+| API server and etcd flags, including TLS protocol and ciphers | 9 | Q33 (planned) |
+| Ingress with a TLS secret | 7 | Q3 |
+| Binary verification with sha512sum | 7 | Killercoda "Verify Platform Binaries" |
+| Kubelet config hardening (CIS 4.2.x) | 5 | Q2, Q22 (planned) |
+| Node metadata endpoint protection | 4 | Q24 (planned) |
+| Kubernetes Dashboard hardening | 2 | none |
 
+Sources are distinct candidate reports counted in the exam research report, section 3. NetworkPolicy and kube-bench sit in the top tier reported by 10 or more sources, so plan on meeting at least one of each. Every task host has `kubectl` with a `k` alias, `yq`, `curl`, `wget` and `man`. There is no `jq`, so no command in this note uses it.
+
+## Recipe 1: Default-deny ingress and egress without breaking DNS
+
+**Goal.** A namespace where no pod sends or receives traffic except DNS lookups to CoreDNS, with `nslookup` still succeeding from inside the namespace.
+
+**Frequency.** 12 candidate sources (research section 3 row 6; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q1.
+
+**Commands.**
 ```bash
-# 1. Default-deny ALL ingress AND egress in a namespace
-kubectl apply -f - <<'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: prod
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-EOF
-
-# 2. Allow ingress to app pods from frontend pods on port 8080
-kubectl apply -f - <<'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-frontend-to-app
-  namespace: prod
-spec:
-  podSelector:
-    matchLabels:
-      app: backend
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - port: 8080
-      protocol: TCP
-EOF
-
-# 3. Allow egress to another namespace (e.g. monitoring namespace)
-kubectl apply -f - <<'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-egress-to-monitoring
-  namespace: prod
-spec:
-  podSelector:
-    matchLabels:
-      app: backend
-  policyTypes:
-  - Egress
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: monitoring
-    ports:
-    - port: 9090
-      protocol: TCP
-EOF
-```
-
----
-
-## NetworkPolicy: The DNS Egress Trap (Port 53)
-
-**Why it matters:** This is the single most common CKS gotcha. If you apply a default-deny-egress policy and forget to allow port 53 UDP+TCP, every DNS lookup inside the namespace silently fails. Pods that look healthy will hang or error on any hostname resolution.
-
-**Concepts**
-- DNS uses port 53, both **UDP** (normal queries) and **TCP** (large responses / zone transfers)
-- `kube-dns` / `CoreDNS` runs in `kube-system`; you need a `namespaceSelector` targeting that namespace
-- You must specify **two separate port entries** — one UDP, one TCP — because `protocol` defaults to TCP only
-
-**Commands & examples**
-
-```bash
-# Allow DNS egress — always add this alongside any egress default-deny
+# Apply the DNS allow policy FIRST. Applying deny-all first breaks resolution for
+# everything already running while you type the second policy.
 kubectl apply -f - <<'EOF'
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -112,6 +61,9 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
     - port: 53
       protocol: UDP
@@ -119,35 +71,119 @@ spec:
       protocol: TCP
 EOF
 
-# Verify DNS still works after applying deny-all
-kubectl run test --image=busybox --restart=Never --rm -it -n prod -- nslookup kubernetes.default
-```
-
-**⚠️ Exam tips:**
-- Forgetting port 53 will break the task silently — your app pod will fail even if the NetworkPolicy rules look correct
-- Always write the DNS-allow policy FIRST, then the deny-all, to avoid locking yourself out mid-task
-- `kubernetes.io/metadata.name` is automatically set on all namespaces in modern Kubernetes — use it instead of custom labels
-
----
-
-## NetworkPolicy: Blocking Cloud Metadata Endpoint (169.254.169.254)
-
-**Why it matters:** On cloud nodes (AWS, GCP, Azure) the instance metadata API is reachable at 169.254.169.254. A compromised pod can harvest IAM credentials from it. Blocking this via `ipBlock` is a standard CKS hardening task.
-
-**Concepts**
-- `ipBlock` matches on CIDR; `except` carves out exclusions
-- To block a single IP, use `/32` as the CIDR, then use `except` if you need to allow a sub-range
-- Strategy: allow the broad CIDR **except** 169.254.169.254/32 — OR deny egress to that IP explicitly
-
-**Commands & examples**
-
-```bash
-# Block egress to the metadata endpoint while allowing all other egress
 kubectl apply -f - <<'EOF'
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: block-metadata-endpoint
+  name: default-deny-all
+  namespace: prod
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+EOF
+```
+**Verify.**
+```bash
+kubectl get netpol default-deny-all -n prod -o jsonpath='{.spec.podSelector}|{.spec.policyTypes[*]}{"\n"}'   # expect {}|Ingress Egress
+
+# Effect test. This is the check that catches the DNS trap.
+kubectl run dnstest -n prod --rm -i --restart=Never --image=busybox:1.36 \
+  --pod-running-timeout=90s -- nslookup kubernetes.default.svc.cluster.local
+```
+**Gotchas.**
+- A policy with `policyTypes` but no matching rule block denies that whole direction. That is the mechanism, not a bug.
+- Port 53 needs two entries, one `UDP` and one `TCP`. `protocol` defaults to TCP, so a single entry leaves normal queries blocked and the pod hangs instead of erroring.
+- `namespaceSelector` and `podSelector` written as one list item are an AND, which is what this rule wants: the kube-system namespace and the kube-dns pods.
+- `kubernetes.io/metadata.name` is set automatically on every namespace, so never invent a custom label for the kube-system selector.
+- Policies are namespace scoped and purely additive. There is no deny rule and no global policy.
+
+**Docs.** kubernetes.io "Network Policies", the "Default deny all ingress and all egress traffic" example near the bottom of the page. docs.cilium.io "Network Policy" when the CNI is Cilium.
+
+## Recipe 2: Selective allow with podSelector, namespaceSelector and ipBlock
+
+**Goal.** One backend workload reachable only from named sources on one port, with everything else still denied by the default-deny policy.
+
+**Frequency.** 12 candidate sources (research section 3 row 6). Drill: Q1.
+
+**Commands.**
+```bash
+# OR across list items: from app=frontend pods in this namespace, OR any pod in
+# the monitoring namespace, OR the 10.0.0.0/8 range minus 10.0.5.0/24.
+kubectl apply -f - <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend
+  namespace: prod
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+    - ipBlock:
+        cidr: 10.0.0.0/8
+        except:
+        - 10.0.5.0/24
+    ports:
+    - port: 8080
+      protocol: TCP
+EOF
+
+# AND inside one list item: only app=frontend pods that live in the monitoring
+# namespace. One dash, two selectors under it. Swap this ingress block in.
+#  ingress:
+#  - from:
+#    - namespaceSelector:
+#        matchLabels:
+#          kubernetes.io/metadata.name: monitoring
+#      podSelector:
+#        matchLabels:
+#          app: frontend
+```
+**Verify.**
+```bash
+kubectl get netpol allow-frontend -n prod \
+  -o jsonpath='{.spec.ingress[*].from[*].podSelector.matchLabels.app}{"\n"}'
+kubectl get netpol allow-frontend -n prod -o jsonpath='{.spec.ingress[*].ports[*].port}{"\n"}'
+
+kubectl run probe-ok -n prod --rm -i --restart=Never --labels=app=frontend \
+  --image=busybox:1.36 -- wget -qO- --timeout=5 backend:8080
+kubectl run probe-deny -n prod --rm -i --restart=Never --labels=app=other \
+  --image=busybox:1.36 -- wget -qO- --timeout=5 backend:8080
+```
+**Gotchas.**
+- The dash placement is the whole answer. Two dashes under `from` means OR, one dash with two selectors indented under it means AND.
+- `ports` sits beside `from` inside the same rule, not inside a `from` item. Wrong indentation there opens every port.
+- `ipBlock` matches the source address the CNI sees, so SNATed traffic will not match the pod CIDR you expect. Prefer selectors for in-cluster traffic.
+- Adding an ingress allow does not help if the client namespace has its own default-deny egress.
+- Back a policy up with `kubectl get netpol <name> -n prod -o yaml > /tmp/bak.yaml` before editing it.
+
+**Docs.** kubernetes.io "Network Policies", section "Behavior of `to` and `from` selectors".
+
+## Recipe 3: Block the cloud metadata endpoint
+
+**Goal.** No pod in the namespace reaches 169.254.169.254, while all other egress keeps working.
+
+**Frequency.** 4 candidate sources (research section 3 row 24). Drill: Q24 (planned).
+
+**Commands.**
+```bash
+kubectl apply -f - <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-metadata-access
   namespace: prod
 spec:
   podSelector: {}
@@ -160,244 +196,322 @@ spec:
         except:
         - 169.254.169.254/32
 EOF
-
-# If you already have a default-deny-egress, add a specific deny via ipBlock + no-to rule
-# (easier approach: use the except pattern above in the allow-all rule)
 ```
-
-**⚠️ Exam tips:**
-- You cannot have a "deny" rule in NetworkPolicy — only allow rules. To block a specific IP, use `ipBlock` with `except` inside an allow-all-else rule
-- Combine metadata blocking with the DNS-allow policy if you're writing egress rules from scratch
-
----
-
-## CIS Benchmark & kube-bench
-
-**Why it matters:** The CIS Kubernetes Benchmark defines secure configuration baselines for every cluster component. The CKS exam may ask you to run kube-bench, identify a FAIL, and remediate the corresponding flag in the right config file.
-
-**Concepts**
-- kube-bench tests: master (apiserver, scheduler, controller-manager, etcd), node (kubelet, proxy)
-- FAIL items include the check ID (e.g. `1.2.9`), the expected setting, and remediation instructions
-- Remediations are almost always a flag change in a manifest or a config file restart
-
-**Commands & examples**
-
+**Verify.**
 ```bash
-# Run kube-bench against master and node components
-kube-bench run --targets master,node
+kubectl get netpol deny-metadata-access -n prod \
+  -o jsonpath='{.spec.egress[*].to[*].ipBlock.except[*]}{"\n"}'   # expect 169.254.169.254/32
 
-# Run only the apiserver checks
-kube-bench run --targets master --check 1.2
+kubectl run metatest -n prod --rm -i --restart=Never --image=busybox:1.36 \
+  -- wget -qO- --timeout=5 http://169.254.169.254/latest/meta-data/
+# expect: wget: download timed out
+```
+**Gotchas.**
+- NetworkPolicy has no deny rule. The only way to block one address is to allow a wide CIDR and carve the address out with `except`.
+- Every `except` entry must sit inside the `cidr` it belongs to. `169.254.169.254/32` under `0.0.0.0/0` is valid; under `10.0.0.0/8` it is rejected.
+- This policy allows all other egress, so for the pods it selects it cancels a default-deny egress in the same namespace. Keep the selector narrow and re-add the DNS rule from Recipe 1 when both are wanted.
+- Some labs use a different metadata address such as `192.168.100.21`. Read the task rather than typing the AWS address from memory.
 
-# Sample FAIL output:
-# [FAIL] 1.2.9 Ensure that the --anonymous-auth argument is set to false
-# Remediation: Edit the API server pod specification file
-#   /etc/kubernetes/manifests/kube-apiserver.yaml
-#   and set the below parameter:  --anonymous-auth=false
+**Docs.** kubernetes.io "Network Policies" for `ipBlock`, and "Securing a Cluster" for the metadata note.
 
-# Remediate: edit the flag in the static manifest
-sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
-# Add: - --anonymous-auth=false  under spec.containers[0].command
+## Recipe 4: Fix kube-bench CIS findings on the control plane and kubelet
 
-# Watch the apiserver restart after editing
-watch crictl ps | grep api
-# Wait for STATUS=Running before proceeding
+**Goal.** The named CIS checks move from FAIL to PASS and the control plane still serves requests.
 
-# Re-run to confirm PASS
+**Frequency.** 12 candidate sources (research section 3 row 4), plus 5 for kubelet config alone (row 30). Drill: Q2, Q22 (planned).
+
+**Commands.**
+```bash
+sudo -i
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
+
+kube-bench run --targets master,node 2>&1 | tee /tmp/bench.txt
+grep '^\[FAIL\]' /tmp/bench.txt
 kube-bench run --targets master --check 1.2.9
 
-# kubelet config findings often require editing /var/lib/kubelet/config.yaml
-# Example: set readOnlyPort: 0 (disables unauthenticated read-only port)
-sudo vi /var/lib/kubelet/config.yaml
-# Then restart kubelet:
-sudo systemctl restart kubelet
+# 1.2.x: API server manifest, under spec.containers[0].command
+vi /etc/kubernetes/manifests/kube-apiserver.yaml
+#   - --anonymous-auth=false
+#   - --authorization-mode=Node,RBAC
+#   - --profiling=false
+
+# 1.3.x and 1.4.x: controller manager and scheduler manifests
+vi /etc/kubernetes/manifests/kube-controller-manager.yaml
+#   - --profiling=false
+
+# 1.1.x and 2.x: etcd data directory and manifest permissions
+chown -R etcd:etcd /var/lib/etcd
+chmod 700 /var/lib/etcd
+chmod 600 /etc/kubernetes/manifests/etcd.yaml
+
+# 4.2.x: kubelet config file, YAML not flags
+vi /var/lib/kubelet/config.yaml
+#   readOnlyPort: 0
+#   protectKernelDefaults: true
+#   authentication:
+#     anonymous:
+#       enabled: false
+#   authorization:
+#     mode: Webhook
+systemctl restart kubelet
 ```
-
-**⚠️ Exam tips:**
-- Check the kube-bench remediation text carefully — it tells you exactly which file and flag to change
-- apiserver changes → edit the static pod manifest; kubelet changes → edit `/var/lib/kubelet/config.yaml` or `/etc/kubernetes/kubelet.conf` + restart kubelet
-- etcd changes → edit `/etc/kubernetes/manifests/etcd.yaml`
-- After editing a static pod manifest, wait for the pod to restart before re-running kube-bench — it takes 10–30 seconds
-
----
-
-## Ingress TLS Termination
-
-**Why it matters:** The exam may ask you to expose a service via Ingress with HTTPS. You need to create a TLS secret and reference it correctly — a missing or misnamed secret silently falls back to HTTP.
-
-**Concepts**
-- Secret type must be `kubernetes.io/tls` with keys `tls.crt` and `tls.key`
-- The secret must be in the **same namespace** as the Ingress
-- `spec.tls[].hosts` must match the hostname in `spec.rules[].host`
-- The Ingress controller handles termination; backend sees plain HTTP
-
-**Commands & examples**
-
+**Verify.**
 ```bash
-# Generate a self-signed cert (one-liner for exam use)
-openssl req -x509 -newkey rsa:4096 -keyout tls.key -out tls.crt -days 365 -nodes \
-  -subj "/CN=myapp.example.com"
+crictl ps | grep -E 'kube-apiserver|etcd'
+systemctl is-active kubelet
+kubectl get --raw='/readyz?verbose' | tail -3
 
-# Create the TLS secret
-kubectl create secret tls myapp-tls \
-  --cert=tls.crt \
-  --key=tls.key \
-  -n prod
+kube-bench run --targets master --check 1.2.9
+kube-bench run --targets node --check 4.2.1,4.2.2   # every line must start with [PASS]
+```
+**Gotchas.**
+- Saving a static manifest restarts that control plane pod. The kubelet rescans `/etc/kubernetes/manifests` about every 20 seconds, so wait and watch rather than editing again.
+- If `kubectl` starts hanging the API server did not come back. Read `journalctl -fu kubelet | grep -i apiserver`, then `crictl ps -a | grep apiserver` and `crictl logs <id>`, then the newest file under `/var/log/pods/kube-system_kube-apiserver-*/`.
+- Kubelet findings live in `/var/lib/kubelet/config.yaml`, which is YAML. Do not add a `--flag` there.
+- `protectKernelDefaults: true` makes the kubelet refuse to start when node sysctls do not match, so check `systemctl is-active kubelet` straight after the restart.
+- kube-bench prints the exact remediation text for each FAIL, naming the file and the setting. Read it instead of guessing, and fix only the checks the task lists.
 
-# Verify the secret
-kubectl get secret myapp-tls -n prod -o jsonpath='{.type}'
-# Should print: kubernetes.io/tls
+**Docs.** kube-bench documentation is not on the allowed list, so its flags must be memorised; in the exam use `kube-bench --help` and `kube-bench run --help` plus the remediation text kube-bench prints. For the settings being changed, kubernetes.io "kube-apiserver" and "kubelet" command line tool references are allowed, as is `man kubelet`.
 
-# Ingress referencing the TLS secret
+## Recipe 5: Restrict TLS versions and ciphers on the API server and etcd
+
+**Goal.** The API server and etcd refuse older TLS handshakes and offer only the named cipher suites.
+
+**Frequency.** 9 candidate sources (research section 3 row 9). Drill: Q33 (planned).
+
+**Commands.**
+```bash
+sudo -i
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
+cp /etc/kubernetes/manifests/etcd.yaml /root/etcd.yaml.bak
+
+vi /etc/kubernetes/manifests/kube-apiserver.yaml
+#   - --tls-min-version=VersionTLS13
+#   - --tls-cipher-suites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384
+
+vi /etc/kubernetes/manifests/etcd.yaml
+#   - --cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+```
+**Verify.**
+```bash
+# The old protocol must fail the handshake.
+openssl s_client -connect 127.0.0.1:6443 -tls1_2 </dev/null 2>&1 \
+  | grep -E 'alert|handshake failure|Protocol'
+
+# The new one must succeed and name the negotiated suite.
+openssl s_client -connect 127.0.0.1:6443 -tls1_3 </dev/null 2>&1 | grep -E 'Protocol|Cipher'
+
+# etcd needs client certificates to complete the handshake.
+openssl s_client -connect 127.0.0.1:2379 \
+  -CAfile /etc/kubernetes/pki/etcd/ca.crt \
+  -cert /etc/kubernetes/pki/etcd/server.crt \
+  -key /etc/kubernetes/pki/etcd/server.key </dev/null 2>&1 | grep -E 'Protocol|Cipher'
+
+crictl ps | grep -E 'kube-apiserver|etcd'
+```
+**Gotchas.**
+- The value is `VersionTLS13`, not `TLSv1.3` and not `1.3`. A wrong spelling stops the API server from starting at all.
+- TLS 1.3 accepts only TLS 1.3 suite names, so `TLS_ECDHE_...` names alongside `--tls-min-version=VersionTLS13` are a configuration error.
+- The etcd flag is `--cipher-suites`, not `--tls-cipher-suites`. The two components spell it differently.
+- etcd is a static pod too, and breaking it takes the whole control plane down. Copy the backup before the first keystroke.
+- `openssl s_client` against 6443 without a client certificate still completes enough of the handshake to print the protocol and cipher lines.
+
+**Docs.** kubernetes.io "kube-apiserver" command line tool reference for `--tls-min-version` and `--tls-cipher-suites`. etcd.io/docs for `--cipher-suites`. Both domains are allowed.
+
+## Recipe 6: Serve an Ingress over TLS and force the redirect
+
+**Goal.** `https://web.example` serves the app through ingress-nginx using a `kubernetes.io/tls` secret, and plain HTTP redirects to it.
+
+**Frequency.** 7 candidate sources (research section 3 row 14). Drill: Q3.
+
+**Commands.**
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt \
+  -subj "/CN=web.example" -days 365
+
+kubectl create secret tls web-tls --cert=tls.crt --key=tls.key -n prod
+
 kubectl apply -f - <<'EOF'
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: myapp-ingress
+  name: web
   namespace: prod
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
-    - myapp.example.com
-    secretName: myapp-tls
+    - web.example
+    secretName: web-tls
   rules:
-  - host: myapp.example.com
+  - host: web.example
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: myapp-svc
+            name: web
             port:
               number: 80
 EOF
 ```
-
-**⚠️ Exam tips:**
-- The `secretName` in `spec.tls` must exactly match the Secret name — typos silently break TLS
-- Secret and Ingress must be in the same namespace
-- `spec.tls[].hosts` is a list; it must include the hostname used in `spec.rules[].host`
-
----
-
-## Verifying Platform Binaries (sha256 / sha512)
-
-**Why it matters:** Supply chain integrity. If you download a binary (kubectl, kubeadm, a CNI plugin) you should verify it hasn't been tampered with. The CKS exam can ask you to check a running binary against a known checksum.
-
-**Concepts**
-- Kubernetes GitHub releases publish `.sha256` and `.sha512` checksum files alongside each binary
-- `sha256sum` / `sha512sum` — standard Linux tools, output: `<hash>  <filename>`
-- Compare the downloaded hash against the published hash; any mismatch = fail
-
-**Commands & examples**
-
+**Verify.**
 ```bash
-# Download kubectl and its checksum (example for v1.34.0)
-curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
-curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl.sha256"
+kubectl get secret web-tls -n prod -o jsonpath='{.type}{"\n"}'   # kubernetes.io/tls
+kubectl get ingress web -n prod -o jsonpath='{.spec.tls[*].hosts[*]}|{.spec.tls[*].secretName}{"\n"}'
 
-# Verify: the output should be "kubectl: OK"
-echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-
-# Alternative one-liner if the .sha256 file contains just the hash
-SHA=$(cat kubectl.sha256)
-sha256sum kubectl | awk '{print $1}' | diff - <(echo "$SHA")
-# No output = match; any diff = tampered
-
-# Check a running binary already on the system
-sha256sum $(which kubectl)
-# Compare manually against the published hash for that version
-
-# Find the version of an installed binary first
-kubectl version --client --short
+IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.clusterIP}')
+curl -kv --resolve web.example:443:"$IP" https://web.example 2>&1 | grep -E 'subject:|HTTP/'
+curl -sI --resolve web.example:80:"$IP" http://web.example | head -1
+# expect: HTTP/1.1 308 Permanent Redirect
 ```
+**Gotchas.**
+- The secret must live in the same namespace as the Ingress. A secret in `default` referenced from `prod` fails silently and the controller serves its own fake certificate.
+- `spec.tls[].hosts` must contain the hostname used in `spec.rules[].host`. A mismatch also falls back to the fake certificate, visible as "Kubernetes Ingress Controller Fake Certificate" in the `curl -kv` subject line.
+- The annotation value is the quoted string `"true"`. Unquoted `true` is a boolean and the manifest is rejected.
+- `-nodes` is what leaves the key unencrypted. Without it openssl prompts for a passphrase and the resulting secret does not work.
+- `ingressClassName` is required when the cluster has more than one controller, otherwise the Ingress never gets an address.
 
-**⚠️ Exam tips:**
-- The exam will tell you the expected hash or provide the `.sha256` file — don't guess
-- `sha256sum --check` expects the format `<hash>  <filename>` (two spaces) — the official `.sha256` files use this format
-- If verifying a binary already installed, use `which kubectl` (or `which kubeadm`) to get the full path
+**Docs.** kubernetes.io "Ingress", section "TLS". The ingress-nginx user guide is allowed for annotation names.
 
----
+## Recipe 7: Verify platform binaries with sha512sum
 
-## Minimizing GUI / Dashboard Exposure
+**Goal.** Each supplied binary is compared against its published hash, and mismatches are reported or deleted as the task instructs.
 
-**Why it matters:** The Kubernetes Dashboard has historically been a major attack vector (e.g., Tesla cryptomining incident). The CKS tests whether you know how to restrict it using RBAC — not how to use the dashboard itself.
+**Frequency.** 7 candidate sources (research section 3 row 13). Drill: Killercoda "Verify Platform Binaries" (no repo question yet).
 
-**Concepts**
-- Dashboard should never be accessible without authentication
-- Anonymous access (`--enable-skip-login`, anonymous auth) must be disabled
-- Dashboard ServiceAccount should have minimal RBAC — view-only at most, namespace-scoped
-- Never bind `cluster-admin` to the dashboard ServiceAccount
-- NodePort / LoadBalancer exposure should be replaced with port-forward or Ingress + auth
-
-**Commands & examples**
-
+**Commands.**
 ```bash
-# Check what the dashboard SA can do — look for over-permissioned bindings
-kubectl get clusterrolebinding,rolebinding -A | grep dashboard
+sha512sum /opt/binaries/kubelet
 
-# Find any cluster-admin binding to a dashboard SA
+# Published checksum for the exam version.
+curl -sL https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubelet.sha512
+
+# Compare in one step. --check wants "<hash><two spaces><file>".
+echo "$(curl -sL https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubelet.sha512)  /opt/binaries/kubelet" \
+  | sha512sum --check
+
+# Compare the binary actually running on the node.
+sha512sum "$(command -v kubelet)"
+
+# When a file of "<hash>  <name>" lines is supplied, check them all at once.
+cd /opt/binaries && sha512sum --check /opt/binaries/expected.sha512
+```
+**Verify.**
+```bash
+echo "$(cat /opt/binaries/kubelet.sha512)  /opt/binaries/kubelet" | sha512sum --check
+# expect: /opt/binaries/kubelet: OK
+
+echo "$(cat /opt/binaries/kubelet.sha512)  /opt/binaries/kubelet" \
+  | sha512sum --check --status; echo "exit=$?"   # 0 match, 1 tampered
+```
+**Gotchas.**
+- Two spaces between the hash and the filename. One space makes `sha512sum --check` report "no properly formatted checksum lines found" instead of a mismatch.
+- The exam asks for sha512 far more often than sha256, so read the extension you were given.
+- The published `.sha512` file holds only the hash with no filename, which is why the `echo` wrapper is needed before piping into `--check`.
+- Check the file at the path the task names and, separately, the running binary found with `command -v`. Comparing the wrong pair is the usual mistake.
+- Re-read the deliverable: some variants want mismatched files deleted, others want the names written to a file under `/opt/course/`.
+
+**Docs.** kubernetes.io "Install and Set Up kubectl on Linux" shows the same verify pattern and is allowed. `man sha512sum` covers `--check` and `--status`.
+
+## Recipe 8: Reduce Dashboard and GUI exposure
+
+**Goal.** No cluster-admin binding to the Dashboard ServiceAccount, no anonymous login, and no NodePort or LoadBalancer reaching it from outside.
+
+**Frequency.** 2 candidate sources (research section 3 row 28). Drill: none.
+
+The curriculum bullet "Minimize use of, and access to, GUI elements" was removed in October 2024, so this is unlikely on a current exam. Skim it once and spend the time on Recipes 1 to 6. The RBAC mechanics behind it are covered in [02-cluster-hardening.md](02-cluster-hardening.md).
+
+**Commands.**
+```bash
 kubectl get clusterrolebinding -o wide | grep -i dashboard
+kubectl get deploy kubernetes-dashboard -n kubernetes-dashboard -o yaml \
+  | grep -E 'enable-skip-login|enable-insecure-login'
 
-# Remove a dangerous binding (example)
+kubectl get clusterrolebinding kubernetes-dashboard -o yaml > /tmp/crb.yaml
 kubectl delete clusterrolebinding kubernetes-dashboard
 
-# Replace with a namespace-scoped view-only role
-kubectl create rolebinding dashboard-view \
-  --clusterrole=view \
-  --serviceaccount=kubernetes-dashboard:kubernetes-dashboard \
-  -n kubernetes-dashboard
-
-# Verify the SA cannot do harmful things
-kubectl auth can-i list secrets \
-  --as=system:serviceaccount:kubernetes-dashboard:kubernetes-dashboard \
-  -n default
-# Should print: no
-
-# Check if anonymous auth is enabled on the dashboard deployment
-kubectl get deploy kubernetes-dashboard -n kubernetes-dashboard -o yaml | grep -i skip
-# Look for --enable-skip-login; remove it if present
+kubectl create rolebinding dashboard-view --clusterrole=view \
+  --serviceaccount=kubernetes-dashboard:kubernetes-dashboard -n kubernetes-dashboard
+kubectl patch svc kubernetes-dashboard -n kubernetes-dashboard \
+  -p '{"spec":{"type":"ClusterIP"}}'
 ```
+**Verify.**
+```bash
+kubectl auth can-i list secrets \
+  --as=system:serviceaccount:kubernetes-dashboard:kubernetes-dashboard -n default   # expect no
+kubectl get svc kubernetes-dashboard -n kubernetes-dashboard \
+  -o jsonpath='{.spec.type}{"\n"}'   # expect ClusterIP
+```
+**Gotchas.**
+- Deleting a ClusterRoleBinding is immediate and cannot be undone, so save the YAML first.
+- `--enable-skip-login` is an argument on the Dashboard deployment, so removing it restarts the pod.
+- The `view` ClusterRole still reads ConfigMaps. If the task forbids secret access, prove it with `kubectl auth can-i` rather than assuming.
 
-**⚠️ Exam tips:**
-- The ask is usually: remove a cluster-admin binding from the dashboard SA, or patch the deployment to remove `--enable-skip-login`
-- Deleting a ClusterRoleBinding is permanent and immediate — double-check the name before deleting
+**Docs.** kubernetes.io "Deploy and Access the Kubernetes Dashboard" and "Using RBAC Authorization".
 
----
-
-## Quick Command Reference
+## Quick reference
 
 ```bash
-# NetworkPolicy: verify what policies exist in a namespace
-kubectl get netpol -n prod
+# NetworkPolicy
+kubectl get netpol <n> -n prod -o jsonpath='{.spec.podSelector}|{.spec.policyTypes[*]}{"\n"}'
+kubectl run t -n prod --rm -i --restart=Never --image=busybox:1.36 -- nslookup kubernetes.default
 
-# NetworkPolicy: describe to see pod/namespace selectors
-kubectl describe netpol default-deny-all -n prod
+# kube-bench
+kube-bench run --targets master,node 2>&1 | tee /tmp/bench.txt
+grep '^\[FAIL\]' /tmp/bench.txt
+kube-bench run --targets master --check 1.2.9
+kube-bench run --targets node --check 4.2.1,4.2.2
 
-# kube-bench: run all checks, save output
-kube-bench run --targets master,node 2>&1 | tee /tmp/kube-bench.txt
-grep FAIL /tmp/kube-bench.txt
+# Control plane health after an edit
+crictl ps | grep -E 'kube-apiserver|etcd'
+journalctl -fu kubelet | grep -i apiserver
+ls -t /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/ | head -1
+kubectl get --raw='/readyz?verbose' | tail -3
 
-# kube-bench: run a specific check by ID
-kube-bench run --check 1.2.9
+# TLS on the API server
+openssl s_client -connect 127.0.0.1:6443 -tls1_2 </dev/null 2>&1 | grep -E 'Protocol|alert'
 
-# TLS secret: quick create
-kubectl create secret tls <name> --cert=tls.crt --key=tls.key -n <ns>
+# Ingress TLS
+openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt -subj "/CN=web.example" -days 365
+kubectl create secret tls web-tls --cert=tls.crt --key=tls.key -n prod
+curl -kv --resolve web.example:443:"$IP" https://web.example
 
-# Verify binary hash
-echo "$(cat file.sha256)  binary" | sha256sum --check
-
-# Dashboard: audit SA bindings
-kubectl get clusterrolebinding -o wide | grep -i dashboard
-kubectl auth can-i list secrets --as=system:serviceaccount:<ns>:<sa>
+# Binaries
+sha512sum /opt/binaries/kubelet
+echo "<hash>  /opt/binaries/kubelet" | sha512sum --check
+sha512sum "$(command -v kubelet)"
 ```
 
-## Docs to Bookmark
-- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [NetworkPolicy API reference](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/)
-- [kube-bench](https://github.com/aquasecurity/kube-bench)
-- [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
-- [Ingress TLS](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls)
-- [Verify kubectl binary](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#verify-kubectl-binary)
-- [Kubernetes Dashboard access control](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/#accessing-the-dashboard-ui)
+CIS check id to the file you edit:
+
+| CIS id range | Component | File to edit | Applied by |
+|---|---|---|---|
+| 1.1.x | Manifest and PKI permissions | `/etc/kubernetes/manifests/`, `/etc/kubernetes/pki/` | `chmod`, `chown`, immediate |
+| 1.2.x | API server | `/etc/kubernetes/manifests/kube-apiserver.yaml` | kubelet restarts the static pod |
+| 1.3.x | Controller manager | `/etc/kubernetes/manifests/kube-controller-manager.yaml` | kubelet restarts the static pod |
+| 1.4.x | Scheduler | `/etc/kubernetes/manifests/kube-scheduler.yaml` | kubelet restarts the static pod |
+| 2.x | etcd | `/etc/kubernetes/manifests/etcd.yaml`, `/var/lib/etcd` | kubelet restarts the static pod |
+| 4.1.x | Kubelet service files | `/etc/systemd/system/kubelet.service.d/` | `systemctl daemon-reload`, restart |
+| 4.2.x | Kubelet configuration | `/var/lib/kubelet/config.yaml` | `systemctl restart kubelet` |
+| 5.x | Policies (RBAC, PSA, network) | cluster objects | `kubectl apply` |
+
+## Memorise
+
+- Write the DNS allow policy before the default deny, and give port 53 both a UDP and a TCP entry.
+- Empty `podSelector: {}` selects every pod in the namespace; `policyTypes` without a matching rule block denies that direction outright.
+- Two dashes under `from` is OR. One dash with `namespaceSelector` and `podSelector` indented under it is AND.
+- Blocking one address means `ipBlock: {cidr: 0.0.0.0/0, except: [169.254.169.254/32]}`. NetworkPolicy has no deny rule.
+- `cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak` before touching any static manifest, every time.
+- CIS 1.2.x is the API server manifest, 1.3.x controller manager, 2.x etcd, 4.2.x `/var/lib/kubelet/config.yaml` followed by `systemctl restart kubelet`.
+- The four kubelet fixes: `readOnlyPort: 0`, `authentication.anonymous.enabled: false`, `authorization.mode: Webhook`, `protectKernelDefaults: true`.
+- `--tls-min-version=VersionTLS13` and `--tls-cipher-suites=...` on the API server; `--cipher-suites=...` on etcd.
+- `openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt -subj "/CN=web.example" -days 365`.
+- `kubectl create secret tls <name> --cert=tls.crt --key=tls.key -n <ns>` produces type `kubernetes.io/tls`, and the secret shares the Ingress namespace.
+- `nginx.ingress.kubernetes.io/ssl-redirect: "true"`, with the quotes.
+- `echo "<hash>  <file>" | sha512sum --check` needs exactly two spaces.
+- kube-bench, Trivy, AppArmor and kubesec documentation are not allowed. Their flags are memory only; on the host fall back to `--help` and `man`.
+- Allowed in-exam documentation: kubernetes.io/docs, kubernetes.io/blog, falco.org/docs, kubernetes-sigs.github.io/bom, etcd.io/docs, the ingress-nginx user guide, docs.cilium.io and istio.io/latest/docs.

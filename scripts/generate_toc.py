@@ -53,7 +53,10 @@ def build(lines):
         if n:
             a = '%s-%d' % (a, n)
         toc.append('%s- [%s](#%s)\n' % ('  ' if lvl == 3 else '', text, a))
-    toc.append('\n<!-- toc stop -->\n')
+    # Keep every element exactly one line, so a TOC read back from disk with
+    # readlines() compares equal to a freshly built one and --check is stable.
+    toc.append('\n')
+    toc.append('<!-- toc stop -->\n')
     return heads, start, end, first_h2, toc
 
 

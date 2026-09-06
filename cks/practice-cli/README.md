@@ -2,10 +2,20 @@
 
 Interactive, exam-style CKS practice with automated lab setup and verification — mirrors the [`cka/practice-cli`](../../cka/practice-cli/) harness. **18 security-focused questions** in official CKS curriculum order (v1.34).
 
+<!-- toc -->
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Layout](#layout)
+- [Question set (official curriculum order)](#question-set-official-curriculum-order)
+
+<!-- toc stop -->
+
 ## Requirements
 
 - **Bash 4+**
-- A running Kubernetes cluster you control. **A 2-node `kubeadm` cluster is strongly recommended** — many CKS tasks need real node access (AppArmor, seccomp, kube-bench, apiserver flags, encryption-at-rest, Falco, audit logging, RuntimeClass). See [`../study-plan/02-resources.md`](../study-plan/02-resources.md#practice-cluster). killercoda/kind covers ~40% (NetworkPolicy, RBAC, PSA, admission policies, Trivy, immutable containers).
+- A running Kubernetes cluster you control. **A 2-node `kubeadm` cluster is strongly recommended** — many CKS tasks need real node access (AppArmor, seccomp, kube-bench, apiserver flags, encryption-at-rest, Falco, audit logging, RuntimeClass). See [`../lab-setup/README.md`](../lab-setup/README.md). killercoda/kind covers ~40% (NetworkPolicy, RBAC, PSA, admission policies, Trivy, immutable containers).
 - `kubectl` in PATH and a working kube-context.
 - Some questions expect tools on the node: `kube-bench`, `trivy`, `kubesec`, `falco`, `apparmor_parser`. Setup scripts degrade gracefully where a tool is missing; the question/solution still teaches the workflow.
 

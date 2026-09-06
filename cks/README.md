@@ -1,55 +1,83 @@
-# CKS - Certified Kubernetes Security Specialist
+# CKS — Certified Kubernetes Security Specialist
 
-Performance-based, CLI-only exam. **2 hours, ~15–17 weighted tasks, 67% to pass.**
-Prerequisite: a **passed CKA** (does not need to still be active). One free retake included.
-Exam tracks the current Kubernetes release — **v1.34** as of this writing (curriculum updates 4–8 weeks after each K8s release).
+Everything needed to pass CKS on **Saturday 12 December 2026**: dated study plan, exam-task recipes, a practice CLI with automated verification, three scored mocks, and a lab you can build in an afternoon.
 
-## Exam Domains & Weights (post-Oct-2024 curriculum, v1.34)
+<!-- toc -->
+## Table of Contents
 
-| Domain | Weight |
-|--------|--------|
-| Minimize Microservice Vulnerabilities | 20% |
-| Supply Chain Security | 20% |
-| Monitoring, Logging and Runtime Security | 20% |
-| Cluster Setup | 15% |
-| Cluster Hardening | 15% |
-| System Hardening | 10% |
+- [What the exam is](#what-the-exam-is)
+  - [Domains and weights](#domains-and-weights)
+- [Start here](#start-here)
+- [What is here](#what-is-here)
+- [Practice CLI](#practice-cli)
+- [Where the content comes from](#where-the-content-comes-from)
+- [Safety](#safety)
 
-> Note: older guides list Cluster Setup at 10% and System Hardening at 15% — that is the **pre-October-2024** split. The weights above are current.
+<!-- toc stop -->
 
-## Key Topics
+## What the exam is
 
-- **Cluster Setup (15%)**: NetworkPolicy (default-deny + DNS egress), CIS benchmark / kube-bench, Ingress TLS, node metadata protection, binary checksum verification
-- **Cluster Hardening (15%)**: RBAC least-privilege, ServiceAccount token controls, API-server flags, NodeRestriction, `kubeadm upgrade`, CSRs
-- **System Hardening (10%)**: OS footprint reduction, kernel module blacklisting, AppArmor, seccomp, Linux capabilities
-- **Minimize Microservice Vulnerabilities (20%)**: Pod Security Admission/Standards (replaces PSP), OPA Gatekeeper, Kyverno, secrets encryption at rest, runtime sandboxes (gVisor/RuntimeClass), mTLS (Cilium/Istio), immutable containers
-- **Supply Chain Security (20%)**: minimal base images, Trivy image scanning, kubesec/kube-linter static analysis, SBOM (bom/syft), Cosign, ImagePolicyWebhook, allowed-registry admission control
-- **Monitoring, Logging & Runtime Security (20%)**: Falco (rules + reload + log parsing), API-server audit policy & logging, behavioral/threat detection, container immutability
+Verified against Linux Foundation pages on 6 September 2026. Full detail in [`study-notes/00-exam-environment.md`](study-notes/00-exam-environment.md).
 
-## What's here
+| | |
+|---|---|
+| Environment | Kubernetes **v1.35** (the published curriculum document is v1.34) |
+| Format | 15 to 20 performance-based tasks, candidates consistently report 16. Two hours. |
+| Pass mark | **67 percent**, so about 11 of 16 tasks solved cleanly. Partial credit counts. |
+| Prerequisite | A passed CKA, which need not still be active |
+| Hosts | One designated host per task via `ssh <nodename>` from `base`. No nested SSH. `sudo -i` for root. |
+| Tools present | `kubectl` with a `k` alias, `yq`, `curl`, `wget`, `man`. **No `jq`.** |
+| Docs allowed | kubernetes.io docs and blog, falco.org, the bom CLI reference, etcd.io, the ingress-nginx user guide, docs.cilium.io, istio.io. **Nothing else**, so Trivy, kube-bench, AppArmor and kubesec flags must be memorised. |
+| Retake | One free retake within 12 months of purchase. Certification valid 2 years. |
+| Bonus | Passing CKS on or after 18 June 2026 also extends the CKA under the CARE policy |
+
+### Domains and weights
+
+| Domain | Weight | Note |
+|---|---|---|
+| Cluster Setup | 15% | [`study-notes/01-cluster-setup.md`](study-notes/01-cluster-setup.md) |
+| Cluster Hardening | 15% | [`study-notes/02-cluster-hardening.md`](study-notes/02-cluster-hardening.md) |
+| System Hardening | 10% | [`study-notes/03-system-hardening.md`](study-notes/03-system-hardening.md) |
+| Minimize Microservice Vulnerabilities | 20% | [`study-notes/04-microservice-vulnerabilities.md`](study-notes/04-microservice-vulnerabilities.md) |
+| Supply Chain Security | 20% | [`study-notes/05-supply-chain-security.md`](study-notes/05-supply-chain-security.md) |
+| Monitoring, Logging and Runtime Security | 20% | [`study-notes/06-monitoring-logging-runtime.md`](study-notes/06-monitoring-logging-runtime.md) |
+
+## Start here
+
+1. **Book the exam.** It releases the two killer.sh sessions and makes the calendar real.
+2. **Build the lab**: [`lab-setup/README.md`](lab-setup/README.md). Two tiers, minikube with Calico plus the Killercoda playground.
+3. **Read** [`study-notes/00-exam-environment.md`](study-notes/00-exam-environment.md) end to end.
+4. **Open the calendar** every Saturday: [`study-plan/00-calendar.md`](study-plan/00-calendar.md).
+
+## What is here
 
 | Folder | What it is |
-|--------|-----------|
-| [`study-plan/`](study-plan/) | Evidence-based **45-day plan** — when to study what |
-| [`study-notes/`](study-notes/) | Concise **per-domain study guides** (concepts + commands + exam gotchas), official curriculum order |
-| [`practice-cli/`](practice-cli/) | Interactive **18-question practice harness** with setup/verify/cleanup, mirrors `cka/practice-cli` |
+|---|---|
+| [`study-plan/`](study-plan/) | The dated calendar from 26 Sep to 12 Dec, mastery checklists, resources, and the exam-day playbook |
+| [`study-notes/`](study-notes/) | Seven notes as exam-task recipes, in curriculum order, plus the environment facts |
+| [`practice-cli/`](practice-cli/) | Interactive questions with automated setup, verification and cleanup, a timer, and progress tracking |
+| [`mock-exams/`](mock-exams/) | Three 16-task, 120-minute papers, scored by domain |
+| [`cheatsheets/`](cheatsheets/) | The one-page reference and the Anki deck |
+| [`lab-setup/`](lab-setup/) | How to build both lab tiers on this machine |
+| [`practice-tests/`](practice-tests/) | Real exam task types compiled from candidate reports |
 
-The three are cross-linked: read the **note** for a domain → drill the matching **practice-CLI** questions → on the cadence in the **plan**.
-
-## Study Plan
-
-See **[`study-plan/`](study-plan/)** for the full evidence-based plan:
-
-- [`study-plan/README.md`](study-plan/README.md) — overview, phases, study principles, how to use
-- [`study-plan/00-daily-schedule.md`](study-plan/00-daily-schedule.md) — 45-day day-by-day calendar
-- [`study-plan/01-domain-checklists.md`](study-plan/01-domain-checklists.md) — per-domain competency + tool mastery trackers
-- [`study-plan/02-resources.md`](study-plan/02-resources.md) — annotated resources, course mapping, cluster setup, doc bookmarks
-- [`study-plan/03-exam-day-playbook.md`](study-plan/03-exam-day-playbook.md) — logistics, aliases/.vimrc, gotchas, top-15 lessons
-
-## Study Notes
-
-See **[`study-notes/`](study-notes/)** — six guides in curriculum order (Cluster Setup → Cluster Hardening → System Hardening → Microservice Vulnerabilities → Supply Chain → Monitoring/Runtime). Each covers what a topic is, why it matters, the commands, and the real exam gotchas.
+The four are cross-linked: read the **note** for a domain, drill the matching **practice-CLI** questions, sit a **mock**, and track it all in the **plan**.
 
 ## Practice CLI
 
-See **[`practice-cli/`](practice-cli/)** — run `./cks` for 18 exam-style, security-focused scenarios with automated setup, PASS/FAIL verification, a timer, and per-question solutions. Requires Bash 4+ and a cluster (kubeadm recommended for node-level tasks).
+```bash
+cd cks/practice-cli
+./cks --env      # what this host can run
+./cks            # interactive
+./cks --mock 1   # a scored 120-minute paper
+```
+
+The CLI refuses to run against a context whose name contains `aks`, `eks`, `gke` or `prod`, and against anything not on its allow-list. The active context on this machine is a work cluster, so that guard is not theoretical.
+
+## Where the content comes from
+
+Every frequency number in the notes ("12 sources") is a count of independent candidate reports from the research behind this kit: [`../docs/research/2026-09-06-cks-exam-research.md`](../docs/research/2026-09-06-cks-exam-research.md). It compiles 28 first-hand write-ups from 2021 to 2026, the official curriculum diffs, and the simulator and scenario catalogues. Nothing in the notes is invented, and where a claim is a synthesis rather than a report, the research file says so.
+
+## Safety
+
+These scenarios edit API server manifests, kubelet configuration, audit policy, encryption keys, AppArmor profiles and node services. Run them only on a disposable practice cluster. Always run cleanup when a question is done.

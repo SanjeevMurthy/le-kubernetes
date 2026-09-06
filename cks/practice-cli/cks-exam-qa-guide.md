@@ -9,6 +9,36 @@
 > This guide drives the `[Q]` (question) and `[H]` (solution) actions in the CKS practice CLI. Run `./cks` to practice interactively.
 ---
 
+<!-- toc -->
+## Table of Contents
+
+- [DOMAIN 1 — Cluster Setup (15%)](#domain-1--cluster-setup-15)
+  - [Q1. NetworkPolicy: Default-Deny + Selective Allow](#q1-networkpolicy-default-deny--selective-allow)
+  - [Q2. CIS Benchmark Remediation with kube-bench](#q2-cis-benchmark-remediation-with-kube-bench)
+  - [Q3. Ingress TLS Termination](#q3-ingress-tls-termination)
+- [DOMAIN 2 — Cluster Hardening (15%)](#domain-2--cluster-hardening-15)
+  - [Q4. RBAC Least-Privilege Role + Binding](#q4-rbac-least-privilege-role--binding)
+  - [Q5. ServiceAccount Token Hardening](#q5-serviceaccount-token-hardening)
+  - [Q6. Restrict the API Server (apiserver flags)](#q6-restrict-the-api-server-apiserver-flags)
+- [DOMAIN 3 — System Hardening (10%)](#domain-3--system-hardening-10)
+  - [Q7. AppArmor Profile on a Pod](#q7-apparmor-profile-on-a-pod)
+  - [Q8. Seccomp RuntimeDefault + Custom Profile](#q8-seccomp-runtimedefault--custom-profile)
+- [DOMAIN 4 — Minimize Microservice Vulnerabilities (20%)](#domain-4--minimize-microservice-vulnerabilities-20)
+  - [Q9. Enforce Pod Security Admission (restricted)](#q9-enforce-pod-security-admission-restricted)
+  - [Q10. Encrypt Secrets at Rest (EncryptionConfiguration)](#q10-encrypt-secrets-at-rest-encryptionconfiguration)
+  - [Q11. Admission Policy with Kyverno/Gatekeeper](#q11-admission-policy-with-kyvernogatekeeper)
+  - [Q12. Runtime Sandbox with RuntimeClass (gVisor)](#q12-runtime-sandbox-with-runtimeclass-gvisor)
+- [DOMAIN 5 — Supply Chain Security (20%)](#domain-5--supply-chain-security-20)
+  - [Q13. Scan Images with Trivy and Remediate](#q13-scan-images-with-trivy-and-remediate)
+  - [Q14. Restrict Images via ImagePolicyWebhook/Registry](#q14-restrict-images-via-imagepolicywebhookregistry)
+  - [Q15. Static Analysis & Manifest Hardening (kubesec)](#q15-static-analysis--manifest-hardening-kubesec)
+- [DOMAIN 6 — Monitoring, Logging and Runtime Security (20%)](#domain-6--monitoring-logging-and-runtime-security-20)
+  - [Q16. Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules)
+  - [Q17. API Server Audit Logging Policy](#q17-api-server-audit-logging-policy)
+  - [Q18. Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem)
+
+<!-- toc stop -->
+
 ## DOMAIN 1 — Cluster Setup (15%)
 
 ---
