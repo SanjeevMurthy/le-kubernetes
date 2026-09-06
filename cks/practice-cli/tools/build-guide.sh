@@ -13,6 +13,20 @@ if [[ "$meta_count" -eq 0 ]]; then
   exit 1
 fi
 
+# Refuse to build from an incomplete question. Without this a folder that is
+# still being written produces a guide with silently empty sections.
+incomplete=""
+for d in "$CLI"/questions/q*/; do
+  [[ -d "$d" ]] || continue
+  for f in meta question.md solution.md setup.sh verify.sh cleanup.sh; do
+    [[ -s "$d$f" ]] || incomplete="$incomplete\n  $(basename "$d") is missing $f"
+  done
+done
+if [[ -n "$incomplete" ]]; then
+  printf "Refusing to build the guide from incomplete questions:%b\n" "$incomplete" >&2
+  exit 1
+fi
+
 slug() { echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 -]//g; s/ /-/g'; }
 
 {

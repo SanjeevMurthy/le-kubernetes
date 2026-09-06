@@ -25,8 +25,10 @@ QUESTIONS=(
   "21|ImagePolicyWebhook: complete the config and deny unverified images|Supply Chain Security|D5|Hard|q21-imagepolicywebhook-broken-kubeconfig|node-root|9|10|12|control-plane"
   "22|kube-bench: fix the kubelet findings|Cluster Setup|D1|Medium|q22-kubelet-cis-hardening|node-root tool:kube-bench|7|8|12|worker"
   "23|The API server is down: find and fix the manifest|Cluster Hardening|D2|Medium|q23-apiserver-crash-recovery|node-root|7|8|9|control-plane"
+  "24|Block the cloud metadata endpoint|Cluster Setup|D1|Easy|q24-networkpolicy-metadata-protection|kubectl cni-netpol|5|6|4|any"
   "25|Read a Secret straight from etcd|Minimize Microservice Vulnerabilities|D4|Medium|q25-read-secret-from-etcd|node-root tool:etcdctl|5|6|8|control-plane"
   "26|Encryption at rest: add a new key and re-encrypt|Minimize Microservice Vulnerabilities|D4|Hard|q26-reencrypt-existing-secrets|node-root tool:etcdctl|8|10|8|control-plane"
+  "27|Fix two issues in the Dockerfile and two in the manifest|Supply Chain Security|D5|Easy|q27-dockerfile-manifest-hardening|linux|5|6|8|linux"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

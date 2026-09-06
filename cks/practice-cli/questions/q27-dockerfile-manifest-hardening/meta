@@ -1,0 +1,10 @@
+id=27
+title="Fix two issues in the Dockerfile and two in the manifest"
+domain="Supply Chain Security"
+domain_short=D5
+difficulty=Easy
+needs="linux"
+weight=5
+minutes=6
+sources=8
+host=linux
