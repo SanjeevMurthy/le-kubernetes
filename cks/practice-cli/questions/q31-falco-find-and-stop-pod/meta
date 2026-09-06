@@ -1,0 +1,10 @@
+id=31
+title="Falco: identify the offending pod and stop it"
+domain="Monitoring, Logging and Runtime Security"
+domain_short=D6
+difficulty=Hard
+needs="node-root tool:falco"
+weight=7
+minutes=8
+sources=15
+host=worker

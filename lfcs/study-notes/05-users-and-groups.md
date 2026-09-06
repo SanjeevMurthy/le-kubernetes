@@ -70,7 +70,16 @@ gpasswd -a ana devs && gpasswd -d ana qa
 useradd -r -s /usr/sbin/nologin -M svcapp    # system account, no home, no login
 userdel -r bob                        # -r also removes the home directory and mail spool
 ```
-**Verify.** Each flag has one command that proves it.
+**Verify.**
+```bash
+id ana                     # uid=2001(ana) gid=3001(devs) groups=3001(devs),...
+getent passwd ana          # ana:x:2001:3001:Ana Diaz:/home/ana:/bin/bash
+getent group devs qa
+chage -l ana
+ls -ld /home/ana           # expect drwx------ or drwxr-x--- owned by ana:devs
+```
+
+Each flag has one command that proves it.
 
 | Attribute | Flag used | Proof |
 |---|---|---|
@@ -83,13 +92,6 @@ userdel -r bob                        # -r also removes the home directory and m
 | Account expiry | `-e 2027-06-30` | `chage -l ana \| grep -i 'Account expires'` |
 | Password state | `chpasswd` | `passwd -S ana` shows `P`, `L` or `NP` |
 
-```bash
-id ana                     # uid=2001(ana) gid=3001(devs) groups=3001(devs),...
-getent passwd ana          # ana:x:2001:3001:Ana Diaz:/home/ana:/bin/bash
-getent group devs qa
-chage -l ana
-ls -ld /home/ana           # expect drwx------ or drwxr-x--- owned by ana:devs
-```
 **Gotchas.**
 - `usermod -G` without `-a` replaces every supplementary group the user had. Dropping the `-a` is how a user silently loses sudo.
 - `-m` creates the home directory and copies `/etc/skel` into it. Rocky sets `CREATE_HOME yes` in `/etc/login.defs` so it happens anyway, and Ubuntu does not, so always type `-m`.
