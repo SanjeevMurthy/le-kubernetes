@@ -107,14 +107,13 @@ nmcli con up eth1
 **Verify.**
 ```bash
 ip -br addr show eth1; ping -c1 192.168.56.1   # live effect
-
 grep -R '192.168.56.' /etc/netplan/           # Ubuntu persistence
 nmcli -g ipv4.method,ipv4.addresses con show eth1   # Rocky persistence, expect manual
 ```
 **Gotchas.**
 - `ip addr add` is the classic non-persistent answer. A grader that reboots the host sees nothing.
-- Netplan YAML uses two-space indent and no tab characters ever. A tab makes `netplan apply` fail with a parser error that names the wrong line.
-- `netplan try` reverts automatically if the session dies, which is the safe way to change the interface carrying the SSH session. `netplan apply` does not revert.
+- Netplan YAML uses two-space indent and no tab characters ever, and the file must be mode 600. A tab makes `netplan apply` fail with a parser error that names the wrong line.
+- `netplan try` reverts automatically if the session dies, which is the safe way to change the interface carrying the SSH session; `netplan apply` does not.
 - `nmcli` needs `ipv4.method manual`. Setting only `ipv4.addresses` leaves the connection on DHCP and the address is discarded.
 - The nmcli connection name and the device name are different things, and `+ipv4.addresses` appends where the bare property replaces the list.
 
@@ -171,10 +170,9 @@ timedatectl set-timezone Asia/Kolkata         # persistent: relinks /etc/localti
 timedatectl set-ntp true
 
 # chrony: config path and unit name differ by family
-printf 'server time.google.com iburst\nallow 192.168.56.0/24\n' >> /etc/chrony/chrony.conf   # Ubuntu
-printf 'server time.google.com iburst\nallow 192.168.56.0/24\n' >> /etc/chrony.conf          # Rocky
-systemctl enable --now chrony                 # Ubuntu unit name
-systemctl enable --now chronyd                # Rocky unit name
+printf 'server time.google.com iburst\nallow 192.168.56.0/24\n' >> /etc/chrony/chrony.conf  # Ubuntu
+printf 'server time.google.com iburst\nallow 192.168.56.0/24\n' >> /etc/chrony.conf         # Rocky
+systemctl enable --now chrony                 # Ubuntu unit name; chronyd on Rocky
 
 chronyc sources -v; chronyc tracking; chronyc makestep
 ```
@@ -197,7 +195,6 @@ ls -l /etc/localtime                          # symlink into /usr/share/zoneinfo
 **Gotchas.**
 - `date -s` sets the clock now and fights the daemon, which steps it back. It is never the answer to a time-sync task.
 - `allow <subnet>` is what turns the host into an NTP server for clients. Without it chrony only consumes time.
-- Serving time needs 123/udp open in the firewall.
 - `chrony` and `systemd-timesyncd` conflict. Enabling chrony masks timesyncd on most distributions, but check `timedatectl` for which one is active.
 - `iburst` only speeds up the first polls, so `chronyc sources` can still show a question mark straight after a restart.
 
@@ -315,7 +312,7 @@ ufw status numbered; ufw delete 3
 firewall-cmd --get-active-zones
 firewall-cmd --permanent --add-service=ssh --add-service=http --add-service=https
 firewall-cmd --permanent --add-port=8080/tcp --add-port=4505/tcp --add-port=4506/tcp
-firewall-cmd --reload
+firewall-cmd --reload   # --permanent without --reload changes nothing until the next boot
 
 # iptables, still accepted by graders and usually the nft backend underneath
 iptables -S
@@ -323,10 +320,10 @@ iptables -I INPUT 1 -p tcp -m multiport --dports 22,8080,4505,4506 -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT; iptables -P INPUT DROP
 
 # Persist: the file AND the enabled service, both halves
-nft list ruleset > /etc/nftables.conf ; systemctl enable --now nftables          # Ubuntu
-nft list ruleset > /etc/sysconfig/nftables.conf ; systemctl enable --now nftables # Rocky
-netfilter-persistent save                                                        # Ubuntu iptables
-iptables-save > /etc/sysconfig/iptables                                          # Rocky iptables
+nft list ruleset > /etc/nftables.conf ; systemctl enable --now nftables   # Ubuntu; Rocky uses
+                                                                         # /etc/sysconfig/nftables.conf
+netfilter-persistent save                       # Ubuntu iptables, writes /etc/iptables/rules.v4
+iptables-save > /etc/sysconfig/iptables         # Rocky iptables
 ```
 
 | Persistence | Ubuntu 24.04 | Rocky 9 |
@@ -351,10 +348,9 @@ for p in 8080 4505 4506; do nft list ruleset | grep -q "$p" && echo "$p referenc
 ```
 **Gotchas.**
 - Ports 8080, 4505 and 4506 must stay reachable. Check the saved file too, because a persisted default-drop policy blocks them on the next boot even if the live ruleset was fine.
-- Set the accept rules before the drop policy. `nft chain ... '{ policy drop ; }'` applied first cuts the SSH session immediately.
 - `nft flush ruleset` deletes the rules ufw and firewalld installed as well, because both front ends drive nftables underneath. Mixing raw `nft` with either one works only until the front end reloads. Choose one tool per host.
 - `iptables -V` usually reports `nf_tables`, so `iptables` commands become nftables rules in a separate table: read both `iptables -S` and `nft list ruleset`. `-I` inserts at the top, `-A` appends, and an accept appended after a drop never matches.
-- A rule added with `nft add` is gone at the next boot unless the ruleset is written to the distribution file and the `nftables` service is enabled. Check `systemctl is-enabled nftables`, not just the file.
+- A rule added with `nft add` is gone at the next boot unless the ruleset is written to the distribution file and the `nftables` service is enabled. Check both, not just the file.
 
 **Docs.** `man 8 nft` for the table, chain, hook and priority syntax, `man 8 ufw`, `man 1 firewall-cmd`, `man 5 firewalld.zone`, `man 8 iptables`, `man 8 iptables-save`, `man 8 netfilter-persistent`.
 
@@ -387,8 +383,7 @@ iptables -t nat -A POSTROUTING -s 10.99.18.0/24 -o eth0 -j MASQUERADE
 
 # firewalld
 firewall-cmd --permanent --add-forward-port=port=8081:proto=tcp:toport=8080
-firewall-cmd --permanent --add-masquerade
-firewall-cmd --reload
+firewall-cmd --permanent --add-masquerade; firewall-cmd --reload
 
 # Persist the nftables version
 nft list ruleset > /etc/nftables.conf ; systemctl enable --now nftables
@@ -414,7 +409,7 @@ systemctl is-enabled nftables; firewall-cmd --permanent --list-forward-ports 2>/
 - `sysctl -w net.ipv4.ip_forward=1` is runtime only. The drop-in under `/etc/sysctl.d` is the half that survives the reboot, and a NAT task is graded on both.
 - The prerouting hook never sees locally generated traffic. Testing a redirect with `curl localhost:8081` on the same host fails even when the rule is correct; test from the peer, or add an output chain rule.
 - `nat` chains need a priority. Use the named values `dstnat` for prerouting and `srcnat` for postrouting.
-- The nat table is consulted only for the first packet of a connection. After changing a rule, flush conntrack with `conntrack -F` before retesting or the old translation persists.
+- The nat table is consulted only for the first packet of a connection, so flush conntrack with `conntrack -F` after changing a rule or the old translation persists. Chain priorities are `dstnat` for prerouting and `srcnat` for postrouting.
 - `REDIRECT` sends traffic to a port on this host; `DNAT` sends it to another host. Both, and masquerade, need forwarding on and a filter forward chain that accepts, or no packet moves.
 
 **Docs.** `man 8 nft`, `man 8 iptables`, `man 8 iptables-extensions` for `REDIRECT`, `DNAT` and `MASQUERADE`, `man 1 firewall-cmd`, `man 5 sysctl.d`, `man 8 conntrack`.
@@ -490,7 +485,7 @@ network:
       interfaces: [eth2, eth3]
       parameters: {mode: active-backup, primary: eth2, mii-monitor-interval: 100}
 EOF
-netplan try
+netplan try    # reverts by itself if the change cuts the session
 
 # Rocky: NetworkManager
 nmcli con add type bridge con-name br0 ifname br0 ipv4.method manual ipv4.addresses 192.168.56.20/24
@@ -508,17 +503,15 @@ nmcli con add type ethernet slave-type bond con-name bond0-eth2 ifname eth2 mast
 **Verify.**
 ```bash
 ip -br link show br0; ip -br addr show br0      # live effect: state UP, address on the bridge
-bridge link                                    # members and their master
-head -12 /proc/net/bonding/bond0               # active slave and link status
+bridge link; head -12 /proc/net/bonding/bond0  # members, master, active slave
 
 grep -R 'br0' /etc/netplan/                    # Ubuntu persistence
 nmcli -g connection.type,connection.slave-type con show br0-eth1   # Rocky persistence
 ```
 **Gotchas.**
-- A bridge member cannot keep its own IP address. Move the address to the bridge in the same change, or the host loses connectivity the moment the member is enslaved.
-- Do this on a NIC that is not carrying the SSH session, or use `netplan try` so a mistake reverts by itself.
+- A bridge member cannot keep its own IP address. Move the address to the bridge in the same change, or the host loses connectivity the moment the member is enslaved. Work on a NIC that is not carrying the SSH session.
 - `ip link` alone does not show which bridge a NIC belongs to; `bridge link` and `ip -d link show eth1` do. With STP enabled a new port takes around 30 seconds to start forwarding, so an immediate test can fail on a correct configuration.
-- Bond modes have both names and numbers. `active-backup` and `1` are the same thing, and `miimon` must be set or link failures go undetected.
+- Bond modes have names and numbers: `active-backup` and `1` are the same. `miimon` must be set or link failures go undetected.
 
 **Docs.** `man 5 netplan`, `man 8 bridge`, `man 8 ip-link` for `type bridge` and `type bond`, `man 1 nmcli`, `man 5 nm-settings-nmcli`.
 
@@ -535,11 +528,9 @@ upstream app_pool {
     server 127.0.0.1:9000;
     server 127.0.0.1:9001 backup;
 }
-
 server {
     listen 80;
     server_name _;
-
     location / {
         proxy_pass http://app_pool;
         proxy_set_header Host $host;
@@ -550,9 +541,7 @@ server {
 EOF
 rm -f /etc/nginx/sites-enabled/default        # Ubuntu default site otherwise owns port 80
 nginx -t                                      # always before a reload
-systemctl enable --now nginx
-systemctl reload nginx
-
+systemctl enable --now nginx; systemctl reload nginx
 setsebool -P httpd_can_network_connect on     # Rocky: SELinux blocks outbound proxying by default
 
 # haproxy alternative: a frontend with "bind :80" and "default_backend be_app", then a
@@ -572,7 +561,6 @@ getsebool httpd_can_network_connect 2>/dev/null   # Rocky, expect on
 - On Rocky an unset `httpd_can_network_connect` gives a 502 with a perfectly correct nginx configuration. It is the single most common silent failure in this recipe.
 - `proxy_pass http://backend;` passes the URI through unchanged; `proxy_pass http://backend/;` with the trailing slash strips the matched location prefix. The two behave differently and the task usually cares.
 - Ubuntu's packaged default site listens on port 80 and answers first. Remove the symlink in `sites-enabled` or the proxy never sees a request.
-- `systemctl reload` keeps existing connections, `restart` drops them. Neither survives a reboot without `systemctl enable`.
 - The firewall still applies: a working proxy on the loopback interface proves nothing about reachability from a peer. Most backends also need `proxy_set_header Host $host` to route correctly.
 
 **Docs.** `man 8 nginx`, `/usr/share/doc/nginx` for the packaged example configuration, `man 1 haproxy`, `/usr/share/doc/haproxy/configuration.txt.gz`, `man 8 setsebool`.
@@ -639,8 +627,8 @@ umount /mnt/share && mount -a && findmnt /mnt/share   # proves the fstab line re
 
 ```bash
 ip -br a; ip -br link; ip -j route; ip route get 10.200.0.5; ss -tulpn
-netplan try; netplan apply; nmcli con mod eth1 ipv4.method manual ipv4.addresses 192.168.56.20/24; nmcli con up eth1
-nmcli con mod eth1 +ipv4.routes "10.200.0.0/16 192.168.56.1"
+netplan try; netplan apply; nmcli con mod eth1 ipv4.method manual ipv4.addresses 192.168.56.20/24
+nmcli con mod eth1 +ipv4.routes "10.200.0.0/16 192.168.56.1"; nmcli con up eth1
 hostnamectl set-hostname node1.lab.local; getent hosts node9; resolvectl dns
 timedatectl set-timezone Asia/Kolkata; chronyc sources -v; chronyc tracking
 sshd -T | grep permitrootlogin; sshd -T -C user=deploy,addr=127.0.0.1 | grep passwordauth; sshd -t
@@ -674,7 +662,6 @@ tcpdump -ni any port 8082 -c 20; nc -zv HOST PORT; curl --max-time 3 -sS http://
 - `authorized_keys` is mode 600, owned by the user, in a 700 `.ssh` directory, in a home directory that is not group writable.
 - Redirect is `nft ... redirect to :8080` or `iptables -t nat -A PREROUTING -p tcp --dport 8081 -j REDIRECT --to-port 8080`. Masquerade needs `net.ipv4.ip_forward=1` persisted and a forward chain that accepts.
 - The prerouting hook never sees locally generated traffic, so test a redirect from the peer, not with `curl localhost`.
-- `nat` chain priorities are `dstnat` for prerouting and `srcnat` for postrouting; flush conntrack after changing a nat rule.
 - A bridge member holds no address; move the address to `br0` in the same change.
 - On Rocky a reverse proxy needs `setsebool -P httpd_can_network_connect on`, and on Ubuntu the packaged default site must be removed from `sites-enabled`.
 - In `/etc/exports` there is no space before the parenthesis, `exportfs -ra` follows every edit, and `_netdev` on the client fstab line stops the boot from hanging.

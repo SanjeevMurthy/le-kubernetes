@@ -10,8 +10,10 @@ W=$(worker_node)
 
 echo "Checking the deliverable $OUT..."
 check "$OUT exists and is not empty" test -s "$OUT"
-LINES=$(grep -c . "$OUT" 2>/dev/null || echo 0)
-check_eq "$OUT holds exactly one non-empty line" 1 "$LINES"
+# grep -c prints its count and exits 1 when the count is zero, so take the
+# number it printed and never append a second one with `|| echo 0`.
+LINES=$(grep -c . "$OUT" 2>/dev/null)
+check_eq "$OUT holds exactly one non-empty line" 1 "${LINES:-0}"
 
 ANS=$(grep -m1 . "$OUT" 2>/dev/null | tr -d ' \t\r')
 if [[ "$ANS" =~ ^falco-hunt/inventory(-[a-z0-9]+)*$ ]]; then
@@ -22,8 +24,8 @@ fi
 
 echo "Checking the offending workload was scaled down..."
 check_eq "deployment inventory is scaled to 0 replicas" 0 "$(kjp deploy inventory "$NS" '{.spec.replicas}')"
-RUNNING=$(kubectl get pods -n "$NS" -l app=inventory --field-selector=status.phase=Running -o name 2>/dev/null | grep -c . || echo 0)
-check_eq "no inventory pod is running any more" 0 "$RUNNING"
+RUNNING=$(kubectl get pods -n "$NS" -l app=inventory --field-selector=status.phase=Running -o name 2>/dev/null | grep -c .)
+check_eq "no inventory pod is running any more" 0 "${RUNNING:-0}"
 
 echo "Checking the innocent workload was left alone..."
 check_eq "deployment catalog still asks for 1 replica" 1 "$(kjp deploy catalog "$NS" '{.spec.replicas}')"

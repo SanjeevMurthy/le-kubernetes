@@ -32,6 +32,7 @@ QUESTIONS=(
   "28|Run a Pod under gVisor and capture dmesg|Minimize Microservice Vulnerabilities|D4|Medium|q28-gvisor-dmesg|node-root tool:runsc|6|6|10|worker"
   "29|Remove anonymous access and scope the ServiceAccount|Cluster Hardening|D2|Medium|q29-rbac-anonymous-and-serviceaccount|kubectl|5|6|10|any"
   "30|seccomp: block mkdir with a Localhost profile|System Hardening|D3|Medium|q30-seccomp-deny-mkdir|node-root|6|8|5|worker"
+  "31|Falco: identify the offending pod and stop it|Monitoring, Logging and Runtime Security|D6|Hard|q31-falco-find-and-stop-pod|node-root tool:falco|7|8|15|worker"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }
