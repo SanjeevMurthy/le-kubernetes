@@ -47,14 +47,18 @@ else
 fi
 
 echo "Checking manifest problem 1: privileged..."
-if grep -Eq 'privileged:[[:space:]]*true' "$MF"; then
+if [[ ! -s "$MF" ]]; then
+  echo "  FAIL: no manifest to check at $MF"; FAIL=$((FAIL + 1))
+elif grep -Eq 'privileged:[[:space:]]*true' "$MF"; then
   echo "  FAIL: the container is still privileged"; FAIL=$((FAIL + 1))
 else
   echo "  PASS: the container is no longer privileged"; PASS=$((PASS + 1))
 fi
 
 echo "Checking manifest problem 2: runAsUser..."
-if grep -Eq 'runAsUser:[[:space:]]*"?0"?[[:space:]]*$' "$MF"; then
+if [[ ! -s "$MF" ]]; then
+  echo "  FAIL: no manifest to check at $MF"; FAIL=$((FAIL + 1))
+elif grep -Eq 'runAsUser:[[:space:]]*"?0"?[[:space:]]*$' "$MF"; then
   echo "  FAIL: runAsUser is still 0"; FAIL=$((FAIL + 1))
 else
   RU=$(grep -Em1 'runAsUser:' "$MF" | sed 's/.*runAsUser:[[:space:]]*//' | tr -d ' "\r')

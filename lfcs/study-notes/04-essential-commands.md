@@ -58,7 +58,6 @@ git config --global user.email "ana@example.com"
 
 git clone /srv/git/app.git /home/ana/app
 cd /home/ana/app
-
 git checkout -b feature/logging    # create and switch
 git switch -c feature/logging      # the same thing in newer syntax
 
@@ -76,8 +75,7 @@ git stash && git stash list && git stash pop     # park and restore uncommitted 
 **Verify.**
 ```bash
 git -C /home/ana/app rev-parse --abbrev-ref HEAD      # expect feature/logging
-git -C /home/ana/app log --oneline -1
-git -C /home/ana/app log -1 --format='%an <%ae>'      # the identity that was set
+git -C /home/ana/app log -1 --format='%h %an <%ae> %s'   # commit and the identity used
 git -C /home/ana/app status --short                   # empty means nothing left uncommitted
 git -C /home/ana/app check-ignore -v build/x.o        # proves .gitignore matches
 ```
@@ -124,7 +122,6 @@ systemctl status inventory.service --no-pager -l
 journalctl -u inventory.service -b --no-pager | tail -30
 systemd-analyze verify /etc/systemd/system/inventory.service
 SYSTEMD_LOG_LEVEL=debug systemctl start inventory.service
-
 ss -tlpn | grep ':9090'                   # another process already holding the port
 systemctl list-units --state=failed
 systemctl unmask inventory.service        # a masked unit refuses every start
@@ -142,8 +139,7 @@ ss -tlpn | grep ':9090'
 - Without an `[Install]` section `enable` reports "no installation config" and nothing persists. `WantedBy=multi-user.target` is the normal answer.
 - Run `systemctl daemon-reload` after every unit edit, otherwise systemd keeps the copy it loaded earlier and the change looks ignored.
 - `ExecStart` takes an absolute path and no shell syntax. Pipes, `&&` and variable expansion need `ExecStart=/bin/bash -c '...'`.
-- Never edit a vendor unit under `/usr/lib/systemd/system`. Use `systemctl edit <unit>`, which writes `/etc/systemd/system/<unit>.d/override.conf` and survives a package upgrade.
-- A masked unit is a symlink to `/dev/null` and fails with "Unit is masked". `systemctl unmask` before anything else.
+- Never edit a vendor unit under `/usr/lib/systemd/system`. Use `systemctl edit <unit>`, which writes `/etc/systemd/system/<unit>.d/override.conf` and survives a package upgrade. A masked unit is a symlink to `/dev/null` that fails with "Unit is masked", so `systemctl unmask` before anything else.
 
 **Docs.** `man 5 systemd.unit`, `man 5 systemd.service`, `man 5 systemd.exec`, `man 1 systemctl`, `man 1 journalctl`. Working examples are readable on the host under `/usr/lib/systemd/system/`.
 
@@ -155,8 +151,7 @@ ss -tlpn | grep ':9090'
 
 **Commands.**
 ```bash
-uptime                  # load over 1, 5 and 15 minutes
-cat /proc/loadavg
+uptime; cat /proc/loadavg   # load over 1, 5 and 15 minutes
 nproc                   # divide the load by this before calling it high
 
 top -b -n 1 -o %CPU | head -15
@@ -225,8 +220,7 @@ cat /proc/"$(systemctl show -p MainPID --value inventory.service)"/limits
 ```
 **Verify.**
 ```bash
-systemctl show inventory.service -p LimitNOFILE --value      # expect 65535
-systemctl show inventory.service -p TasksMax -p MemoryMax
+systemctl show inventory.service -p LimitNOFILE -p TasksMax -p MemoryMax
 grep 'Max open files' /proc/"$(systemctl show -p MainPID --value inventory.service)"/limits
 systemctl cat inventory.service          # the header lists every drop-in that applied
 ```
@@ -250,13 +244,11 @@ systemctl cat inventory.service          # the header lists every drop-in that a
 df -h                  # which filesystem is full
 df -i                  # a full inode table looks identical from user space
 du -xh --max-depth=1 /data 2>/dev/null | sort -h | tail -10
-
 find /data -xdev -type f -size +100M -exec ls -lh {} \; | sort -k5 -h | tail
 
 # Space held by a deleted file that a process still has open.
 # df stays full while du finds nothing.
-lsof +L1 | head
-lsof -nP /data | grep deleted
+lsof +L1 | head                  # or: lsof -nP /data | grep deleted
 systemctl restart rsyslog        # releasing the handle returns the space
 : > /var/log/huge.log            # truncate a live log instead of deleting it
 
@@ -266,8 +258,7 @@ dnf clean all                    # Rocky
 ```
 **Verify.**
 ```bash
-df -h /data
-df -i /data
+df -h /data && df -i /data
 du -xsh /data
 lsof +L1 | wc -l          # expect 0 remaining deleted-but-open files
 ```
@@ -291,7 +282,6 @@ lsof +L1 | wc -l          # expect 0 remaining deleted-but-open files
 # Inspect. This is the reported task: report the common name and the expiry.
 openssl x509 -in /etc/ssl/certs/site.crt -noout -subject -enddate -issuer
 openssl x509 -in site.crt -noout -text | less
-openssl x509 -in site.crt -noout -serial -ext subjectAltName -fingerprint -sha256
 openssl x509 -in site.crt -noout -checkend 604800; echo "exit=$?"   # 1 if it expires within 7 days
 
 # Self-signed certificate and key in one command.
@@ -300,12 +290,10 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
   -subj "/C=IN/ST=KA/L=Bengaluru/O=Example/CN=web.example.com" \
   -addext "subjectAltName=DNS:web.example.com"
 
-# Certificate signing request against an existing key.
+# Certificate signing request against an existing key, then chain validation.
 openssl genrsa -out site.key 2048
 openssl req -new -key site.key -out site.csr -subj "/CN=web.example.com"
 openssl req -in site.csr -noout -text -verify
-
-# Chain validation.
 openssl verify -CAfile /etc/ssl/certs/ca.crt site.crt        # expect "site.crt: OK"
 
 # What a live server presents.
@@ -317,8 +305,7 @@ openssl x509 -noout -modulus -in site.crt | openssl sha256
 openssl rsa  -noout -modulus -in site.key | openssl sha256
 openssl req  -noout -modulus -in site.csr | openssl sha256
 
-chown root:root /etc/ssl/private/site.key
-chmod 600 /etc/ssl/private/site.key
+chown root:root /etc/ssl/private/site.key && chmod 600 /etc/ssl/private/site.key
 ```
 **Verify.**
 ```bash
@@ -331,7 +318,7 @@ stat -c '%a %U:%G %n' /etc/ssl/private/site.key     # expect 600 root:root
 **Gotchas.**
 - `-noout` suppresses the base64 blob. Without it the fields scroll off the screen.
 - `-nodes` leaves the private key unencrypted. Without it openssl prompts for a passphrase and the web server then cannot start unattended.
-- `-subj` must begin with a slash and separate components with slashes. `CN=x` without the leading slash is rejected.
+- `-subj` must begin with a slash and separate components with slashes, because `CN=x` without the leading slash is rejected.
 - `-days` belongs to `req -x509`, because a CSR has no validity period. `openssl s_client` needs `-servername` against any host serving more than one certificate, otherwise it returns the default virtual host.
 - Comparing the sha256 of the modulus is the only reliable key-to-certificate check. File sizes and timestamps prove nothing.
 - A private key readable by anyone but root is a graded failure in its own right, so `chmod 600` every time. The trust store path differs by distribution and a new CA only persists once the extract command has run, so see the Ubuntu vs Rocky table below.
@@ -347,7 +334,7 @@ stat -c '%a %U:%G %n' /etc/ssl/private/site.key     # expect 600 root:root
 **Commands.**
 ```bash
 grep -E 'ERROR|FATAL' /var/log/app.log
-grep -c 'ERROR' /var/log/app.log                     # counts matching lines
+grep -c 'ERROR' /var/log/app.log                     # counts matching lines, not matches
 grep -o '[0-9]\{1,3\}\(\.[0-9]\{1,3\}\)\{3\}' access.log | sort -u   # only the match
 grep -v '^#' /etc/ssh/sshd_config | grep -v '^$'     # strip comments and blank lines
 grep -rn 'ListenAddress' /etc                        # which file holds this setting
@@ -362,8 +349,7 @@ awk -F, '{print $3}' data.csv
 awk '{sum += $5} END {print sum}' access.log
 
 cut -d: -f1,7 /etc/passwd
-tr 'a-z' 'A-Z' < names.txt
-tr -s ' ' < spaced.txt
+tr 'a-z' 'A-Z' < names.txt && tr -s ' ' < spaced.txt
 wc -l /var/log/app.log
 
 # The classic one-liner: the five most frequent values in a column.
@@ -399,8 +385,7 @@ grep -c 'http://' /etc/app/config.ini     # expect 0
 ```bash
 find /data -type f -user ana -size +1M -mtime -7
 find /var/log -type f -name '*.log' -mmin -30
-find / -xdev -type f -perm -4000 2>/dev/null        # every SUID binary
-find / -xdev -type f -perm -2000 2>/dev/null        # every SGID binary
+find / -xdev -type f -perm -4000 2>/dev/null        # every SUID binary, -2000 for SGID
 find /data -type d -perm /0002 -o -type f -size +100M   # world-writable dirs or big files
 find /data -type f -size +100M -exec cp -p {} /backup/ \;
 find /data -type f -name '*.tmp' -exec rm -f {} +   # + batches, \; runs once per file
@@ -446,9 +431,7 @@ getfacl -p /srv/shared                    # confirms no ACL is overriding the mo
 tar czf /backup/etc.tar.gz /etc
 tar cJf /backup/data.tar.xz --exclude='*.tmp' --exclude='cache' /data
 tar czf /backup/home.tar.gz -C /home ana      # -C drops the leading path
-
 tar tzf /backup/etc.tar.gz | head             # always list before extracting
-tar xzf /backup/etc.tar.gz -C /restore
 tar xJf /backup/data.tar.xz -C /restore --same-owner -p
 
 gzip -k file.txt && gunzip file.txt.gz
@@ -476,17 +459,15 @@ chmod 755 /usr/local/bin/report.sh
 ```
 **Verify.**
 ```bash
-tar tzf /backup/etc.tar.gz | head -3
 file /backup/data.tar.xz                  # expect XZ compressed data
 test -L /usr/local/bin/app && readlink -f /usr/local/bin/app
-stat -c '%i' /data/report.csv /data/archive/report.csv   # identical inode means hard link
-stat -c '%h' /data/report.csv             # link count 2
+stat -c '%i %h %n' /data/report.csv /data/archive/report.csv   # same inode, link count 2
 bash -n /usr/local/bin/report.sh          # syntax check without running it
 ```
 **Gotchas.**
 - `> out.txt 2>&1` works and `2>&1 > out.txt` does not. Redirections are applied left to right, so the second form aims stderr at the terminal that stdout still pointed to.
 - `>` truncates the target the moment the shell parses the line, before the command runs, so `cmd > file` where `file` is also the input empties it.
-- `tar` chooses the compressor from the flag, not the file name, so `tar czf x.tar.xz` writes gzip data under a misleading name. GNU tar accepts `-a` to pick from the suffix instead.
+- `tar` chooses the compressor from the flag and not the file name, so `tar czf x.tar.xz` writes gzip data under a misleading name. GNU tar accepts `-a` to pick from the suffix instead.
 - Extract as root with `-p` to keep permissions, and pass `-C /target` because tar strips the leading slash and extracts relative to the working directory.
 - A hard link cannot cross a filesystem and cannot point at a directory. A symlink does both but breaks when its target moves, and a relative symlink resolves from the directory holding the link, so prefer absolute targets.
 - A `#!/bin/bash` shebang, mode 755 and `set -euo pipefail` are what turn a text file into a script that a unit or a cron job can actually run.

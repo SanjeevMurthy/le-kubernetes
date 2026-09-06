@@ -7,7 +7,7 @@ source "$(dirname "$0")/../../lib/env.sh"
 require_node_root
 require_tool kubectl
 require_tool etcdctl
-[[ -f "$KAS_MANIFEST" ]] || { echo "missing $KAS_MANIFEST — run this on the control-plane node"; exit 1; }
+[[ -f "$KAS_MANIFEST" ]] || { echo "missing $KAS_MANIFEST; run this on the control-plane node"; exit 1; }
 
 NS=enc-lab
 ENC_DIR=/etc/kubernetes/enc
