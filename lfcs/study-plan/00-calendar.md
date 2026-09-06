@@ -10,6 +10,23 @@ Eight weeks from the lab build to exam day, starting the day after the CKS exam.
 
 ---
 
+<!-- toc -->
+## Table of Contents
+
+- [Before Sunday 13 December](#before-sunday-13-december)
+- [Week 1 — 13 to 20 Dec · Lab, then Essential Commands and Users](#week-1--13-to-20-dec--lab-then-essential-commands-and-users)
+- [Week 2 — 21 to 27 Dec · Operations and Deployment (25%)](#week-2--21-to-27-dec--operations-and-deployment-25)
+- [Week 3 — 28 Dec to 3 Jan · Storage (20%)](#week-3--28-dec-to-3-jan--storage-20)
+- [Week 4 — 4 to 10 Jan · Networking (25%)](#week-4--4-to-10-jan--networking-25)
+- [Week 5 — 11 to 17 Jan · Drills](#week-5--11-to-17-jan--drills)
+- [Week 6 — 18 to 24 Jan · Drills and the first simulator](#week-6--18-to-24-jan--drills-and-the-first-simulator)
+- [Week 7 — 25 to 31 Jan · Closing the gaps](#week-7--25-to-31-jan--closing-the-gaps)
+- [Week 8 — 1 to 6 Feb · Exam week](#week-8--1-to-6-feb--exam-week)
+- [After the exam](#after-the-exam)
+- [If the date slips](#if-the-date-slips)
+
+<!-- toc stop -->
+
 ## Before Sunday 13 December
 
 - [ ] **Book the LFCS exam for Saturday 6 February 2027.** Booking releases the two killer.sh sessions.
