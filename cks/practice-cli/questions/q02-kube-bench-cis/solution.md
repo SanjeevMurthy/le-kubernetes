@@ -7,22 +7,24 @@
 **Solution — Step by Step:**
 
 ```bash
-# Run against the relevant target
-kube-bench run --targets master | grep -A3 "\[FAIL\]"
+# See the two findings first
+kube-bench run --targets master --check 1.2.1
+kube-bench run --targets node   --check 4.2.4
 # or as a Job:  kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
 
-# Example fix 1 — apiserver anonymous-auth (edit the static pod manifest):
+# Fix CIS 1.2.1 — apiserver anonymous-auth (edit the static pod manifest):
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 sudo sed -i 's/--anonymous-auth=true/--anonymous-auth=false/' \
   /etc/kubernetes/manifests/kube-apiserver.yaml   # or add the flag if missing
+curl -sk https://127.0.0.1:6443/readyz            # wait for 'ok'
 
-# Example fix 2 — kubelet read-only port:
+# Fix CIS 4.2.4 — kubelet read-only port:
 sudo vi /var/lib/kubelet/config.yaml      # set: readOnlyPort: 0
 sudo systemctl restart kubelet
 
-# Re-verify
-sudo crictl ps | grep apiserver
-kube-bench run --targets master,node | grep -A2 "anonymous-auth\|read-only"
+# Re-verify (the port must stop answering, and 4.2.4 must PASS)
+curl -s --max-time 3 http://127.0.0.1:10255/pods  # connection refused
+kube-bench run --targets node --check 4.2.4 | grep '\[PASS\]'
 ```
 
 **Key Points to Remember:**

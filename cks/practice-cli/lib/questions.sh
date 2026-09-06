@@ -20,6 +20,8 @@ QUESTIONS=(
   "16|Detect Threats with Falco Rules|Monitoring, Logging and Runtime Security|D6|Medium|q16-falco|node-root tool:falco|7|8|15|worker"
   "17|API Server Audit Logging Policy|Monitoring, Logging and Runtime Security|D6|Hard|q17-audit-logging|node-root|8|10|13|control-plane"
   "18|Immutable Containers (readOnlyRootFilesystem)|Monitoring, Logging and Runtime Security|D6|Easy|q18-immutable-containers|kubectl|4|5|6|any"
+  "19|Falco: change the output format and save the alerts|Monitoring, Logging and Runtime Security|D6|Hard|q19-falco-output-format|node-root tool:falco|8|10|15|worker"
+  "20|Audit log forensics: who deleted the Secret|Monitoring, Logging and Runtime Security|D6|Medium|q20-audit-log-forensics|linux|6|8|13|linux"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

@@ -15,11 +15,11 @@ sudo aa-status | grep k8s-deny-write
 # Pod confined by the profile (Kubernetes 1.30+ field form)
 apiVersion: v1
 kind: Pod
-metadata: {name: secure-pod}
+metadata: {name: secure-pod, namespace: apparmor-lab}
 spec:
   containers:
   - name: c
-    image: busybox
+    image: busybox:1.36
     command: ["sh","-c","sleep 3600"]
     securityContext:
       appArmorProfile:
@@ -28,7 +28,7 @@ spec:
 ```
 ```bash
 # Verify enforcement: a write should be denied
-kubectl exec secure-pod -- sh -c 'echo x > /root/test' 2>&1   # Permission denied
+kubectl exec -n apparmor-lab secure-pod -- sh -c 'touch /tmp/apparmor-probe' 2>&1   # Permission denied
 ```
 
 **Key Points to Remember:**

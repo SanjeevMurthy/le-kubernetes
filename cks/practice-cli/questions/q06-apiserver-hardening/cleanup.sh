@@ -1,3 +1,6 @@
 #!/bin/bash
-# Q6 — Cleanup (manual)
-echo "No automated cleanup. Restore /tmp backup of kube-apiserver.yaml if needed."
+# Q6 apiserver hardening: restore the original static pod manifest.
+source "$(dirname "$0")/../../lib/env.sh"
+restore_file "$KAS_MANIFEST" q06
+wait_apiserver
+echo "Cleanup complete"

@@ -28,6 +28,8 @@
 | Q16 | D6 | [Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules) | 15 sources | `node-root tool:falco` |
 | Q17 | D6 | [API Server Audit Logging Policy](#q17-api-server-audit-logging-policy) | 13 sources | `node-root` |
 | Q18 | D6 | [Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem) | 6 sources | `kubectl` |
+| Q19 | D6 | [Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts) | 15 sources | `node-root tool:falco` |
+| Q20 | D6 | [Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret) | 13 sources | `linux` |
 
 ---
 
@@ -105,7 +107,13 @@ EOF
 **Question**
 
 
-Run the CIS Kubernetes Benchmark against the control-plane node using `kube-bench`. Identify the FAIL items related to the API server and kubelet, and remediate at least the findings for `--anonymous-auth` and kubelet `--read-only-port`. Re-run to confirm the findings pass.
+**Host:** the control-plane node named in the setup output (root shell: `sudo -i`).
+
+A CIS Kubernetes Benchmark run on this node reports two failures: **1.2.1** — the API server accepts anonymous requests — and **4.2.4** — the kubelet serves an unauthenticated read-only port, which currently answers on `http://127.0.0.1:10255/pods`.
+
+1. Remediate **CIS 1.2.1**: set `--anonymous-auth=false` in the kube-apiserver static pod manifest `/etc/kubernetes/manifests/kube-apiserver.yaml`, and wait until the API server is ready again (`curl -sk https://127.0.0.1:6443/readyz`).
+2. Remediate **CIS 4.2.4**: set `readOnlyPort: 0` in `/var/lib/kubelet/config.yaml` and restart the kubelet, so that `curl -s --max-time 3 http://127.0.0.1:10255/pods` fails to connect.
+3. Leave the kubelet service `active` and the API server serving, then confirm with `kube-bench run --targets node --check 4.2.4` that the check now reports `[PASS]`.
 
 **Solution**
 
@@ -117,22 +125,24 @@ Run the CIS Kubernetes Benchmark against the control-plane node using `kube-benc
 **Solution — Step by Step:**
 
 ```bash
-# Run against the relevant target
-kube-bench run --targets master | grep -A3 "\[FAIL\]"
+# See the two findings first
+kube-bench run --targets master --check 1.2.1
+kube-bench run --targets node   --check 4.2.4
 # or as a Job:  kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
 
-# Example fix 1 — apiserver anonymous-auth (edit the static pod manifest):
+# Fix CIS 1.2.1 — apiserver anonymous-auth (edit the static pod manifest):
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 sudo sed -i 's/--anonymous-auth=true/--anonymous-auth=false/' \
   /etc/kubernetes/manifests/kube-apiserver.yaml   # or add the flag if missing
+curl -sk https://127.0.0.1:6443/readyz            # wait for 'ok'
 
-# Example fix 2 — kubelet read-only port:
+# Fix CIS 4.2.4 — kubelet read-only port:
 sudo vi /var/lib/kubelet/config.yaml      # set: readOnlyPort: 0
 sudo systemctl restart kubelet
 
-# Re-verify
-sudo crictl ps | grep apiserver
-kube-bench run --targets master,node | grep -A2 "anonymous-auth\|read-only"
+# Re-verify (the port must stop answering, and 4.2.4 must PASS)
+curl -s --max-time 3 http://127.0.0.1:10255/pods  # connection refused
+kube-bench run --targets node --check 4.2.4 | grep '\[PASS\]'
 ```
 
 **Key Points to Remember:**
@@ -314,7 +324,14 @@ kubectl exec -n app legacy -- ls /var/run/secrets/kubernetes.io/serviceaccount 2
 **Question**
 
 
-Harden the API server on the control-plane node: disable anonymous authentication, ensure the authorization mode is `Node,RBAC`, and enable the `NodeRestriction` admission plugin. Confirm the API server comes back healthy.
+**Host:** the control-plane node named in the setup output (root shell: `sudo -i`).
+
+The kube-apiserver static pod at `/etc/kubernetes/manifests/kube-apiserver.yaml` has been started with three insecure flags: `--anonymous-auth=true`, `--authorization-mode=AlwaysAllow` and `--profiling=true`. Back the manifest up before you edit it — a bad edit stops the control plane.
+
+1. Set `--anonymous-auth=false` so unauthenticated callers are rejected.
+2. Set `--authorization-mode=Node,RBAC` (no `AlwaysAllow`).
+3. Set `--profiling=false`.
+4. Bring the API server back: `curl -sk https://127.0.0.1:6443/readyz` must return `ok`, `kubectl get --raw=/version` must succeed, and an anonymous request `curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:6443/api` must return `401` or `403`.
 
 **Solution**
 
@@ -328,16 +345,19 @@ The kube-apiserver runs as a static pod; its flags live in `/etc/kubernetes/mani
 ```bash
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 
-# Ensure these appear under spec.containers[0].command:
-#   - --anonymous-auth=false
-#   - --authorization-mode=Node,RBAC
-#   - --enable-admission-plugins=NodeRestriction   (append to existing list)
+# Correct these three flags under spec.containers[0].command:
+#   - --anonymous-auth=false      (was true)
+#   - --authorization-mode=Node,RBAC   (was AlwaysAllow)
+#   - --profiling=false           (was true)
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Wait for restart, then verify health:
 sudo crictl ps | grep kube-apiserver
 kubectl get --raw='/readyz'
-kubectl -n kube-system get pod -l component=kube-apiserver
+kubectl get --raw='/version'
+
+# Effect check — an anonymous call must now be refused (401/403):
+curl -sk -o /dev/null -w '%{http_code}\n' https://127.0.0.1:6443/api
 
 # If it does NOT recover:
 sudo crictl logs $(sudo crictl ps -a | grep kube-apiserver | awk '{print $1}')
@@ -347,7 +367,7 @@ sudo journalctl -u kubelet -f
 **Key Points to Remember:**
 
 - **Back up first.** A typo in the manifest stops the API server entirely.
-- Append `NodeRestriction` to any existing `--enable-admission-plugins` list (comma-separated) — don't drop the others.
+- `--authorization-mode` is an ordered, comma-separated list: `Node,RBAC`. `AlwaysAllow` anywhere in it authorizes everything.
 - The pod restart takes 30–90s and the API may be briefly unreachable; confirm with `/readyz`.
 
 **Official Documentation:**
@@ -364,7 +384,13 @@ sudo journalctl -u kubelet -f
 **Question**
 
 
-An AppArmor profile named `k8s-deny-write` (denies writes to the filesystem) is provided. Load it on the worker node, then run a pod `secure-pod` whose container is confined by that profile. Confirm the profile is enforced.
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+The profile file `/etc/apparmor.d/k8s-deny-write` exists on that worker but has **not** been loaded into the kernel. It defines a profile called `k8s-deny-write` that denies all filesystem writes. Namespace `apparmor-lab` exists and is empty.
+
+1. Load `/etc/apparmor.d/k8s-deny-write` on the worker node so that `k8s-deny-write` appears in **enforce** mode in `aa-status`.
+2. Create pod `secure-pod` in namespace `apparmor-lab`, image `busybox:1.36`, command `sleep 3600`, confined by the `k8s-deny-write` profile (`securityContext.appArmorProfile` with `type: Localhost` and `localhostProfile: k8s-deny-write`).
+3. The pod must be **Running**, and a write inside the container (for example `touch /tmp/apparmor-probe`) must be **denied**.
 
 **Solution**
 
@@ -384,11 +410,11 @@ sudo aa-status | grep k8s-deny-write
 # Pod confined by the profile (Kubernetes 1.30+ field form)
 apiVersion: v1
 kind: Pod
-metadata: {name: secure-pod}
+metadata: {name: secure-pod, namespace: apparmor-lab}
 spec:
   containers:
   - name: c
-    image: busybox
+    image: busybox:1.36
     command: ["sh","-c","sleep 3600"]
     securityContext:
       appArmorProfile:
@@ -397,7 +423,7 @@ spec:
 ```
 ```bash
 # Verify enforcement: a write should be denied
-kubectl exec secure-pod -- sh -c 'echo x > /root/test' 2>&1   # Permission denied
+kubectl exec -n apparmor-lab secure-pod -- sh -c 'touch /tmp/apparmor-probe' 2>&1   # Permission denied
 ```
 
 **Key Points to Remember:**
@@ -421,7 +447,13 @@ kubectl exec secure-pod -- sh -c 'echo x > /root/test' 2>&1   # Permission denie
 **Question**
 
 
-Run pod `audited` using the `RuntimeDefault` seccomp profile. Then run pod `custom` using a custom seccomp profile located at `profiles/audit.json` under the kubelet seccomp directory. Verify both pods run.
+**Host:** the worker node named in the setup output (root shell: `sudo -i`); both pods must run on that node.
+
+The kubelet seccomp root on that worker is `/var/lib/kubelet/seccomp`, and a custom profile has already been placed at `/var/lib/kubelet/seccomp/profiles/audit.json` (`defaultAction: SCMP_ACT_LOG`). `localhostProfile` values are relative to the seccomp root. Namespace `seccomp-lab` exists and is empty.
+
+1. Create pod `audited` in namespace `seccomp-lab`, image `busybox:1.36`, command `sleep 3600`, using seccomp `type: Localhost` with `localhostProfile: profiles/audit.json`.
+2. Create pod `default-seccomp` in namespace `seccomp-lab`, image `busybox:1.36`, command `sleep 3600`, using seccomp `type: RuntimeDefault`.
+3. Both pods must be **Running**, and the `audited` container's process must really be confined: `/proc/<pid>/status` on the worker must report `Seccomp:	2` (filter mode), where the pid comes from `crictl inspect --output go-template --template '{{.info.pid}}' <container-id>`.
 
 **Solution**
 
@@ -433,34 +465,39 @@ Seccomp filters the syscalls a container may make. `RuntimeDefault` applies the 
 **Solution — Step by Step:**
 
 ```yaml
-# RuntimeDefault (pod-level securityContext)
-apiVersion: v1
-kind: Pod
-metadata: {name: audited}
-spec:
-  securityContext:
-    seccompProfile: {type: RuntimeDefault}
-  containers: [{name: c, image: nginx}]
----
 # Custom profile at /var/lib/kubelet/seccomp/profiles/audit.json
 apiVersion: v1
 kind: Pod
-metadata: {name: custom}
+metadata: {name: audited, namespace: seccomp-lab}
 spec:
   securityContext:
     seccompProfile:
       type: Localhost
       localhostProfile: profiles/audit.json
-  containers: [{name: c, image: nginx}]
+  containers:
+  - {name: c, image: busybox:1.36, command: ["sh","-c","sleep 3600"]}
+---
+# RuntimeDefault (pod-level securityContext)
+apiVersion: v1
+kind: Pod
+metadata: {name: default-seccomp, namespace: seccomp-lab}
+spec:
+  securityContext:
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - {name: c, image: busybox:1.36, command: ["sh","-c","sleep 3600"]}
 ```
 ```bash
-# The custom profile file (on the node), e.g. an audit-logging profile:
-sudo mkdir -p /var/lib/kubelet/seccomp/profiles
-# (place audit.json with {"defaultAction":"SCMP_ACT_LOG"} or similar)
+# The custom profile file already exists on the worker:
+#   /var/lib/kubelet/seccomp/profiles/audit.json  -> {"defaultAction":"SCMP_ACT_LOG"}
 
 # Verify the applied profile:
-kubectl get pod custom -o jsonpath='{.spec.securityContext.seccompProfile}'
-sudo crictl inspect <container-id> | grep -i seccomp
+kubectl get pod audited -n seccomp-lab -o jsonpath='{.spec.securityContext.seccompProfile}'
+
+# Effect check on the worker — mode 2 means a seccomp filter is loaded:
+CID=$(sudo crictl ps -q --name audited)
+PID=$(sudo crictl inspect --output go-template --template '{{.info.pid}}' "$CID")
+sudo grep Seccomp: /proc/$PID/status        # Seccomp:  2
 ```
 
 **Key Points to Remember:**
@@ -1015,3 +1052,238 @@ kubectl rollout status deploy/api -n prod
 
 **Official Documentation:**
 - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+---
+
+### Q19. Falco: change the output format and save the alerts
+
+**Domain:** Monitoring, Logging and Runtime Security. **Difficulty:** Hard. **Weight:** 8. **Target:** 10 min. **Host:** worker. **Needs:** `node-root tool:falco`.
+
+**Question**
+
+
+Falco is running on the worker node. A workload in namespace `falco-lab` is repeatedly reading a sensitive file, which trips the shipped rule **Read sensitive file untrusted**.
+
+On the worker node:
+
+1. Override that rule so its alerts are emitted in exactly this format, and nothing else:
+
+   ```
+   %evt.time,%container.id,%container.name,%user.name
+   ```
+
+   Keep the rule's name and its priority at `WARNING`. Do not edit `/etc/falco/falco_rules.yaml`.
+
+2. Reload Falco so the change takes effect without losing the service.
+
+3. Collect at least 5 alert lines produced by that rule and write them to `/opt/course/19/falco.log` (or `$COURSE_DIR/19/falco.log` on this lab), one per line, in the format above and nothing else.
+
+Falco documentation is one of the few sources allowed in the exam. The field names are listed under "Supported Fields", and `falco --list` prints them on the host.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the worker node, as root.
+
+```bash
+ssh <worker>
+sudo -i
+```
+
+**1. Find the rule and its current output.** Never edit the shipped file; you only need to read it.
+
+```bash
+grep -A6 'rule: Read sensitive file untrusted' /etc/falco/falco_rules.yaml
+```
+
+**2. Confirm the field names.** This is the part worth checking rather than guessing.
+
+```bash
+falco --list | grep -E 'evt.time|container.id|container.name|user.name'
+```
+
+**3. Override the rule in the local file.** Falco loads `falco_rules.local.yaml` last, so re-declaring a rule with the same name replaces the shipped one. Copy the shipped `condition` across unchanged; only `output` is being changed.
+
+```bash
+cat >> /etc/falco/falco_rules.local.yaml <<'EOF'
+- rule: Read sensitive file untrusted
+  desc: Detect reads of sensitive files by untrusted programs
+  condition: >
+    sensitive_files and open_read and container
+    and not proc_name_exists_in_allowlist
+  output: "%evt.time,%container.id,%container.name,%user.name"
+  priority: WARNING
+  tags: [filesystem, mitre_credential_access]
+EOF
+```
+
+If the shipped condition references macros that do not resolve, take the exact `condition:` block from step 1 rather than retyping it.
+
+**4. Validate before reloading.** A syntax error takes Falco down, and a Falco that will not start scores zero.
+
+```bash
+falco --validate /etc/falco/falco_rules.local.yaml
+```
+
+**5. Reload.** The signal reloads rules without dropping the service. Restarting the unit also works.
+
+```bash
+kill -1 "$(cat /var/run/falco.pid)" 2>/dev/null \
+  || systemctl restart falco-modern-bpf 2>/dev/null \
+  || systemctl restart falco
+```
+
+Confirm it survived:
+
+```bash
+systemctl is-active falco-modern-bpf || systemctl is-active falco
+```
+
+**6. Collect the alerts.** The workload trips the rule every three seconds, so a short wait is enough.
+
+```bash
+mkdir -p /opt/course/19
+journalctl -u falco-modern-bpf -u falco --since '-2 min' --no-pager \
+  | grep -oE '[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+,[0-9a-f]+,[^,]+,[^ ]+' \
+  | head -10 > /opt/course/19/falco.log
+
+cat /opt/course/19/falco.log
+```
+
+If file output is enabled in `/etc/falco/falco.yaml`, read `/var/log/falco.log` instead, which needs no extraction:
+
+```bash
+tail -20 /var/log/falco.log
+```
+
+## Why
+
+Falco ships its rules in `/etc/falco/falco_rules.yaml` and that file is replaced on upgrade, so any change belongs in `falco_rules.local.yaml`. The local file is loaded last and a rule declared there with an existing name wins outright. That is the whole override mechanism, and it is why the task can be solved without touching the shipped file.
+
+The `output` string is a template. Each `%` field is substituted at alert time from the event, and `falco --list` is the authoritative list of what is available. The four fields asked for here identify when it happened, which container, what that container is called, and who was running as, which is the minimum a responder needs to pivot to the pod.
+
+Reloading with `SIGHUP` rather than a restart matters when a task says to keep Falco running: a restart drops events during the gap, and on a slow node the gap can be long enough that the grader sees no alerts.
+
+## Verify
+
+```bash
+grep -A3 'rule: Read sensitive file untrusted' /etc/falco/falco_rules.local.yaml
+systemctl is-active falco-modern-bpf || systemctl is-active falco
+wc -l /opt/course/19/falco.log     # 5 or more
+head -2 /opt/course/19/falco.log   # four comma-separated fields, nothing else
+```
+
+## Docs
+
+**Allowed:** `https://falco.org/docs/`. Search "Supported Fields" for the output field names and the rules reference for condition syntax. Falco is one of only eight documentation sources open to you in the exam, so use it rather than guessing field names.
+
+On the host, `falco --list` and `falco -L` need no network at all.
+
+---
+
+### Q20. Audit log forensics: who deleted the Secret
+
+**Domain:** Monitoring, Logging and Runtime Security. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** linux. **Needs:** `linux`.
+
+**Question**
+
+
+The Secret `db-creds` in namespace `finance` has disappeared. An API server audit log covering the period has been preserved at `/opt/course/20/audit.log` (or `$COURSE_DIR/20/audit.log` on this lab). Each line is one JSON audit event.
+
+There is no `jq` on this host, exactly as in the exam.
+
+Investigate the log and write your findings to `/opt/course/20/answer.txt`, one per line, in exactly this format:
+
+```
+user=<username that deleted the Secret>
+ip=<source IP that request came from>
+time=<requestReceivedTimestamp of the delete, verbatim>
+gets=<how many times db-creds was read with the get verb>
+```
+
+Only the deletion of `db-creds` in `finance` counts. Other Secrets were deleted in the same window, and reads of `db-creds` are spread across several users.
+
+**Solution**
+
+
+## Steps
+
+Set the log path once. On a real exam host this is `/opt/course/20/audit.log`.
+
+```bash
+LOG=/opt/course/20/audit.log
+```
+
+**1. Find the deletion.** Filter on all four facts at once. Filtering on the verb alone is not enough, because other Secrets were deleted in the same window.
+
+```bash
+grep '"verb":"delete"' "$LOG" | grep '"resource":"secrets"' \
+  | grep '"name":"db-creds"' | grep '"namespace":"finance"'
+```
+
+That returns exactly one line. Confirm it is one:
+
+```bash
+grep '"verb":"delete"' "$LOG" | grep '"resource":"secrets"' \
+  | grep '"name":"db-creds"' | grep '"namespace":"finance"' | wc -l
+```
+
+**2. Pull the three fields out of that line.** There is no `jq`, so use `grep -o` and `cut`.
+
+```bash
+DEL=$(grep '"verb":"delete"' "$LOG" | grep '"resource":"secrets"' \
+      | grep '"name":"db-creds"' | grep '"namespace":"finance"')
+
+echo "$DEL" | grep -o '"username":"[^"]*"' | cut -d'"' -f4
+echo "$DEL" | grep -o '"sourceIPs":\["[^"]*"' | cut -d'"' -f4
+echo "$DEL" | grep -o '"requestReceivedTimestamp":"[^"]*"' | cut -d'"' -f4
+```
+
+`yq` is installed and also works, one line at a time:
+
+```bash
+echo "$DEL" | yq -p json '.user.username, .sourceIPs[0], .requestReceivedTimestamp'
+```
+
+**3. Count the reads.**
+
+```bash
+grep '"verb":"get"' "$LOG" | grep '"name":"db-creds"' | grep -c '"namespace":"finance"'
+```
+
+**4. Write the deliverable.**
+
+```bash
+mkdir -p /opt/course/20
+cat > /opt/course/20/answer.txt <<EOF
+user=mallory
+ip=10.44.0.7
+time=2026-11-14T02:41:07.884213Z
+gets=7
+EOF
+```
+
+Substitute the values you actually found; the ones above are from one generated log.
+
+## Why
+
+Audit events are one compact JSON object per line, which is what makes line-oriented tools work at all. Every event carries `user.username`, `sourceIPs`, `verb`, `objectRef` (resource, namespace, name) and `requestReceivedTimestamp`, so a single line answers who, from where, what and when.
+
+The reason to filter on four fields rather than one is that a real log is mostly noise. Here there are three deletions of Secrets and only one of them is the target. On the exam the same is true at a larger scale, and a broad grep that returns twelve lines costs more time than a narrow one that returns one.
+
+Reads are counted separately because `get` on a Secret returns its contents. The count tells you how widely the value may have leaked before it was deleted, which is the question an investigator actually cares about.
+
+## Verify
+
+```bash
+cat /opt/course/20/answer.txt
+grep '"verb":"delete"' "$LOG" | grep '"name":"db-creds"' | grep -c '"namespace":"finance"'   # 1
+```
+
+## Docs
+
+None needed, and none would help. This is a text-processing task under time pressure. What matters is knowing the audit event field names by heart, which is why they are in the `## Memorise` section of `../../study-notes/06-monitoring-logging-runtime.md`.
+
+Note the contrast worth remembering: a kube-apiserver **audit log** is compact JSON, so `grep '"verb":"delete"'` matches. The output of `kubectl -o json` is pretty-printed, so the same pattern never matches there. Use `-o jsonpath` against the API and line tools against the log.

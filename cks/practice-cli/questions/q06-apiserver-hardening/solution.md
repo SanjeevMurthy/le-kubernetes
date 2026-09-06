@@ -9,16 +9,19 @@ The kube-apiserver runs as a static pod; its flags live in `/etc/kubernetes/mani
 ```bash
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 
-# Ensure these appear under spec.containers[0].command:
-#   - --anonymous-auth=false
-#   - --authorization-mode=Node,RBAC
-#   - --enable-admission-plugins=NodeRestriction   (append to existing list)
+# Correct these three flags under spec.containers[0].command:
+#   - --anonymous-auth=false      (was true)
+#   - --authorization-mode=Node,RBAC   (was AlwaysAllow)
+#   - --profiling=false           (was true)
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Wait for restart, then verify health:
 sudo crictl ps | grep kube-apiserver
 kubectl get --raw='/readyz'
-kubectl -n kube-system get pod -l component=kube-apiserver
+kubectl get --raw='/version'
+
+# Effect check — an anonymous call must now be refused (401/403):
+curl -sk -o /dev/null -w '%{http_code}\n' https://127.0.0.1:6443/api
 
 # If it does NOT recover:
 sudo crictl logs $(sudo crictl ps -a | grep kube-apiserver | awk '{print $1}')
@@ -28,7 +31,7 @@ sudo journalctl -u kubelet -f
 **Key Points to Remember:**
 
 - **Back up first.** A typo in the manifest stops the API server entirely.
-- Append `NodeRestriction` to any existing `--enable-admission-plugins` list (comma-separated) — don't drop the others.
+- `--authorization-mode` is an ordered, comma-separated list: `Node,RBAC`. `AlwaysAllow` anywhere in it authorizes everything.
 - The pod restart takes 30–90s and the API may be briefly unreachable; confirm with `/readyz`.
 
 **Official Documentation:**

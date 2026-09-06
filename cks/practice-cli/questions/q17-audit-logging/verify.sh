@@ -1,12 +1,18 @@
 #!/bin/bash
-# Q17 — Verify (control-plane node)
-PASS=0; FAIL=0
-KAS=/etc/kubernetes/manifests/kube-apiserver.yaml
-POL=/etc/kubernetes/audit/policy.yaml
-if [ ! -f "$KAS" ]; then echo "  FAIL: $KAS not found — run on the control-plane node"; echo "Results: 0 passed, 1 failed"; exit 1; fi
-echo "Checking --audit-policy-file and --audit-log-path flags..."
-if grep -q -- '--audit-policy-file=' "$KAS" && grep -q -- '--audit-log-path=' "$KAS"; then echo "  PASS"; ((PASS++)); else echo "  FAIL: audit flags not set on apiserver"; ((FAIL++)); fi
-echo "Checking audit policy logs secrets at RequestResponse..."
-if [ -f "$POL" ] && grep -q 'secrets' "$POL" && grep -q 'RequestResponse' "$POL"; then echo "  PASS"; ((PASS++)); else echo "  FAIL: policy.yaml missing or no secrets/RequestResponse rule"; ((FAIL++)); fi
-echo ""; echo "Results: $PASS passed, $FAIL failed"
-[[ $FAIL -eq 0 ]]
+# Q17 audit logging: verify.
+source "$(dirname "$0")/../../lib/checks.sh"; source "$(dirname "$0")/../../lib/env.sh"
+P=/etc/kubernetes/audit/policy.yaml; L=/var/log/kubernetes/audit/audit.log
+echo "Checking the audit policy at $P..."
+check_file_has "policy logs secrets at RequestResponse" 'level: *RequestResponse' "$P"
+check_file_has "policy mentions resource secrets" 'resources: *\[? *"?secrets' "$P"
+check_file_has "policy has a Metadata catch-all" 'level: *Metadata' "$P"
+echo "Checking the API server wiring in $KAS_MANIFEST..."
+check_file_has "apiserver has --audit-policy-file" '--audit-policy-file=/etc/kubernetes/audit/policy.yaml' "$KAS_MANIFEST"
+check_file_has "apiserver has --audit-log-path" "--audit-log-path=$L" "$KAS_MANIFEST"
+check_file_has "policy file is mounted" 'mountPath: */etc/kubernetes/audit' "$KAS_MANIFEST"
+check_file_has "log dir is mounted" 'mountPath: */var/log/kubernetes/audit' "$KAS_MANIFEST"
+check "apiserver is ready" curl -sk --max-time 3 https://127.0.0.1:6443/readyz
+echo "Reading secrets and watching $L (effect test)..."
+before=$(wc -l < "$L" 2>/dev/null || echo 0); kubectl get secrets -A >/dev/null 2>&1; sleep 2; after=$(wc -l < "$L" 2>/dev/null || echo 0)
+if [[ "$after" -gt "$before" ]]; then echo "  PASS: audit log grows on API activity ($before -> $after lines)"; PASS=$((PASS + 1)); else echo "  FAIL: audit log did not grow ($before -> $after lines)"; FAIL=$((FAIL + 1)); fi
+summary
