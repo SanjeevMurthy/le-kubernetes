@@ -6,33 +6,36 @@ Kubernetes certification preparation repository for the **Kubestronaut** program
 
 | Certification | Type | Status | Directory |
 |--------------|------|--------|-----------|
-| **CKA** — Certified Kubernetes Administrator | Performance-based | Active | [`cka/`](cka/) |
-| **CKAD** — Certified Kubernetes Application Developer | Performance-based | In Progress | [`ckad/`](ckad/) |
-| **CKS** — Certified Kubernetes Security Specialist | Performance-based | Planned | [`cks/`](cks/) |
+| **CKA** — Certified Kubernetes Administrator | Performance-based | Passed | [`cka/`](cka/) |
+| **CKAD** — Certified Kubernetes Application Developer | Performance-based | Passed | [`ckad/`](ckad/) |
+| **CKS** — Certified Kubernetes Security Specialist | Performance-based | In progress, exam 12 Dec 2026 | [`cks/`](cks/) |
+| **LFCS** — Linux Foundation Certified System Administrator | Performance-based | Planned, exam 6 Feb 2027 | `lfcs/` (built Dec 2026) |
 | **KCNA** — Kubernetes and Cloud Native Associate | Multiple choice | Planned | [`kcna/`](kcna/) |
 | **KCSA** — Kubernetes and Cloud Native Security Associate | Multiple choice | Planned | [`kcsa/`](kcsa/) |
+
+LFCS is not a CNCF exam; it is the extra requirement for **Golden Kubestronaut**. The combined schedule for both live exams is in [`roadmap.md`](roadmap.md).
 
 ## Repository Structure
 
 ```
 le-kubernetes/
-├── cka/                    # CKA certification prep
-│   ├── cheatsheets/        # Quick-reference guides for exam day
-│   ├── study-guide/        # Exercises organized by exam domain (4 domains)
-│   ├── course-notes/       # Udemy course notes (scheduling, networking, security, helm)
-│   ├── practice-cli/       # Interactive CLI exam simulators (v1: 17q, v2: 22q)
-│   ├── practice-tests/     # Practice tests (udemy, killercoda, exam questions)
-│   ├── troubleshooting/    # Troubleshooting scenarios & study companion
-│   └── resources/          # PDFs and reference materials
-├── ckad/                   # CKAD certification prep
-│   ├── course-notes/       # Udemy course notes
-│   └── practice-cli/       # Interactive CLI exam simulator (24 questions)
-├── cks/                    # CKS certification prep (placeholder)
-├── kcna/                   # KCNA certification prep (placeholder)
-├── kcsa/                   # KCSA certification prep (placeholder)
-└── shared/                 # Common resources across all certs
-    ├── manifests/          # K8s manifest examples (pods, replicasets, services)
-    └── cluster-setup/      # Minikube setup & common commands
+├── cka/                    # CKA prep (cheatsheets, study guide, course notes, 2 practice CLIs)
+├── ckad/                   # CKAD prep (course notes, 24-question practice CLI)
+├── cks/                    # CKS prep
+│   ├── study-plan/         # dated calendar, domain checklists, resources, exam-day playbook
+│   ├── study-notes/        # seven exam-task-recipe notes, in curriculum order
+│   ├── practice-cli/       # per-question labs with setup, verify, cleanup and mock mode
+│   ├── mock-exams/         # scored 120-minute papers
+│   ├── cheatsheets/        # one-page reference and Anki deck
+│   ├── lab-setup/          # how to build both lab tiers
+│   └── practice-tests/     # real exam task types compiled from candidate reports
+├── lfcs/                   # LFCS prep (same shape as cks/)
+├── kcna/  kcsa/            # placeholders
+├── shared/                 # manifests and cluster setup shared across certs
+├── scripts/                # check-docs.sh and friends: links, TOCs, mermaid, shell syntax
+├── docs/research/          # the evidence the study material is built on
+├── docs/superpowers/       # design spec and implementation plans
+└── roadmap.md              # CKS and LFCS on one page
 ```
 
 ## CKA Practice CLI
