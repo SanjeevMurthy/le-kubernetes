@@ -10,6 +10,25 @@ Four recipes run on a node as root, and one edits `/etc/kubernetes/manifests/kub
 back that file up first. Every task host has `kubectl` with a `k` alias, `yq`, `curl`, `wget` and `man`,
 and there is no `jq`, so no command here uses it.
 
+<!-- toc -->
+## Table of Contents
+
+- [What the exam asks](#what-the-exam-asks)
+- [Isolation techniques](#isolation-techniques)
+- [Recipe 1: Enforce a Pod Security Standard and list the violators](#recipe-1-enforce-a-pod-security-standard-and-list-the-violators)
+- [Recipe 2: Restrict registries with a Gatekeeper ConstraintTemplate and Constraint](#recipe-2-restrict-registries-with-a-gatekeeper-constrainttemplate-and-constraint)
+- [Recipe 3: Restrict registries with a Kyverno ClusterPolicy](#recipe-3-restrict-registries-with-a-kyverno-clusterpolicy)
+- [Recipe 4: Require non-root with a ValidatingAdmissionPolicy](#recipe-4-require-non-root-with-a-validatingadmissionpolicy)
+- [Recipe 5: Encrypt Secrets at rest and re-encrypt the existing ones](#recipe-5-encrypt-secrets-at-rest-and-re-encrypt-the-existing-ones)
+- [Recipe 6: Read a Secret from etcd and mount it safely](#recipe-6-read-a-secret-from-etcd-and-mount-it-safely)
+- [Recipe 7: Run a pod in a gVisor sandbox with RuntimeClass](#recipe-7-run-a-pod-in-a-gvisor-sandbox-with-runtimeclass)
+- [Recipe 8: Cilium L7 policy and WireGuard pod-to-pod encryption](#recipe-8-cilium-l7-policy-and-wireguard-pod-to-pod-encryption)
+- [Recipe 9: Enforce Istio mTLS with PeerAuthentication STRICT](#recipe-9-enforce-istio-mtls-with-peerauthentication-strict)
+- [Quick reference](#quick-reference)
+- [Memorise](#memorise)
+
+<!-- toc stop -->
+
 ## What the exam asks
 
 | Task type | Sources | Drill |

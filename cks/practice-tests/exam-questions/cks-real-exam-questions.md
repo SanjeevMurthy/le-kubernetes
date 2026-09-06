@@ -40,6 +40,22 @@ The published curriculum document is `CKS_Curriculum v1.34.pdf`, released on 30 
 domain weights below come from that curriculum document. Nothing in the inventory depends on the
 difference between the two versions.
 
+<!-- toc -->
+## Table of Contents
+
+- [Frequency tiers](#frequency-tiers)
+- [Domain 1 — Cluster Setup (15%)](#domain-1--cluster-setup-15)
+- [Domain 2 — Cluster Hardening (15%)](#domain-2--cluster-hardening-15)
+- [Domain 3 — System Hardening (10%)](#domain-3--system-hardening-10)
+- [Domain 4 — Minimize Microservice Vulnerabilities (20%)](#domain-4--minimize-microservice-vulnerabilities-20)
+- [Domain 5 — Supply Chain Security (20%)](#domain-5--supply-chain-security-20)
+- [Domain 6 — Monitoring, Logging and Runtime Security (20%)](#domain-6--monitoring-logging-and-runtime-security-20)
+- [What is no longer on the exam](#what-is-no-longer-on-the-exam)
+- [Sources](#sources)
+- [How to use this file](#how-to-use-this-file)
+
+<!-- toc stop -->
+
 ## Frequency tiers
 
 Tier 1 is a task family reported by 10 or more independent sources. Tier 2 is 6 to 9 sources.

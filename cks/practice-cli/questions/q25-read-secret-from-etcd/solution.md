@@ -1,5 +1,15 @@
 # Q25. Read a Secret straight from etcd (solution)
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the control-plane node, as root.

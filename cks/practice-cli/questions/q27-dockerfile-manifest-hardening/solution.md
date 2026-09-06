@@ -1,5 +1,15 @@
 # Q27. Fix two issues in the Dockerfile and two in the manifest (solution)
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 **1. Read both files first.** Four lines change in total, so find them before typing anything.

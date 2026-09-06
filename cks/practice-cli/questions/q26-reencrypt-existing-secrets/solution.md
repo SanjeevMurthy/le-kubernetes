@@ -1,5 +1,15 @@
 # Q26. Encryption at rest: add a new key and re-encrypt (solution)
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the control-plane node, as root.

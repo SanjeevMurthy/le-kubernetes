@@ -1,5 +1,15 @@
 # Q22. kube-bench: fix the kubelet findings (solution)
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the worker node, as root.

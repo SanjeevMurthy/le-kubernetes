@@ -1,5 +1,15 @@
 # Q28. Run a Pod under gVisor and capture dmesg (solution)
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 **1. Confirm the handler exists before writing anything.** A `RuntimeClass` naming a handler containerd does not know produces a Pod stuck in `ContainerCreating` with `RunContainerError`, and the cause is on the node, not in the manifest.

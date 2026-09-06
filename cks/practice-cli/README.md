@@ -2,6 +2,22 @@
 
 Exam-style CKS questions with automated lab setup, effect-based verification, a per-question timer, progress tracking, and a scored 120-minute mock mode.
 
+<!-- toc -->
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [The safety guard](#the-safety-guard)
+- [Menu](#menu)
+- [How a question is built](#how-a-question-is-built)
+  - [Needs tags](#needs-tags)
+  - [Verification philosophy](#verification-philosophy)
+- [Generated files](#generated-files)
+- [State](#state)
+- [Safety](#safety)
+
+<!-- toc stop -->
+
 ## Requirements
 
 - **Bash**. The menus run on bash 3.2, so `--list` and `--env` work on macOS. Question scripts run on Linux and assume bash 4.
