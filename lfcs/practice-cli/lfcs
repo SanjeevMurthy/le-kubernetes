@@ -12,6 +12,15 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/colors.sh"
 source "$SCRIPT_DIR/lib/env.sh"
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "usage: lfcs [--list | --env | --mock N]"
+  echo "  --list   every question with its needs tags (no root required)"
+  echo "  --env    what this host can run (root)"
+  echo "  --mock N run mock N, scored, 120 minutes (root)"
+  exit 0
+fi
+
 if [[ -f "$SCRIPT_DIR/lib/questions.sh" ]]; then
   source "$SCRIPT_DIR/lib/questions.sh"
 else
@@ -341,12 +350,6 @@ main() {
 # marker. Everything else touches real system state and does both.
 case "${1:-}" in
   --list) show_question_list; exit 0 ;;
-  -h|--help)
-    echo "usage: lfcs [--list | --env | --mock N]"
-    echo "  --list   every question with its needs tags (no root required)"
-    echo "  --env    what this host can run (root)"
-    echo "  --mock N run mock N, scored, 120 minutes (root)"
-    exit 0 ;;
 esac
 
 require_root "$@"

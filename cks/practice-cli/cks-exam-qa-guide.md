@@ -33,8 +33,13 @@
 | Q21 | D5 | [ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images) | 12 sources | `node-root` |
 | Q22 | D1 | [kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings) | 12 sources | `node-root tool:kube-bench` |
 | Q23 | D2 | [The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest) | 9 sources | `node-root` |
+| Q24 | D1 | [Block the cloud metadata endpoint](#q24-block-the-cloud-metadata-endpoint) | 4 sources | `kubectl cni-netpol` |
 | Q25 | D4 | [Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd) | 8 sources | `node-root tool:etcdctl` |
 | Q26 | D4 | [Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt) | 8 sources | `node-root tool:etcdctl` |
+| Q27 | D5 | [Fix two issues in the Dockerfile and two in the manifest](#q27-fix-two-issues-in-the-dockerfile-and-two-in-the-manifest) | 8 sources | `linux` |
+| Q28 | D4 | [Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg) | 10 sources | `node-root tool:runsc` |
+| Q29 | D2 | [Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount) | 10 sources | `kubectl` |
+| Q30 | D3 | [seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile) | 5 sources | `node-root` |
 
 ---
 
@@ -1923,6 +1928,120 @@ The recovery procedure itself has to be memorised, because no page will help whi
 
 ---
 
+### Q24. Block the cloud metadata endpoint
+
+**Domain:** Cluster Setup. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `kubectl cni-netpol`.
+
+**Question**
+
+
+Use context: the cluster you are already on. No node access is needed for this question.
+
+Namespace `metadata-lab` runs a deployment named `app` whose pods carry the label `app=app`. There are no NetworkPolicies in the namespace, so those pods can reach the cloud provider metadata service at `169.254.169.254`, which hands out instance credentials to anything that asks.
+
+1. Create a NetworkPolicy named `metadata-deny` in namespace `metadata-lab`.
+2. It must apply to the pods labelled `app=app`, and to those pods only.
+3. It must control **egress**.
+4. Egress to every other address must keep working. Express this as a single `ipBlock` rule that allows `0.0.0.0/0` and excepts `169.254.169.254/32`.
+
+The `app` pods must stay `Running`, and a pod labelled `app=app` must still be able to resolve DNS after the policy is applied.
+
+**Solution**
+
+
+## Steps
+
+**1. Look at what is there.**
+
+```bash
+kubectl -n metadata-lab get pods --show-labels
+kubectl -n metadata-lab get networkpolicy
+```
+
+**2. Write the policy.**
+
+```bash
+kubectl apply -f - <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metadata-deny
+  namespace: metadata-lab
+spec:
+  podSelector:
+    matchLabels:
+      app: app
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+EOF
+```
+
+**3. Check the object came out the way it was meant to.**
+
+```bash
+kubectl -n metadata-lab describe networkpolicy metadata-deny
+kubectl -n metadata-lab get networkpolicy metadata-deny -o yaml
+```
+
+**4. Check the pods still work.**
+
+```bash
+kubectl -n metadata-lab get pods
+kubectl -n metadata-lab run np-check --rm -it --restart=Never \
+  --image=busybox:1.36 --labels=app=app -- nslookup kubernetes.default.svc.cluster.local
+```
+
+That probe carries the same label as the workload, so the policy applies to it. DNS resolving from it is the proof that the policy allows ordinary traffic. The metadata address itself times out:
+
+```bash
+kubectl -n metadata-lab run np-check --rm -it --restart=Never \
+  --image=busybox:1.36 --labels=app=app -- wget -T 3 -O- http://169.254.169.254/
+```
+
+**5. If a question asks for the whole namespace instead of one workload**, the policy is identical with an empty `podSelector`:
+
+```yaml
+  podSelector: {}
+```
+
+## Why
+
+A NetworkPolicy has no deny rule. Selecting a pod and naming a `policyType` denies that whole direction, and the rules listed under it are the only exceptions. That is why this task is written as one broad allow with a hole in it rather than as a block rule. `cidr: 0.0.0.0/0` restores everything the `Egress` policy type just took away, and `except: [169.254.169.254/32]` carves the metadata address back out of that allowance.
+
+The order of evaluation is what makes `except` work. Within one `ipBlock`, `except` is subtracted from `cidr`, so the resulting allow-list is every address other than the excepted ones. Putting the metadata address in a separate rule would do nothing at all, because rules are additive and there is no rule type that removes an address another rule allowed.
+
+`169.254.169.254` matters because it is the link-local address that AWS, GCP, Azure and others serve instance metadata on, including short-lived credentials for the node's own identity. Any pod that can reach it inherits the node's cloud permissions, which is a straight path from a compromised container to the cloud account. The address is link-local, so it is not routed and no firewall between the nodes ever sees the request. A NetworkPolicy on the pod is where it has to be stopped.
+
+One detail that decides whether this works at all: `ipBlock` matches the destination IP after the CNI has done its work, and policies are enforced by the CNI rather than by Kubernetes. A cluster whose CNI does not implement NetworkPolicy accepts this object without complaint and enforces nothing, which is why the question is gated on Calico or Cilium being present.
+
+## Verify
+
+```bash
+kubectl -n metadata-lab get networkpolicy metadata-deny \
+  -o jsonpath='{.spec.policyTypes[*]}{"\n"}'
+kubectl -n metadata-lab get networkpolicy metadata-deny \
+  -o jsonpath='{.spec.podSelector.matchLabels.app}{"\n"}'
+kubectl -n metadata-lab get networkpolicy metadata-deny \
+  -o jsonpath='{.spec.egress[*].to[*].ipBlock.cidr}{"\n"}'
+kubectl -n metadata-lab get networkpolicy metadata-deny \
+  -o jsonpath='{.spec.egress[*].to[*].ipBlock.except[*]}{"\n"}'
+kubectl -n metadata-lab get pods
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/concepts/services-networking/network-policies/`. The section headed "Targeting a range of ports" is not the one you want; scroll to the `ipBlock` example, which shows `cidr` with `except` in exactly the shape this answer needs. Copying that block and changing the two addresses is faster than writing it out.
+
+The same page also carries the "Default policies" snippets, which are worth knowing by sight because a default-deny is asked for so often.
+
+---
+
 ### Q25. Read a Secret straight from etcd
 
 **Domain:** Minimize Microservice Vulnerabilities. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** control-plane. **Needs:** `node-root tool:etcdctl`.
@@ -2053,5 +2172,584 @@ Worth memorising instead of looking up: the three certificate flags, `ETCDCTL_AP
 **Question**
 
 
+**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+
+Encryption at rest is already working on this cluster. `kube-apiserver` runs with `--encryption-provider-config=/etc/kubernetes/enc/enc.yaml`, that file has one `aescbc` key named `key1`, and the Secrets `s1`, `s2` and `s3` in namespace `enc-lab` are already stored in etcd encrypted under it.
+
+`key1` is being retired.
+
+1. Add a second `aescbc` key named `key2` with fresh 32-byte key material, and make it the write key. Keep `key1` available for reading, and keep `identity` last.
+
+2. Get `kube-apiserver` to load the new configuration and come back ready.
+
+3. Re-encrypt every Secret in namespace `enc-lab` so that `s1`, `s2` and `s3` are stored in etcd under `key2`, not `key1`.
+
+4. Confirm with `etcdctl` (client certificates under `/etc/kubernetes/pki/etcd/`) that the stored values now begin with `k8s:enc:aescbc:v1:key2`.
+
+Do not delete `key1` from the configuration and do not delete the Secrets.
+
 **Solution**
 
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+```bash
+ssh <control-plane>
+sudo -i
+```
+
+**1. Look at what is already there.** The file has one key and identity last.
+
+```bash
+cat /etc/kubernetes/enc/enc.yaml
+```
+
+**2. Generate 32 bytes of new key material.**
+
+```bash
+head -c 32 /dev/urandom | base64
+```
+
+**3. Put the new key first.** Order inside the `keys` list decides which key encrypts. The first key of the first provider is the write key; every other key is only ever used to decrypt. So `key2` goes above `key1`, `key1` stays, and `identity` stays last.
+
+```bash
+cp /etc/kubernetes/enc/enc.yaml /etc/kubernetes/enc/enc.yaml.bak
+vi /etc/kubernetes/enc/enc.yaml
+```
+
+```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key2
+              secret: <NEW_BASE64_KEY>
+            - name: key1
+              secret: <THE_EXISTING_KEY_UNCHANGED>
+      - identity: {}
+```
+
+Copy the existing `key1` line across byte for byte. Losing it makes every Secret already in etcd unreadable.
+
+**4. Restart the API server so it reads the new file.** The configuration is loaded at startup, so editing the file changes nothing on its own. Move the manifest out of the watched directory and back:
+
+```bash
+mv /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/
+sleep 10
+mv /etc/kubernetes/kube-apiserver.yaml /etc/kubernetes/manifests/
+```
+
+Wait for it to come back before touching anything else:
+
+```bash
+watch crictl ps | grep kube-apiserver
+kubectl get nodes
+```
+
+**5. Re-encrypt.** Nothing rewrites existing rows by itself. Reading each Secret and writing it straight back is what moves it onto the new key.
+
+```bash
+kubectl -n enc-lab get secrets -o json | kubectl replace -f -
+```
+
+For the whole cluster, which is what a real key rotation means:
+
+```bash
+kubectl get secrets -A -o json | kubectl replace -f -
+```
+
+**6. Confirm in etcd.** The prefix names the key that encrypted the value, so this is the only check that distinguishes a correct configuration from a completed rotation.
+
+```bash
+ETCDCTL_API=3 etcdctl \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  get /registry/secrets/enc-lab/s1 | hexdump -C | head -3
+```
+
+The value starts `k8s:enc:aescbc:v1:key2:`. If it still says `key1`, step 5 did not run or the API server had not restarted when it did.
+
+## Why
+
+An `EncryptionConfiguration` is an ordered list twice over. The provider list decides which provider writes, and inside a provider the key list decides which key writes. Both lists are searched top to bottom on read, so anything still readable stays readable as long as its key remains somewhere in the list. That is what makes rotation safe: add the new key above the old one, rotate the data, and only then remove the old key in a second edit.
+
+Encryption applies to writes only. The API server never walks etcd rewriting rows, so a rotation that stops after editing the file leaves every existing Secret on the old key. `kubectl get ... -o json | kubectl replace -f -` is the standard trick: it is an ordinary update on each object, and an update is a write.
+
+The restart matters for the same reason. Without `--encryption-provider-config-automatic-reload=true` the file is read once at startup, so a re-encryption run started before the restart completes writes everything back under `key1` again and looks like it did nothing.
+
+Keeping `identity` last means Secrets that predate encryption still decrypt. Putting `identity` first would silently write everything in plain text, which is the classic way this configuration is got wrong.
+
+## Verify
+
+```bash
+grep -n 'name: key' /etc/kubernetes/enc/enc.yaml     # key2 above key1
+curl -sk https://127.0.0.1:6443/readyz               # ok
+for s in s1 s2 s3; do
+  ETCDCTL_API=3 etcdctl \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/etcd/server.crt \
+    --key=/etc/kubernetes/pki/etcd/server.key \
+    get "/registry/secrets/enc-lab/$s" | head -c 60; echo
+done
+```
+
+Each line begins `k8s:enc:aescbc:v1:key2`.
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/`. The page has the full provider list, the key-order rules and the exact `get ... | replace -f -` command under "Rotating a decryption key".
+
+Worth memorising: the write key is the first key of the first provider, `identity` goes last, encryption applies to writes only, and the etcd prefix is `k8s:enc:<provider>:v1:<keyname>:`.
+
+---
+
+### Q27. Fix two issues in the Dockerfile and two in the manifest
+
+**Domain:** Supply Chain Security. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** linux. **Needs:** `linux`.
+
+**Question**
+
+
+Two files are waiting in `/opt/course/27/` (or `$COURSE_DIR/27/` on this lab):
+
+- `Dockerfile`, which builds the image for the `web` application
+- `deploy.yaml`, the Deployment that runs it
+
+Each file has exactly **two** security problems.
+
+1. In `Dockerfile`, fix the two problems. The image must not be built from an end-of-life base image, and the container must not end up running as root.
+
+2. In `deploy.yaml`, fix the two problems. The container must not be privileged, and it must not run as UID 0.
+
+Change **only** what is needed. Do not rewrite the files, do not reorder them, do not add commentary, and do not change anything that is already correct. Keep the base image on the same distribution and keep the application working.
+
+Nothing is applied to a cluster. Both files are graded as text.
+
+**Solution**
+
+
+## Steps
+
+**1. Read both files first.** Four lines change in total, so find them before typing anything.
+
+```bash
+cd /opt/course/27
+cat -n Dockerfile
+cat -n deploy.yaml
+```
+
+**2. Dockerfile, problem one: the base image.** `ubuntu:16.04` went end of life in April 2021 and receives no security updates, so every CVE in it is permanent. Stay on the same distribution, as the task asks, and move to a supported tag.
+
+```
+FROM ubuntu:16.04
+```
+becomes
+```
+FROM ubuntu:24.04
+```
+
+**3. Dockerfile, problem two: the final `USER`.** The image already creates `appuser` with UID 10001, then throws that away by ending on `USER root`. The last `USER` instruction is the one the container starts with.
+
+```
+USER root
+```
+becomes
+```
+USER appuser
+```
+
+`USER 10001` is equally correct and is the better habit, because a numeric UID lets `runAsNonRoot: true` be enforced without the kubelet having to resolve a name.
+
+**4. Manifest, problem one: `privileged: true`.** A privileged container gets every capability, an unmasked `/proc` and the host's devices. It is a container escape waiting to happen.
+
+```yaml
+            privileged: false
+```
+
+Deleting the line is also accepted, since `false` is the default.
+
+**5. Manifest, problem two: `runAsUser: 0`.** UID 0 in the container is UID 0 on the host for anything that crosses the boundary.
+
+```yaml
+            runAsUser: 10001
+```
+
+Any non-zero UID passes. Matching the UID baked into the image is what keeps the application able to read its own files.
+
+**6. Check the diff is four lines and nothing else.**
+
+```bash
+grep -n 'FROM\|USER' Dockerfile
+grep -n 'privileged\|runAsUser' deploy.yaml
+wc -l Dockerfile deploy.yaml
+```
+
+## Why
+
+Two of these are build-time settings and two are run-time settings, and they fail independently. An image with a perfect `USER` still runs as root if the Pod sets `runAsUser: 0`, because the manifest wins. A manifest with a perfect `securityContext` still ships the CVEs of an end-of-life base image, because no run-time setting patches a library. Supply chain questions test both halves for exactly that reason.
+
+The instruction to change only what is asked is not decoration. Graders diff the file, and an answer that reformats the YAML, reorders keys or "improves" the settings that were already correct loses points even when the four required changes are present. On the real exam this is also a time control: four edits take a minute, a rewrite takes ten and introduces mistakes.
+
+`allowPrivilegeEscalation: false` and `readOnlyRootFilesystem: true` were already in the manifest. Leaving them untouched is part of the answer.
+
+## Verify
+
+```bash
+head -1 /opt/course/27/Dockerfile                       # not ubuntu:16.04
+grep '^USER' /opt/course/27/Dockerfile | tail -1        # not root
+grep -c 'privileged: true' /opt/course/27/deploy.yaml   # 0
+grep 'runAsUser' /opt/course/27/deploy.yaml             # not 0
+wc -l /opt/course/27/Dockerfile /opt/course/27/deploy.yaml
+```
+
+The line counts must stay within 2 of what setup printed.
+
+## Docs
+
+**Memorise.** Nothing here needs a lookup, and opening a browser for it costs more time than the task is worth.
+
+The four facts to carry in: the last `USER` wins in a Dockerfile, `privileged: true` grants everything, `runAsUser: 0` is root regardless of the image, and a base image tag that no longer receives updates is a finding on its own. `https://kubernetes.io/docs/tasks/configure-pod-container/security-context/` has the `securityContext` field names if the spelling escapes you.
+
+---
+
+### Q28. Run a Pod under gVisor and capture dmesg
+
+**Domain:** Minimize Microservice Vulnerabilities. **Difficulty:** Medium. **Weight:** 6. **Target:** 6 min. **Host:** worker. **Needs:** `node-root tool:runsc`.
+
+**Question**
+
+
+gVisor (`runsc`) is installed on the worker node and registered as a containerd runtime handler, but the cluster has no `RuntimeClass` for it.
+
+1. Create a `RuntimeClass` named `gvisor` that uses the handler `runsc`.
+
+2. In namespace `gvisor-lab`, create a Pod named `gvisor-test` from image `nginx:1.27` that runs under that RuntimeClass. It has to be scheduled on the worker node, because that is where `runsc` is installed.
+
+3. Prove the Pod really is sandboxed: read the kernel ring buffer from inside it and write the output to `/opt/course/28/dmesg.txt` (or `$COURSE_DIR/28/dmesg.txt` on this lab).
+
+A Pod that merely names the RuntimeClass is not enough. The deliverable has to show the sandbox kernel.
+
+**Solution**
+
+
+## Steps
+
+**1. Confirm the handler exists before writing anything.** A `RuntimeClass` naming a handler containerd does not know produces a Pod stuck in `ContainerCreating` with `RunContainerError`, and the cause is on the node, not in the manifest.
+
+```bash
+ssh <worker>
+runsc --version
+grep -A2 'runtimes.runsc' /etc/containerd/config.toml
+exit
+```
+
+The handler name in the config is the string after `runtimes.` in
+`[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]`, which is what `handler:` must match.
+
+**2. Create the RuntimeClass.** It is cluster-scoped, so no namespace.
+
+```bash
+cat <<'EOF' | kubectl apply -f -
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+EOF
+```
+
+**3. Create the Pod.** `runtimeClassName` goes at the Pod spec level, not in the container. Pin it to the worker, because that is the only node where `runsc` is installed.
+
+```bash
+W=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name | head -1 | cut -d/ -f2)
+echo "$W"
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gvisor-test
+  namespace: gvisor-lab
+spec:
+  runtimeClassName: gvisor
+  nodeName: $W
+  containers:
+    - name: web
+      image: nginx:1.27
+EOF
+
+kubectl -n gvisor-lab get pod gvisor-test -w
+```
+
+`kubectl run gvisor-test --image=nginx:1.27 -n gvisor-lab --dry-run=client -o yaml > pod.yaml` and then editing in the two fields is faster than typing the whole manifest.
+
+**4. Capture the proof.**
+
+```bash
+mkdir -p /opt/course/28
+kubectl exec -n gvisor-lab gvisor-test -- dmesg > /opt/course/28/dmesg.txt
+head -3 /opt/course/28/dmesg.txt
+```
+
+The first lines read:
+
+```
+[    0.000000] Starting gVisor...
+```
+
+## Why
+
+`dmesg` is the whole point of the task. A Pod spec can name any `runtimeClassName` and still be scheduled somewhere that silently runs it on the host runtime, or the field can be quietly dropped by a mutating webhook. The Pod's YAML therefore proves intent, never effect.
+
+Inside a normal container `dmesg` reads the host's kernel ring buffer, so it either prints host kernel messages or is refused outright because `CAP_SYSLOG` is missing and `kernel.dmesg_restrict` is set. Under gVisor there is no host ring buffer to read. The Sentry, gVisor's user-space kernel, serves a ring buffer of its own, and it opens with `Starting gVisor...`. That banner cannot be produced by anything else, which is why it is the accepted evidence.
+
+`runsc` intercepts system calls in user space and re-implements them, so a kernel exploit in the container reaches the Sentry rather than the host kernel. The cost is compatibility and speed, which is why gVisor is applied per workload through a `RuntimeClass` rather than turned on for the whole node.
+
+The node pinning matters because a `RuntimeClass` says nothing about where the handler exists. In production you attach `scheduling.nodeSelector` to the RuntimeClass so the scheduler only places sandboxed Pods on nodes that have `runsc`; in the exam, `nodeName` is quicker.
+
+## Verify
+
+```bash
+kubectl get runtimeclass gvisor -o jsonpath='{.handler}'; echo      # runsc
+kubectl -n gvisor-lab get pod gvisor-test -o wide                   # Running, on the worker
+kubectl -n gvisor-lab get pod gvisor-test -o jsonpath='{.spec.runtimeClassName}'; echo
+kubectl exec -n gvisor-lab gvisor-test -- dmesg | head -3
+grep -i gvisor /opt/course/28/dmesg.txt
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/concepts/containers/runtime-class/` has the RuntimeClass manifest and the `runtimeClassName` field, which is all you need to copy.
+
+Worth memorising: `apiVersion: node.k8s.io/v1`, `handler:` matches the containerd runtime name, `runtimeClassName` sits on the Pod spec, and `dmesg` inside the Pod is the proof.
+
+---
+
+### Q29. Remove anonymous access and scope the ServiceAccount
+
+**Domain:** Cluster Hardening. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `kubectl`.
+
+**Question**
+
+
+An audit of this cluster turned up two RBAC findings.
+
+1. A ClusterRoleBinding grants the built-in user `system:anonymous` the `view` ClusterRole, so anyone who can reach the API server without credentials can read the whole cluster. Find it and remove it. When you are done, no ClusterRoleBinding anywhere in the cluster may have `system:anonymous` as a subject.
+
+2. ServiceAccount `reporter` in namespace `rbac-lab` is bound to `cluster-admin`. It is a reporting job and needs far less. Remove that binding and grant it exactly this instead, scoped to namespace `rbac-lab` only:
+
+   - `get` and `list` on `pods`
+   - `get` and `list` on `services`
+
+   Afterwards `reporter` must be able to get Pods and list Services in `rbac-lab`, and must **not** be able to delete Pods or get Nodes.
+
+Do not create a ClusterRole or a ClusterRoleBinding for `reporter`.
+
+**Solution**
+
+
+## Steps
+
+**1. Find every ClusterRoleBinding that names `system:anonymous`.** Do not guess the binding's name. There is no `jq`, so use a go-template.
+
+```bash
+kubectl get clusterrolebinding -o go-template='{{range .items}}{{$n := .metadata.name}}{{if .subjects}}{{range .subjects}}{{if eq .name "system:anonymous"}}{{$n}}{{"\n"}}{{end}}{{end}}{{end}}{{end}}'
+```
+
+That prints `anon-viewer`. Remove it:
+
+```bash
+kubectl delete clusterrolebinding anon-viewer
+```
+
+Run the search again; it must print nothing.
+
+**2. Find what binds the ServiceAccount.** Same idea, filtered on the subject kind.
+
+```bash
+kubectl get clusterrolebinding -o go-template='{{range .items}}{{$n := .metadata.name}}{{if .subjects}}{{range .subjects}}{{if eq .kind "ServiceAccount"}}{{if eq .name "reporter"}}{{$n}}{{"\n"}}{{end}}{{end}}{{end}}{{end}}{{end}}'
+
+kubectl delete clusterrolebinding reporter-admin
+```
+
+**3. Grant the narrow permissions back.** Imperative commands are faster than YAML and are exactly what the exam expects here.
+
+```bash
+kubectl create role reporter \
+  --verb=get,list --resource=pods,services -n rbac-lab
+
+kubectl create rolebinding reporter \
+  --role=reporter --serviceaccount=rbac-lab:reporter -n rbac-lab
+```
+
+Note `--serviceaccount=<namespace>:<name>` on the RoleBinding, not `--user`.
+
+**4. Prove it, both ways.** The negative answers matter as much as the positive ones.
+
+```bash
+SA=system:serviceaccount:rbac-lab:reporter
+kubectl auth can-i get    pods     --as=$SA -n rbac-lab   # yes
+kubectl auth can-i list   services --as=$SA -n rbac-lab   # yes
+kubectl auth can-i delete pods     --as=$SA -n rbac-lab   # no
+kubectl auth can-i get    nodes    --as=$SA               # no
+kubectl auth can-i list   pods     --as=$SA -n kube-system # no
+```
+
+## Why
+
+`system:anonymous` is the identity the API server assigns to any request that carries no credentials, and it is a member of the `system:unauthenticated` group. Binding it to `view` turns "unauthenticated" into "reads everything", which is worse than it looks: `view` covers ConfigMaps, and ConfigMaps are where people leave connection strings. Deleting the binding is the fix; `--anonymous-auth=false` on the API server is the other half, and that is Q6.
+
+The search matters more than the deletion. A single named binding is easy, but the finding is "no ClusterRoleBinding may have this subject", and a cluster can accumulate several. Listing subjects with a go-template is the habit to build, because `kubectl get clusterrolebinding` on its own shows only the role, never who is bound.
+
+For the ServiceAccount, a Role plus RoleBinding confines the grant to one namespace. A ClusterRole bound with a RoleBinding would also work and is sometimes the right answer, but a ClusterRoleBinding never is: it applies the permissions in every namespace at once, which is how `list pods -n kube-system` stays a yes when you thought you had scoped it.
+
+`kubectl auth can-i --as=` asks the API server's authorizer the same question the authorizer will answer at request time, so it accounts for every binding that applies, including ones you did not know about. Checking only the permissions that must exist is half a test. Least privilege is defined by what is refused.
+
+## Verify
+
+```bash
+kubectl get clusterrolebinding anon-viewer     # NotFound
+kubectl get clusterrolebinding reporter-admin  # NotFound
+kubectl -n rbac-lab get role,rolebinding
+
+SA=system:serviceaccount:rbac-lab:reporter
+for q in "get pods" "list services"; do kubectl auth can-i $q --as=$SA -n rbac-lab; done   # yes yes
+kubectl auth can-i delete pods --as=$SA -n rbac-lab   # no
+kubectl auth can-i get nodes   --as=$SA               # no
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/reference/access-authn-authz/rbac/` for the subject kinds and the binding rules, and `https://kubernetes.io/docs/concepts/security/rbac-good-practices/` for why anonymous binding is called out.
+
+Worth memorising: `kubectl create role --verb= --resource= -n`, `kubectl create rolebinding --role= --serviceaccount=<ns>:<name> -n`, the subject name `system:anonymous`, the group `system:unauthenticated`, and `kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa> -n <ns>`.
+
+---
+
+### Q30. seccomp: block mkdir with a Localhost profile
+
+**Domain:** System Hardening. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** worker. **Needs:** `node-root`.
+
+**Question**
+
+
+The kubelet seccomp root on the worker node is `/var/lib/kubelet/seccomp`, and `/var/lib/kubelet/seccomp/profiles/` already exists and is empty.
+
+1. On the worker node, write a seccomp profile to `/var/lib/kubelet/seccomp/profiles/no-mkdir.json` that allows every system call **except** directory creation, which must fail with an error rather than kill the process.
+
+2. In namespace `seccomp-lab`, create a Pod named `sandboxed` from image `busybox:1.36` running `sleep 3600`, using that profile as a `Localhost` seccomp profile. The Pod has to be scheduled on the worker node, because the profile file only exists there.
+
+3. The Pod must reach `Running`, and ordinary work inside it must still succeed. Only directory creation is blocked.
+
+4. Run a directory creation inside the Pod, and write the error it produces to `/opt/course/30/result.txt` (or `$COURSE_DIR/30/result.txt` on this lab).
+
+**Solution**
+
+
+## Steps
+
+**1. Write the profile on the worker node.** `localhostProfile` is resolved by the kubelet on the node that runs the Pod, so the file has to exist there, not on the control plane.
+
+```bash
+ssh <worker>
+sudo -i
+mkdir -p /var/lib/kubelet/seccomp/profiles
+
+cat > /var/lib/kubelet/seccomp/profiles/no-mkdir.json <<'EOF'
+{
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "syscalls": [
+    {
+      "names": ["mkdir", "mkdirat"],
+      "action": "SCMP_ACT_ERRNO"
+    }
+  ]
+}
+EOF
+
+chmod 0644 /var/lib/kubelet/seccomp/profiles/no-mkdir.json
+exit
+```
+
+Both names are needed. A libc `mkdir()` call goes to the `mkdirat` syscall on current systems, and on arm64 the `mkdir` syscall does not exist at all. Listing only `mkdir` produces a profile that loads cleanly and blocks nothing.
+
+**2. Create the Pod.** `seccompProfile` sits under `securityContext`, and the path is relative to `/var/lib/kubelet/seccomp`, so it is `profiles/no-mkdir.json` and not the absolute path.
+
+```bash
+W=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name | head -1 | cut -d/ -f2)
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sandboxed
+  namespace: seccomp-lab
+spec:
+  nodeName: $W
+  securityContext:
+    seccompProfile:
+      type: Localhost
+      localhostProfile: profiles/no-mkdir.json
+  containers:
+    - name: c
+      image: busybox:1.36
+      command: ["sleep", "3600"]
+EOF
+
+kubectl -n seccomp-lab get pod sandboxed -w
+```
+
+If the Pod sticks in `CreateContainerError`, read the event. `cannot load seccomp profile` means the path is wrong or the file is not on that node.
+
+**3. Show that ordinary work still succeeds.** This is worth doing before the denial, because a Pod that cannot do anything is not a passing answer.
+
+```bash
+kubectl exec -n seccomp-lab sandboxed -- touch /tmp/ok && echo "writes still work"
+```
+
+**4. Trigger the denial and keep the error.** The message goes to stderr, so redirect it.
+
+```bash
+mkdir -p /opt/course/30
+kubectl exec -n seccomp-lab sandboxed -- mkdir /tmp/blocked > /opt/course/30/result.txt 2>&1
+cat /opt/course/30/result.txt
+```
+
+```
+mkdir: can't create directory '/tmp/blocked': Operation not permitted
+```
+
+## Why
+
+A seccomp profile is a default plus a list of exceptions, and which way round they go changes everything. `SCMP_ACT_ALLOW` as the default with a short deny list is a blocklist: easy to write, easy to keep a workload running, and easy to bypass because anything not named is permitted. `SCMP_ACT_ERRNO` as the default with an allow list is what `RuntimeDefault` and the Docker profile actually do, and it is far stronger, but it takes a full syscall trace of the workload to build. The task asks for the first shape because it isolates one syscall.
+
+The action decides what the process sees. `SCMP_ACT_ERRNO` returns `EPERM` from the call, so the program gets an ordinary error it can handle and keeps running, which is why the container stays up and `mkdir` merely fails. `SCMP_ACT_KILL` would terminate the process instead, and the Pod would restart-loop rather than produce the error message this task asks you to capture. `SCMP_ACT_LOG` allows the call and records it, which is how you build an allow list without breaking anything.
+
+The filter is installed by the container runtime at container start and is inherited by every child process. It cannot be relaxed afterwards, which is why a change to the profile requires the Pod to be recreated, not restarted.
+
+The relative path trips people up. `/var/lib/kubelet/seccomp` is the kubelet's seccomp root (its `--root-dir` plus `seccomp`), and `localhostProfile` is always relative to it. An absolute path is rejected by the API server.
+
+## Verify
+
+```bash
+cat /var/lib/kubelet/seccomp/profiles/no-mkdir.json          # on the worker
+kubectl -n seccomp-lab get pod sandboxed -o wide             # Running, on the worker
+kubectl -n seccomp-lab get pod sandboxed \
+  -o jsonpath='{.spec.securityContext.seccompProfile}'; echo
+kubectl exec -n seccomp-lab sandboxed -- touch /tmp/ok       # succeeds
+kubectl exec -n seccomp-lab sandboxed -- mkdir /tmp/blocked  # Operation not permitted
+cat /opt/course/30/result.txt
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/tutorials/security/seccomp/` has a copyable profile and the `securityContext.seccompProfile` block, and `https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context` has the field reference.
+
+Worth memorising: the seccomp root is `/var/lib/kubelet/seccomp`, `localhostProfile` is relative to it, `type` is one of `RuntimeDefault`, `Localhost` or `Unconfined`, and the actions are `SCMP_ACT_ALLOW`, `SCMP_ACT_ERRNO`, `SCMP_ACT_LOG` and `SCMP_ACT_KILL`.

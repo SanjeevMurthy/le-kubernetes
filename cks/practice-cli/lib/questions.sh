@@ -29,6 +29,9 @@ QUESTIONS=(
   "25|Read a Secret straight from etcd|Minimize Microservice Vulnerabilities|D4|Medium|q25-read-secret-from-etcd|node-root tool:etcdctl|5|6|8|control-plane"
   "26|Encryption at rest: add a new key and re-encrypt|Minimize Microservice Vulnerabilities|D4|Hard|q26-reencrypt-existing-secrets|node-root tool:etcdctl|8|10|8|control-plane"
   "27|Fix two issues in the Dockerfile and two in the manifest|Supply Chain Security|D5|Easy|q27-dockerfile-manifest-hardening|linux|5|6|8|linux"
+  "28|Run a Pod under gVisor and capture dmesg|Minimize Microservice Vulnerabilities|D4|Medium|q28-gvisor-dmesg|node-root tool:runsc|6|6|10|worker"
+  "29|Remove anonymous access and scope the ServiceAccount|Cluster Hardening|D2|Medium|q29-rbac-anonymous-and-serviceaccount|kubectl|5|6|10|any"
+  "30|seccomp: block mkdir with a Localhost profile|System Hardening|D3|Medium|q30-seccomp-deny-mkdir|node-root|6|8|5|worker"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }
