@@ -8,24 +8,24 @@ Falco evaluates kernel syscall events against rules. Custom rules go in `/etc/fa
 
 ```yaml
 # /etc/falco/falco_rules.local.yaml
-- rule: Shell In Container
+- rule: Shell spawned in container
   desc: Detect a shell spawned inside a container
-  condition: container.id != host and proc.name in (bash, sh)
-  output: "Shell in container (container=%container.name proc=%proc.name user=%user.name)"
+  condition: spawned_process and container.id != host and proc.name in (bash, sh)
+  output: "Shell spawned in container (container=%container.name proc=%proc.name user=%user.name)"
   priority: WARNING
 ```
 ```bash
 # Reload without full restart
 sudo kill -1 $(cat /var/run/falco.pid)        # SIGHUP
-# Trigger + observe
-kubectl exec -it <somepod> -- sh
-sudo journalctl -fu falco | grep "Shell in container"
+# Trigger + observe (the unit is falco-modern-bpf on recent builds, falco on older ones)
+kubectl exec -n falco-lab deploy/shell-bot -- sh -c id
+sudo journalctl -u falco-modern-bpf -u falco -f | grep "Shell spawned in container"
 ```
 
 **Key Points to Remember:**
 
 - Put custom rules in `falco_rules.local.yaml`, not the default file.
-- **Reload after editing** (`kill -1 $(cat /var/run/falco.pid)` or `systemctl reload falco`) or the rule won't fire.
+- **Reload after editing** (`kill -1 $(cat /var/run/falco.pid)` or `systemctl restart falco-modern-bpf`) or the rule won't fire — the file on disk proves nothing.
 - Output fields use `%field`; common ones: `%container.name`, `%proc.name`, `%fd.name`, `%user.name`.
 
 **Official Documentation:**

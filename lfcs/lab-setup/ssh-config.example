@@ -1,0 +1,12 @@
+# Append to ~/.ssh/config, then: ssh-copy-id node1 && ssh-copy-id node2
+# Using node1 and node2 from day one builds the exam habit of working on a
+# named host and returning to base between tasks.
+Host node1
+  HostName 192.168.56.10
+  User lfcs
+  StrictHostKeyChecking accept-new
+
+Host node2
+  HostName 192.168.56.20
+  User lfcs
+  StrictHostKeyChecking accept-new

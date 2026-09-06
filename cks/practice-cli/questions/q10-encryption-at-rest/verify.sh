@@ -9,7 +9,7 @@ check_file_has "the config directory is mounted into the pod" 'mountPath: */etc/
 check_file_has "the config directory has a hostPath volume" 'path: */etc/kubernetes/enc' "$KAS_MANIFEST"
 echo "Checking the provider order in $ENC..."
 check_file_has "the file is an EncryptionConfiguration" 'kind: *EncryptionConfiguration' "$ENC"
-check_file_has "it encrypts the resource secrets" 'resources: *(\[? *"?secrets|- *"?secrets)' "$ENC"
+check_file_has "it encrypts the resource secrets" '(resources: *\[? *"?secrets|^ *- *"?secrets"? *$)' "$ENC"
 a=$(grep -n 'aescbc' "$ENC" 2>/dev/null | head -1 | cut -d: -f1)
 i=$(grep -n 'identity' "$ENC" 2>/dev/null | head -1 | cut -d: -f1)
 if [[ -n "$a" && -n "$i" && "$a" -lt "$i" ]]; then
