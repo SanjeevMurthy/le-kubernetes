@@ -249,7 +249,7 @@ run_mock() {
   MOCK_RESULTS="$CKS_STATE_DIR/mock-$n.results"; : > "$MOCK_RESULTS"
 
   print_header "${ICON_TARGET} Mock exam $n"
-  echo -e "  $(grep -c '|' "$MOCK_DIR/mock-$n.set") tasks, 120 minutes, pass mark 67 percent."
+  echo -e "  $(grep -v '^[[:space:]]*#' "$MOCK_DIR/mock-$n.set" | grep -c '|') tasks, 120 minutes, pass mark 67 percent."
   echo -e "  Setups run now. Scoring runs when you press F."
   confirm_action "Start the mock now?" || return 0
 

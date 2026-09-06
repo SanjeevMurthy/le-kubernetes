@@ -10,14 +10,14 @@ NetworkPolicies are additive, namespaced allow-lists enforced by the CNI (Calico
 kubectl apply -f - <<'EOF'
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: default-deny-all, namespace: prod}
+metadata: {name: default-deny-all, namespace: netpol-lab}
 spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: allow-frontend-to-backend, namespace: prod}
+metadata: {name: allow-frontend-to-backend, namespace: netpol-lab}
 spec:
   podSelector: {matchLabels: {app: backend}}
   policyTypes: [Ingress]
@@ -29,7 +29,7 @@ spec:
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: allow-dns, namespace: prod}
+metadata: {name: allow-dns, namespace: netpol-lab}
 spec:
   podSelector: {}
   policyTypes: [Egress]

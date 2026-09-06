@@ -15,16 +15,16 @@ handler: runsc
 ---
 apiVersion: v1
 kind: Pod
-metadata: {name: sandboxed}
+metadata: {name: sandboxed, namespace: gvisor-lab}
 spec:
   runtimeClassName: gvisor
   containers:
-  - {name: c, image: nginx}
+  - {name: c, image: busybox:1.36, command: ["sleep", "3600"]}
 EOF
 
 # Verify the sandbox kernel differs from the host:
-kubectl exec sandboxed -- dmesg 2>/dev/null | head    # gVisor signature
-kubectl exec sandboxed -- uname -a
+kubectl exec -n gvisor-lab sandboxed -- dmesg | head    # "Starting gVisor..."
+kubectl exec -n gvisor-lab sandboxed -- uname -a
 ```
 
 **Key Points to Remember:**

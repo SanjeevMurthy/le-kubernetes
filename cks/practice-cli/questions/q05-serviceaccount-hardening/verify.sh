@@ -1,19 +1,25 @@
 #!/bin/bash
-# Q5 — Verify
-PASS=0; FAIL=0
+# Q5 ServiceAccount token hardening: verify.
+source "$(dirname "$0")/../../lib/checks.sh"
+source "$(dirname "$0")/../../lib/env.sh"
 
-echo "Checking SA app-sa has automountServiceAccountToken: false..."
-AM=$(kubectl get sa app-sa -n app -o jsonpath='{.automountServiceAccountToken}' 2>/dev/null)
-if [[ "$AM" == "false" ]]; then echo "  PASS: SA automount disabled"; ((PASS++)); else echo "  FAIL: SA automount is '$AM' (expected false)"; ((FAIL++)); fi
+NS=app
+TOKEN_DIR=/var/run/secrets/kubernetes.io/serviceaccount
 
-echo "Checking pod 'legacy' uses app-sa..."
-PSA=$(kubectl get pod legacy -n app -o jsonpath='{.spec.serviceAccountName}' 2>/dev/null)
-if [[ "$PSA" == "app-sa" ]]; then echo "  PASS: pod uses app-sa"; ((PASS++)); else echo "  FAIL: pod serviceAccountName is '$PSA'"; ((FAIL++)); fi
+echo "Checking the ServiceAccount and the pod spec..."
+check_eq "ServiceAccount app-sa has automountServiceAccountToken: false" "false" "$(kjp sa app-sa "$NS" '{.automountServiceAccountToken}')"
+check_eq "pod legacy runs as app-sa" "app-sa" "$(kjp pod legacy "$NS" '{.spec.serviceAccountName}')"
 
-echo "Checking pod has no token mounted..."
-PAM=$(kubectl get pod legacy -n app -o jsonpath='{.spec.automountServiceAccountToken}' 2>/dev/null)
-MNT=$(kubectl get pod legacy -n app -o json 2>/dev/null | grep -c 'kube-api-access' )
-if [[ "$PAM" == "false" || "$MNT" == "0" ]]; then echo "  PASS: no SA token mounted"; ((PASS++)); else echo "  FAIL: SA token appears mounted"; ((FAIL++)); fi
+MOUNTS=$(kjp pod legacy "$NS" '{.spec.containers[*].volumeMounts[*].mountPath}')
+check_not "no serviceaccount token is mounted into the container" grep -q "kubernetes.io/serviceaccount" <<<"$MOUNTS"
 
-echo ""; echo "Results: $PASS passed, $FAIL failed"
-[[ $FAIL -eq 0 ]]
+echo "Checking the pod is still running the workload..."
+check_pod_running "pod legacy is Running" legacy "$NS"
+# Precondition for the effect test: exec must work at all, otherwise the next
+# check would pass for the wrong reason.
+check "kubectl exec into legacy works" kubectl exec -n "$NS" legacy -- true
+
+echo "Checking the token directory is really gone inside the container (effect test)..."
+check_not "$TOKEN_DIR does not exist in the container" kubectl exec -n "$NS" legacy -- ls "$TOKEN_DIR"
+
+summary

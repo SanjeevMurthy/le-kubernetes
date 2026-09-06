@@ -27,11 +27,11 @@ resources:
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# 4. Re-encrypt existing secrets
+# 4. Re-encrypt the secrets that already exist (the config only affects new writes)
 kubectl get secrets -A -o json | kubectl replace -f -
 
 # 5. Verify in etcd
-sudo ETCDCTL_API=3 etcdctl get /registry/secrets/default/<name> \
+sudo ETCDCTL_API=3 etcdctl get /registry/secrets/enc-lab/pre-existing \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key | hexdump -C | head   # k8s:enc:aescbc:

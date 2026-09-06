@@ -17,6 +17,11 @@ check() {
 }
 
 # check_not "label" cmd args...    PASS when the command exits non-zero
+#
+# Careful: a command can fail for the wrong reason. `kubectl exec` into a pod
+# that does not exist also exits non-zero, which would report a false PASS.
+# Establish the precondition first (the pod is Running, exec works at all),
+# then use check_not for the thing you actually want to fail.
 check_not() {
   local label="$1"; shift
   if "$@" >/dev/null 2>&1; then

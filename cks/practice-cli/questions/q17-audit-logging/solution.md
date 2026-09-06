@@ -20,18 +20,20 @@ rules:
 ```yaml
 # kube-apiserver.yaml (back up first) — flags + mounts:
     - --audit-policy-file=/etc/kubernetes/audit/policy.yaml
-    - --audit-log-path=/var/log/kubernetes/audit.log
+    - --audit-log-path=/var/log/kubernetes/audit/audit.log
     - --audit-log-maxage=7
     volumeMounts:
     - {name: audit-policy, mountPath: /etc/kubernetes/audit, readOnly: true}
-    - {name: audit-logs,   mountPath: /var/log/kubernetes}
+    - {name: audit-logs,   mountPath: /var/log/kubernetes/audit}
   volumes:
   - {name: audit-policy, hostPath: {path: /etc/kubernetes/audit, type: DirectoryOrCreate}}
-  - {name: audit-logs,   hostPath: {path: /var/log/kubernetes, type: DirectoryOrCreate}}
+  - {name: audit-logs,   hostPath: {path: /var/log/kubernetes/audit, type: DirectoryOrCreate}}
 ```
 ```bash
 sudo crictl ps | grep apiserver
-sudo tail -f /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource=="secrets")'
+# no jq in the exam: grep the raw JSON lines instead
+kubectl get secrets -A >/dev/null
+sudo grep '"resource":"secrets"' /var/log/kubernetes/audit/audit.log | tail -1
 ```
 
 **Key Points to Remember:**

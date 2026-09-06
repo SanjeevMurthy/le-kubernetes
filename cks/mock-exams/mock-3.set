@@ -1,0 +1,18 @@
+# Mock 3 - everything not yet covered, plus a second pass at the five most
+# frequently reported task families (Falco, audit, kube-bench, AppArmor, RBAC).
+22|7
+01|6
+29|5
+37|7
+39|8
+42|6
+43|6
+07|7
+26|8
+36|5
+44|6
+38|5
+18|4
+16|7
+17|8
+32|8

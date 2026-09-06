@@ -2,17 +2,18 @@
 
 **Concept & Explanation:**
 
-A mounted SA token is a stealable credential. Setting `automountServiceAccountToken: false` (on the SA or pod) removes `/var/run/secrets/kubernetes.io/serviceaccount/` from the container, shrinking the blast radius of a compromise.
+A mounted ServiceAccount token is a stealable credential. Setting `automountServiceAccountToken: false` on the ServiceAccount, or on the pod, removes `/var/run/secrets/kubernetes.io/serviceaccount/` from the container and shrinks the blast radius of a compromise. `serviceAccountName` is immutable, so an existing pod has to be recreated rather than patched.
 
 **Solution — Step by Step:**
 
 ```bash
+# 1. Dedicated ServiceAccount with automount disabled
 kubectl create serviceaccount app-sa -n app
-kubectl patch serviceaccount app-sa -n app \
-  -p '{"automountServiceAccountToken": false}'
-```
-```yaml
-# Pod uses the SA and (belt-and-suspenders) disables automount at pod level:
+kubectl patch serviceaccount app-sa -n app -p '{"automountServiceAccountToken": false}'
+
+# 2. Recreate the pod on that ServiceAccount
+kubectl delete pod legacy -n app --now
+kubectl apply -f - <<'YAML'
 apiVersion: v1
 kind: Pod
 metadata: {name: legacy, namespace: app}
@@ -20,18 +21,22 @@ spec:
   serviceAccountName: app-sa
   automountServiceAccountToken: false
   containers:
-  - {name: c, image: nginx}
-```
-```bash
-# Verify: the token dir should be absent
-kubectl exec -n app legacy -- ls /var/run/secrets/kubernetes.io/serviceaccount 2>&1 # No such file
+  - name: legacy
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+YAML
+
+# 3. Prove the token is gone
+kubectl exec -n app legacy -- ls /var/run/secrets/kubernetes.io/serviceaccount   # No such file or directory
+kubectl get pod legacy -n app -o jsonpath='{.spec.containers[*].volumeMounts[*].mountPath}{"\n"}'
 ```
 
 **Key Points to Remember:**
 
-- Pod-level `automountServiceAccountToken` overrides the SA-level setting.
-- Give workloads their **own** SA, never rely on `default`.
-- Verify by exec-ing into the pod and confirming the token path is gone.
+- Pod-level `automountServiceAccountToken` overrides the ServiceAccount-level setting; either one alone removes the mount.
+- Give every workload its **own** ServiceAccount; never leave it on `default`.
+- `serviceAccountName` cannot be patched on a running pod — delete and recreate.
+- Verify inside the container, not only in the spec: the token directory must be absent.
 
 **Official Documentation:**
 - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
