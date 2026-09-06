@@ -1,79 +1,110 @@
 # CKS Practice CLI
 
-Interactive, exam-style CKS practice with automated lab setup and verification — mirrors the [`cka/practice-cli`](../../cka/practice-cli/) harness. **18 security-focused questions** in official CKS curriculum order (v1.34).
-
-<!-- toc -->
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Usage](#usage)
-- [Layout](#layout)
-- [Question set (official curriculum order)](#question-set-official-curriculum-order)
-
-<!-- toc stop -->
+Exam-style CKS questions with automated lab setup, effect-based verification, a per-question timer, progress tracking, and a scored 120-minute mock mode.
 
 ## Requirements
 
-- **Bash 4+**
-- A running Kubernetes cluster you control. **A 2-node `kubeadm` cluster is strongly recommended** — many CKS tasks need real node access (AppArmor, seccomp, kube-bench, apiserver flags, encryption-at-rest, Falco, audit logging, RuntimeClass). See [`../lab-setup/README.md`](../lab-setup/README.md). killercoda/kind covers ~40% (NetworkPolicy, RBAC, PSA, admission policies, Trivy, immutable containers).
-- `kubectl` in PATH and a working kube-context.
-- Some questions expect tools on the node: `kube-bench`, `trivy`, `kubesec`, `falco`, `apparmor_parser`. Setup scripts degrade gracefully where a tool is missing; the question/solution still teaches the workflow.
+- **Bash**. The menus run on bash 3.2, so `--list` and `--env` work on macOS. Question scripts run on Linux and assume bash 4.
+- **A disposable Kubernetes cluster.** Roughly half the questions only need `kubectl`; the rest need a root shell on a kubeadm node. See [`../lab-setup/README.md`](../lab-setup/README.md) for both tiers.
+- `kubectl` on PATH with a working context.
+- Per-question tools (Falco, Trivy, kube-bench, `runsc`, kubesec, bom, AppArmor utilities). Install them with `sudo bash tools/install-tools.sh all`.
 
-## Usage
+## Quick start
+
+On minikube with Calico, for the `kubectl`-level questions:
 
 ```bash
 cd cks/practice-cli
+./cks --env        # what this host can run
+./cks              # interactive
+```
+
+On the Killercoda Killer Shell CKS playground, for everything else:
+
+```bash
+git clone -b cks https://github.com/SanjeevMurthy/le-kubernetes
+cd le-kubernetes/cks/practice-cli
+sudo bash tools/install-tools.sh all
 ./cks
 ```
 
-Then:
-- `[1]` list all questions (grouped by domain),
-- `[2]` pick a question → per-question actions:
-  - `[S]` **Setup** the scenario (starts a timer — target **≤ 8 min/task**),
-  - `[Q]` show the **question**,
-  - `[H]` show the **solution** (hint),
-  - `[V]` **verify** your solution (PASS/FAIL checks),
-  - `[C]` **cleanup**, `[B]` back.
+## The safety guard
 
-## Layout
+The CLI refuses to run against a context whose name contains `aks`, `eks`, `gke` or `prod`, and against any context not on its allow-list (`minikube`, `cks*`, `kubernetes-admin@kubernetes`, `kind-*`, `default`, `killercoda*`). Override with `CKS_ALLOW_CONTEXT=1` only when you are certain the cluster is disposable.
+
+This is not theoretical. These questions edit RBAC, admission control, API server manifests, kubelet configuration and node files.
+
+## Menu
+
+| Key | Action |
+|---|---|
+| `1` | List every question with its domain, difficulty, needs tags and completion mark |
+| `2` | Select a question |
+| `3` | Random incomplete question |
+| `4` | Progress, overall and per domain |
+| `5` | Mock exam: one 120-minute timer, scored by weight and domain |
+| `E` | Environment check: what this host can and cannot run |
+| `Q` | Quit |
+
+Inside a question: `S` setup, `Q` show the question, `H` show the solution, `V` verify, `C` cleanup, `B` back.
+
+Non-interactive: `./cks --list`, `./cks --env`, `./cks --mock N`.
+
+## How a question is built
 
 ```
-practice-cli/
-├── cks                       # entrypoint
-├── cks-exam-qa-guide.md      # question + concept + solution + key points (drives [Q]/[H])
-├── lib/
-│   ├── colors.sh             # colors, icons, print helpers
-│   ├── questions.sh          # the 18-question registry (ID|Title|Domain|Short|Difficulty|Folder)
-│   ├── menu.sh               # menus
-│   └── setup_map.sh          # setup-path resolution
-└── questions/
-    └── qNN-<slug>/
-        ├── setup.sh          # builds the scenario (idempotent, silent)
-        ├── verify.sh         # PASS/FAIL checks, exits non-zero on any FAIL
-        └── cleanup.sh        # tears down with --ignore-not-found
+questions/qNN-<slug>/
+├── meta          # id, title, domain, domain_short, difficulty, needs,
+│                 # weight, minutes, sources, host
+├── question.md   # shown by [Q]: exam wording, exact names and paths
+├── solution.md   # shown by [H]: steps, why, verification, allowed docs
+├── setup.sh      # creates the real starting state and prints the scenario facts
+├── verify.sh     # PASS/FAIL checks that test effect; non-zero exit on failure
+└── cleanup.sh    # removes what setup created and restores every backup
 ```
 
-## Question set (official curriculum order)
+`sources` records how many independent candidate reports mention that task type, taken from [`../practice-tests/exam-questions/cks-real-exam-questions.md`](../practice-tests/exam-questions/cks-real-exam-questions.md). It is why the question bank is weighted the way it is.
 
-| # | Domain | Question |
-|---|--------|----------|
-| Q1 | Cluster Setup | NetworkPolicy: default-deny + selective allow |
-| Q2 | Cluster Setup | CIS Benchmark remediation with kube-bench |
-| Q3 | Cluster Setup | Ingress TLS termination |
-| Q4 | Cluster Hardening | RBAC least-privilege role + binding |
-| Q5 | Cluster Hardening | ServiceAccount token hardening |
-| Q6 | Cluster Hardening | Restrict the API server (apiserver flags) |
-| Q7 | System Hardening | AppArmor profile on a pod |
-| Q8 | System Hardening | Seccomp RuntimeDefault + custom profile |
-| Q9 | Microservice Vulns | Enforce Pod Security Admission (restricted) |
-| Q10 | Microservice Vulns | Encrypt Secrets at rest (EncryptionConfiguration) |
-| Q11 | Microservice Vulns | Admission policy with Kyverno/Gatekeeper |
-| Q12 | Microservice Vulns | Runtime sandbox with RuntimeClass (gVisor) |
-| Q13 | Supply Chain | Scan images with Trivy and remediate |
-| Q14 | Supply Chain | Restrict images via ImagePolicyWebhook/registry |
-| Q15 | Supply Chain | Static analysis & manifest hardening (kubesec) |
-| Q16 | Runtime Security | Detect threats with Falco rules |
-| Q17 | Runtime Security | API server audit logging policy |
-| Q18 | Runtime Security | Immutable containers (readOnlyRootFilesystem) |
+### Needs tags
 
-> ⚠️ **Practice only.** These scenarios edit cluster/node config (apiserver manifest, audit policy, encryption, AppArmor/seccomp). Run them on a disposable practice cluster, **never production**. Always `[C]` cleanup when done.
+`./cks --env` matches these against the current host and lists what is runnable.
+
+| Tag | Means |
+|---|---|
+| `kubectl` | any cluster with a usable context |
+| `cni-netpol` | a NetworkPolicy-enforcing CNI (Calico or Cilium) |
+| `cni-cilium` | Cilium specifically |
+| `ingress` | an ingress-nginx controller |
+| `admission:kyverno`, `admission:gatekeeper` | that policy engine is installed |
+| `istio` | Istio CRDs present |
+| `node-root` | a root shell on a kubeadm node |
+| `tool:<name>` | that binary is on PATH |
+
+### Verification philosophy
+
+Verifiers prove the mechanism works, not that a file contains the right words. A NetworkPolicy question runs a DNS lookup, an AppArmor question tries a write that must be denied, an encryption question reads the raw value out of etcd, an audit question checks the log actually grows.
+
+Two rules follow from the exam environment and are enforced throughout:
+
+- **Never grep compact JSON.** `kubectl -o json` is pretty-printed, so a pattern like `'"app":"backend"'` never matches. Use `-o jsonpath`.
+- **Never use `jq`.** It does not exist on exam hosts. Use `-o jsonpath`, `-o go-template` or `yq`.
+
+## Generated files
+
+Never edit these by hand; regenerate them.
+
+```bash
+bash tools/build-registry.sh   # questions/*/meta -> lib/questions.sh
+bash tools/build-guide.sh      # questions/*/     -> cks-exam-qa-guide.md
+bash tools/build-mock.sh 1     # ../mock-exams/mock-1.set -> mock-1.md
+```
+
+Each generator refuses to overwrite its output when the inputs look wrong, so a half-finished edit cannot silently destroy the registry or the guide.
+
+## State
+
+Runtime state lives outside the repo in `~/.cks-practice`: the timer, completed question ids, mock results and file backups taken by setup scripts. Override with `CKS_STATE_DIR`. Deliverable files go to `/opt/course/<n>/` when writable, mirroring the exam, and to `~/cks-course/<n>/` otherwise.
+
+## Safety
+
+These scenarios edit API server manifests, kubelet configuration, audit policy, encryption keys, AppArmor profiles and node services. Run them only on a disposable practice cluster, and run `[C]` cleanup when a question is done. Cleanup restores every file a setup backed up.

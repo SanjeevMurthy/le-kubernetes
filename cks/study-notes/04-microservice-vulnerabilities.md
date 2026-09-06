@@ -6,9 +6,9 @@ covers what stops one compromised workload from becoming a compromised cluster: 
 that rejects bad pods, encryption that makes a stolen etcd snapshot useless, a sandboxed runtime
 that keeps a container off the host kernel, and encrypted pod-to-pod traffic.
 
-Four recipes run on a node as root, and one edits `/etc/kubernetes/manifests/kube-apiserver.yaml`,
-so back that file up first. Every task host has `kubectl` with a `k` alias, `yq`, `curl`, `wget` and
-`man`. There is no `jq`, so no command here uses it.
+Four recipes run on a node as root, and one edits `/etc/kubernetes/manifests/kube-apiserver.yaml`, so
+back that file up first. Every task host has `kubectl` with a `k` alias, `yq`, `curl`, `wget` and `man`,
+and there is no `jq`, so no command here uses it.
 
 ## What the exam asks
 
@@ -20,10 +20,6 @@ so back that file up first. Every task host has `kubectl` with a `k` alias, `yq`
 | Pod Security Admission via namespace labels | 6 | Q9, Q36 (planned) |
 | OPA Gatekeeper constraint and template edits | 5 | Q11 |
 | Istio mTLS with PeerAuthentication STRICT | 3 | Q44 (planned) |
-
-Source counts are distinct candidate reports from the exam research report, section 3, rows 8, 12,
-15, 19, 21 and 27. gVisor is the most reported task type here, and the secrets pair costs the most
-time when the re-encryption step is forgotten.
 
 ```mermaid
 flowchart LR
@@ -39,7 +35,11 @@ flowchart LR
   PSA & GK & KYV & VAP & IPW --> ETCD[etcd]
 ```
 
-Order matters. A request that fails authorization never reaches admission, so a policy that seems
+Source counts are distinct candidate reports from the exam research report, section 3, rows 8, 12, 15,
+19, 21 and 27. gVisor is the most reported task type here, and the secrets pair costs the most time
+when the re-encryption step is forgotten.
+
+Order matters in that chain. A request that fails authorization never reaches admission, so a policy that seems
 not to fire may sit behind an RBAC denial. Mutating webhooks run first, which is why a Kyverno mutate
 rule can make a pod pass a constraint that would otherwise reject it.
 
@@ -73,8 +73,7 @@ k label ns prod --overwrite \
   pod-security.kubernetes.io/audit=restricted
 k label ns prod --overwrite pod-security.kubernetes.io/enforce-version=v1.35
 
-# List the pods that already violate a standard without enabling it.
-# --dry-run=server runs the real admission check and warns once per offending pod.
+# List violators without enabling anything: --dry-run=server runs the real check.
 k label --dry-run=server --overwrite ns prod \
   pod-security.kubernetes.io/enforce=baseline 2>&1 \
   | grep -v '^namespace/' > /opt/course/4/logs
@@ -86,9 +85,7 @@ spec:
   containers:
   - name: app
     image: nginx:1.27.1
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities: {drop: ["ALL"]}
+    securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}}
 ```
 **Verify.**
 ```bash
@@ -115,7 +112,7 @@ through a `ConstraintTemplate` carrying the Rego and a `Constraint` carrying par
 **Commands.**
 ```yaml
 # Gatekeeper is pre-installed. Read `k get constrainttemplates` and `k get constraints`
-# first, because the exam variant is usually `k edit` on one of these two objects.
+# first: the exam variant is usually `k edit` on one of these two objects.
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata: {name: k8sblockedregistries}
@@ -165,14 +162,13 @@ spec:
 k get constrainttemplate k8sblockedregistries -o jsonpath='{.status.created}{"\n"}'
 k -n prod run bad --image=docker.io/nginx:1.27.1
 # expected: admission webhook "validation.gatekeeper.sh" denied the request:
-#           [only-internal-registry] image docker.io/nginx:1.27.1 is not from an allowed registry
-k -n prod run good --image=registry.internal/nginx:1.27.1
+#           [only-internal-registry] image docker.io/nginx:1.27.1 is not allowed
 k get k8sblockedregistries only-internal-registry -o jsonpath='{.status.totalViolations}{"\n"}'
 ```
 **Gotchas.**
 - Never install Gatekeeper during the exam. It is already there, and the task is an edit of an existing template or constraint. The rule must be named `violation` and return an object with a `msg` key; a rule named `deny` compiles and never fires.
 - Negation over a parameter list is unsafe in Rego, which is why `allowed(image)` exists as a helper instead of an inline `not startswith(...)`.
-- Applying the Constraint straight after the template can fail with "no matches for kind". The template creates a CRD first, so wait a few seconds and reapply.
+- Applying the Constraint straight after the template can fail with "no matches for kind", because the template creates a CRD first; wait a few seconds and reapply.
 - `enforcementAction` takes `deny`, `warn` or `dryrun`. `dryrun` blocks nothing and records `status.violations`, which the audit controller refreshes about every 60 seconds.
 
 **Docs.** Not on the allowed list. Memorise the template and constraint shape, or use the links in the task Quick Reference box.
@@ -203,8 +199,7 @@ spec:
         spec:
           containers:
           - image: "registry.internal/*"
-          =(securityContext):
-            =(runAsNonRoot): true
+          =(securityContext): {=(runAsNonRoot): true}
 ```
 ```bash
 k apply -f /root/kyverno-registry.yaml
@@ -215,14 +210,12 @@ k patch cpol restrict-image-registries --type=merge -p '{"spec":{"validationFail
 k get cpol restrict-image-registries -o jsonpath='{.spec.validationFailureAction}{"\n"}'
 k -n prod run bad --image=docker.io/nginx:1.27.1
 # expected: resource Pod/prod/bad was blocked due to the following policies
-k -n prod run good --image=registry.internal/nginx:1.27.1
-k get policyreport -A
+k -n prod run good --image=registry.internal/nginx:1.27.1   # and k get policyreport -A
 ```
 **Gotchas.**
-- `Enforce` blocks, `Audit` only writes a PolicyReport. Read which word the task uses; they are capitalised exactly like this.
-- Kyverno 1.13 and later also accept the per-rule `spec.rules[].validate.failureAction`, and the per-rule value wins. Check for a leftover rule-level `Audit` when a policy refuses to block.
+- `Enforce` blocks, `Audit` only writes a PolicyReport, and both are capitalised exactly like this. Kyverno 1.13 and later also accept the per-rule `spec.rules[].validate.failureAction`, whose value wins, so check for a leftover rule-level `Audit` when a policy refuses to block.
 - The `=(field)` prefix means "if present, must match"; without it the field becomes mandatory and pods the task never meant to touch are rejected. A pattern under `containers` matches every container, so one bad sidecar fails the whole pod.
-- Kyverno also does `mutate`, `generate` and `verifyImages`. A task that says "add a missing label" wants `mutate`, not `validate`.
+- Kyverno also does `mutate`, `generate` and `verifyImages`, so a task that says "add a missing label" wants `mutate`.
 
 **Docs.** Not on the allowed list. Memorise the `ClusterPolicy` skeleton, or use the links in the task Quick Reference box.
 
@@ -263,14 +256,11 @@ spec:
 ```bash
 k get validatingadmissionpolicy
 k -n prod create deployment web --image=nginx:1.27.1
-# expected: deployments.apps "web" is forbidden: ValidatingAdmissionPolicy
-#           'require-run-as-non-root' denied request: ... runAsNonRoot must be true
+# expected: deployments.apps "web" is forbidden: ValidatingAdmissionPolicy denied ...
 ```
 **Gotchas.**
-- The policy alone does nothing. Without a `ValidatingAdmissionPolicyBinding` it is inert, which is the usual reason a correct-looking policy never fires.
-- `validationActions` must be `["Deny"]` to block. `["Warn"]` and `["Audit"]` let the object through.
-- CEL evaluates eagerly, so a missing field raises an error rather than returning false. Guard optional paths with `has(...)` or the optional-field form `.?field.orValue(...)`.
-- `matchConstraints` picks the resource being validated. A Deployment-scoped policy never sees the pod its ReplicaSet later creates, and `failurePolicy: Fail` turns any evaluation error into a rejection.
+- The policy alone does nothing. Without a `ValidatingAdmissionPolicyBinding` it is inert, which is the usual reason a correct-looking policy never fires, and `validationActions` must be `["Deny"]` to block, since `["Warn"]` and `["Audit"]` let the object through.
+- CEL evaluates eagerly, so a missing field raises an error rather than returning false; guard optional paths with `has(...)` or `.?field.orValue(...)`. `matchConstraints` picks the resource being validated. A Deployment-scoped policy never sees the pod its ReplicaSet later creates, and `failurePolicy: Fail` turns any evaluation error into a rejection.
 
 **Docs.** Search kubernetes.io for "Validating Admission Policy" and "Common Expression Language in Kubernetes".
 
@@ -285,8 +275,7 @@ cluster has been rewritten, and a raw etcd read shows the `k8s:enc:aescbc:v1:` p
 ```bash
 # All of this runs on the control plane node as root.
 head -c 32 /dev/urandom | base64          # 1. aescbc needs exactly 32 bytes
-mkdir -p /etc/kubernetes/enc && vim /etc/kubernetes/enc/enc.yaml    # 2. config below
-chmod 600 /etc/kubernetes/enc/enc.yaml
+mkdir -p /etc/kubernetes/enc && vim /etc/kubernetes/enc/enc.yaml && chmod 600 $_  # 2.
 cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
 vim /etc/kubernetes/manifests/kube-apiserver.yaml   # 3. the three edits below
 watch crictl ps                            # 4. wait for the static pod to restart
@@ -333,9 +322,9 @@ k -n default get secret enc-check -o jsonpath='{.data.password}' | base64 -d; ec
 ```
 **Gotchas.**
 - Provider order is the whole task. The first provider encrypts writes; every provider in the list can decrypt reads. `identity` first silently disables encryption while the file still looks right.
-- A key that is not exactly 32 bytes before base64 stops the API server from starting. Use `head -c 32 /dev/urandom | base64` and nothing else.
-- The flag alone crashloops the API server with "no such file or directory". The `volumeMounts` entry and the `hostPath` volume are both mandatory, because the API server runs in a container.
-- `kubectl get secrets -A -o json | kubectl replace -f -` is the forgotten step. Encryption applies to new writes only, so untouched Secrets stay plaintext forever.
+- A key that is not exactly 32 bytes before base64 stops the API server from starting, so use `head -c 32 /dev/urandom | base64` and nothing else.
+- The flag alone crashloops the API server with "no such file or directory", because it runs in a container: the `volumeMounts` entry and the `hostPath` volume are both mandatory.
+- `kubectl get secrets -A -o json | kubectl replace -f -` is the forgotten step, since encryption applies to new writes only and untouched Secrets stay plaintext forever.
 - Check `ls /etc/kubernetes/pki/etcd/` before typing the etcd flags, since some clusters ship `healthcheck-client.crt` rather than `server.crt`. Encrypting ConfigMaps needs `configmaps` under `resources`, and reversing everything means moving `identity` to the front and re-running the replace.
 
 **Docs.** Search kubernetes.io for "Encrypting Confidential Data at Rest". etcd.io/docs is also allowed.
@@ -364,12 +353,10 @@ k -n prod get secret tls-cert -o jsonpath='{.data.tls\.crt}' | base64 -d | head 
 ```
 ```yaml
 # Volume beats env. Set immutable: true on the Secret once the value is final.
-# In the pod spec:
     volumeMounts:
     - {name: creds, mountPath: /etc/creds, readOnly: true}
   volumes:
-  - name: creds
-    secret: {secretName: db-creds, defaultMode: 0400}
+  - {name: creds, secret: {secretName: db-creds, defaultMode: 0400}}
 ```
 **Verify.**
 ```bash
@@ -377,9 +364,8 @@ k -n prod exec app -- cat /etc/creds/password; echo
 k -n prod get secret db-creds -o jsonpath='{.immutable}{"\n"}'
 ```
 **Gotchas.**
-- base64 is encoding, not encryption. A Secret that was never re-encrypted is readable by anyone holding the etcd data directory or a snapshot of it.
-- Environment variables leak into `kubectl describe pod`, crash dumps and every child process. Mounted files do not, and they update in place when the Secret changes.
-- `immutable: true` cannot be undone, so delete and recreate the Secret. A `subPath` mount freezes the file at the value present when the pod started, so it never sees an update.
+- base64 is encoding, not encryption: a Secret that was never re-encrypted is readable by anyone holding the etcd data directory or a snapshot of it.
+- Environment variables leak into `kubectl describe pod`, crash dumps and every child process, while mounted files do not and update in place when the Secret changes. `immutable: true` cannot be undone, so delete and recreate the Secret. A `subPath` mount freezes the file at the value present when the pod started, so it never sees an update.
 - There is no `jq`. Only `base64 -d`, `go-template` with `base64decode`, or `yq` with `@base64d` produce plaintext, and a key name containing a dot needs it escaped as `{.data.tls\.crt}`.
 
 **Docs.** Search kubernetes.io for "Secrets" and "Good practices for Kubernetes Secrets". etcd.io/docs is also allowed.
@@ -396,8 +382,8 @@ the node where runsc is configured, and `dmesg` inside the pod shows the gVisor 
 # On the worker node: confirm runsc exists and containerd knows the handler.
 runsc --version
 grep -A2 runsc /etc/containerd/config.toml
-#   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
-#     runtime_type = "io.containerd.runsc.v1"
+#   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc] with
+#   runtime_type = "io.containerd.runsc.v1"
 systemctl restart containerd
 ```
 ```yaml
@@ -426,9 +412,8 @@ k exec gvisor-test -- dmesg > /opt/course/10/gvisor-test-dmesg
 ```
 **Gotchas.**
 - `handler` is lowercase `runsc` and must match the containerd runtime name exactly. Using `gvisor` as the handler is the classic wrong answer.
-- Only one node usually has runsc. Without `nodeName` or a matching `nodeSelector` the pod can schedule elsewhere and fail with `CreateContainerError` and "failed to get sandbox runtime".
-- `RuntimeClass` has no namespace, and adding one makes the apply fail. A pod naming a RuntimeClass that does not exist stays `Pending` with a scheduling error rather than a container error.
-- `dmesg` in a normal container prints the host ring buffer or is denied outright. The gVisor banner is the proof the sandbox is active.
+- Only one node usually has runsc, so without `nodeName` or a matching `nodeSelector` the pod can schedule elsewhere and fail with `CreateContainerError` and "failed to get sandbox runtime". `RuntimeClass` has no namespace, and adding one makes the apply fail. A pod naming a RuntimeClass that does not exist stays `Pending` with a scheduling error rather than a container error.
+- `dmesg` in a normal container prints the host ring buffer or is denied outright, so the gVisor banner is the proof the sandbox is active.
 - Redirect the `kubectl exec` output on the exam host. A redirect placed after `--` writes the file inside the container, where the grader never looks.
 
 **Docs.** Search kubernetes.io for "Runtime Class" and "Container Runtimes".
@@ -468,7 +453,6 @@ k -n kube-system rollout restart ds/cilium
 ```
 **Verify.**
 ```bash
-k -n prod get cnp
 k -n kube-system exec ds/cilium -- cilium status | grep -i encryption
 k -n kube-system exec ds/cilium -- cilium encrypt status
 # expected: Encryption: Wireguard, with a peer count above zero
@@ -477,7 +461,7 @@ k -n prod exec deploy/frontend -- curl -s -o /dev/null -w '%{http_code}\n' -XPOS
 # expected: 200 for the GET, 403 from the Envoy proxy for the POST
 ```
 **Gotchas.**
-- An L7 denial returns HTTP 403 immediately. An L3 or L4 denial hangs and times out. The failure mode says which layer rejected the request and saves minutes of guessing.
+- An L7 denial returns HTTP 403 immediately while an L3 or L4 denial hangs and times out, so the failure mode says which layer rejected the request.
 - `port` must be a quoted string in a `CiliumNetworkPolicy`, and `path` is a regular expression, so `/api` alone does not cover subpaths but `/api/.*` does.
 - Any policy selecting an endpoint puts that endpoint into default deny for the direction it covers, so adding one ingress rule silently blocks every other ingress source.
 - Only docs.cilium.io is allowed in the exam browser, and the Cilium Network Policy Editor site is not. `cilium status` and `cilium encrypt status` run inside the agent pod, hence `exec ds/cilium`; there is no `cilium` binary on the task host.
@@ -493,8 +477,8 @@ request from a pod without a sidecar fails.
 
 **Commands.**
 ```yaml
-# Mesh wide: named default, in the Istio root namespace, with no selector.
-# The same object named default in namespace prod scopes it to that namespace only.
+# Mesh wide: named default, in the Istio root namespace, with no selector. The same
+# object named default in namespace prod scopes it to that namespace only.
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata: {name: default, namespace: istio-system}
@@ -525,11 +509,9 @@ k -n prod exec deploy/frontend -c frontend -- curl -s -o /dev/null -w '%{http_co
 # expected: 200
 ```
 **Gotchas.**
-- A mesh-wide policy must be named `default` and live in the Istio root namespace, normally `istio-system`. The same object elsewhere applies to that namespace only.
-- Precedence runs workload selector, then namespace, then mesh. A leftover `PERMISSIVE` workload policy quietly defeats a correct mesh-wide `STRICT`.
+- A mesh-wide policy must be named `default` and live in the Istio root namespace, normally `istio-system`; the same object elsewhere applies to that namespace only. Precedence runs workload selector, then namespace, then mesh, so a leftover `PERMISSIVE` workload policy quietly defeats a correct mesh-wide `STRICT`.
 - Mode values are uppercase: `STRICT`, `PERMISSIVE`, `DISABLE`, `UNSET`. `PERMISSIVE` accepts both mTLS and plaintext, so if legacy clients must keep working that is the answer, not `STRICT`.
-- Labelling the namespace does not inject sidecars into running pods. Restart the deployments, then confirm each pod has two containers.
-- `PeerAuthentication` decides how callers authenticate, not who may call what. That is `AuthorizationPolicy`.
+- Labelling the namespace does not inject sidecars into running pods, so restart the deployments and confirm each pod has two containers. `PeerAuthentication` decides how callers authenticate, not who may call what; that is `AuthorizationPolicy`.
 
 **Docs.** istio.io/latest/docs is on the allowed list. Search it for "Peer Authentication" and "Mutual TLS Migration".
 
@@ -544,7 +526,6 @@ k label --dry-run=server --overwrite ns NS pod-security.kubernetes.io/enforce=ba
 # Gatekeeper and Kyverno
 k get constrainttemplates && k get constraints && k get cpol
 k get k8sblockedregistries NAME -o jsonpath='{.status.totalViolations}{"\n"}'
-k patch cpol NAME --type=merge -p '{"spec":{"validationFailureAction":"Enforce"}}'
 
 # Secrets encryption at rest
 head -c 32 /dev/urandom | base64
@@ -557,26 +538,23 @@ ETCDCTL_API=3 etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   get /registry/secrets/NS/NAME | hexdump -C | head -3
 
 # Decoding Secrets without jq, then gVisor, Cilium and Istio
-k -n NS get secret NAME -o jsonpath='{.data.password}' | base64 -d; echo
 k -n NS get secret NAME -o yaml | yq '.data | map_values(@base64d)'
 k get runtimeclass gvisor -o jsonpath='{.handler}{"\n"}'
 k exec POD -- dmesg > /opt/course/10/POD-dmesg
 k -n kube-system exec ds/cilium -- cilium encrypt status
-helm upgrade cilium cilium/cilium -n kube-system --reuse-values --set encryption.enabled=true --set encryption.type=wireguard
 k -n NS get peerauthentication default -o jsonpath='{.spec.mtls.mode}{"\n"}'
 ```
 
 ## Memorise
 
-- PSA is three labels on a namespace and nothing else. `enforce` blocks new pods, `warn` and `audit` only report, and `--dry-run=server` on the label command lists the pods that already violate the standard.
+- PSA is three labels on a namespace. `enforce` blocks new pods, `warn` and `audit` only report, and `--dry-run=server` on the label command lists the pods that already violate the standard. A violating Deployment is admitted; its ReplicaSet is what fails, so read events.
 - The `restricted` checklist is five fields: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile.type: RuntimeDefault`, and no host namespaces or privileged containers.
 - Gatekeeper is a `ConstraintTemplate` carrying Rego plus a `Constraint` carrying parameters and scope. The rule must be called `violation` and return `{"msg": msg}`. Never install Gatekeeper during the exam.
 - `enforcementAction: dryrun` reports without blocking. Kyverno's equivalent is `validationFailureAction: Audit` against `Enforce`, and a `ValidatingAdmissionPolicy` needs a binding with `validationActions: ["Deny"]`.
 - Encryption at rest is four steps: generate a 32-byte key, write the `EncryptionConfiguration` with `aescbc` first and `identity` last, add `--encryption-provider-config` plus a `volumeMounts` entry and a `hostPath` volume, then run `kubectl get secrets -A -o json | kubectl replace -f -`.
-- The proof of encryption is the `k8s:enc:aescbc:v1:` prefix in a raw etcd read. The three etcd flags are `--cacert`, `--cert` and `--key`, all under `/etc/kubernetes/pki/etcd/`.
-- base64 in a Secret is encoding, not encryption. Mount Secrets as read-only volumes rather than environment variables, and set `immutable: true` once the value is final.
+- The proof of encryption is the `k8s:enc:aescbc:v1:` prefix in a raw etcd read, and the three etcd flags are `--cacert`, `--cert` and `--key`, all under `/etc/kubernetes/pki/etcd/`.
+- base64 in a Secret is encoding, not encryption; mount Secrets as read-only volumes rather than environment variables and set `immutable: true` once the value is final.
 - gVisor is `handler: runsc` on a cluster-scoped `RuntimeClass`, `runtimeClassName: gvisor` on the pod, and node targeting so the pod lands where containerd knows the handler. Prove it with `dmesg` inside the pod.
-- Cilium L7 rejections come back as HTTP 403; L3 and L4 rejections time out. `cilium status` and `cilium encrypt status` run inside the agent pod through `exec ds/cilium`.
+- Cilium L7 rejections come back as HTTP 403 while L3 and L4 rejections time out, and `cilium status` and `cilium encrypt status` run inside the agent pod through `exec ds/cilium`.
 - Istio mesh-wide mTLS is a `PeerAuthentication` named `default` in `istio-system` with `mtls.mode: STRICT`. Workload selector beats namespace, and namespace beats mesh.
-- Allowed docs in this domain are kubernetes.io, etcd.io, docs.cilium.io and istio.io. Gatekeeper and Kyverno documentation is not allowed, so their YAML shapes must be memorised.
-- There is no `jq` on the exam hosts. Use `-o jsonpath`, `-o go-template`, `-o custom-columns` or `yq`.
+- Allowed docs in this domain are kubernetes.io, etcd.io, docs.cilium.io and istio.io. Gatekeeper and Kyverno documentation is not, so memorise their YAML shapes. There is no `jq` on the exam hosts, so use `-o jsonpath`, `-o go-template`, `-o custom-columns` or `yq`.
