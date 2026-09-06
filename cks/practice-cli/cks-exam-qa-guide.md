@@ -40,7 +40,13 @@
 **Question**
 
 
-Namespace `prod` runs a `backend` deployment (label `app=backend`) and a `frontend` deployment (label `app=frontend`). Apply a default-deny policy for all ingress and egress in `prod`, then add policies so that: (a) `backend` pods accept ingress only from `frontend` pods on TCP 8080, and (b) all pods may still resolve DNS. Do not break DNS.
+Namespace `netpol-lab` runs a `backend` deployment (label `app=backend`, container port 8080) and a `frontend` deployment (label `app=frontend`). There are no NetworkPolicies in the namespace yet.
+
+1. Apply a default-deny policy for all ingress and egress traffic in `netpol-lab`.
+2. Add a policy so that `backend` pods accept ingress only from `frontend` pods, on TCP 8080.
+3. Add a policy so that every pod in `netpol-lab` can still resolve DNS.
+
+Both deployments must still be Running, and `nslookup kubernetes.default.svc.cluster.local` from a pod in `netpol-lab` must still succeed.
 
 **Solution**
 
@@ -55,14 +61,14 @@ NetworkPolicies are additive, namespaced allow-lists enforced by the CNI (Calico
 kubectl apply -f - <<'EOF'
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: default-deny-all, namespace: prod}
+metadata: {name: default-deny-all, namespace: netpol-lab}
 spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: allow-frontend-to-backend, namespace: prod}
+metadata: {name: allow-frontend-to-backend, namespace: netpol-lab}
 spec:
   podSelector: {matchLabels: {app: backend}}
   policyTypes: [Ingress]
@@ -74,7 +80,7 @@ spec:
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: {name: allow-dns, namespace: prod}
+metadata: {name: allow-dns, namespace: netpol-lab}
 spec:
   podSelector: {}
   policyTypes: [Egress]
@@ -166,31 +172,33 @@ kube-bench run --targets node --check 4.2.4 | grep '\[PASS\]'
 **Question**
 
 
-Expose service `web` (port 80) in namespace `prod` through an Ingress `web-ingress` for host `secure.example.com`, terminating TLS using a self-signed certificate stored in a `kubernetes.io/tls` secret named `web-tls`.
+Namespace `tls-lab` runs deployment `web` behind service `web` on port 80. A self-signed certificate and its private key for host `secure.example.com` are already on disk at `/opt/course/3/web.crt` and `/opt/course/3/web.key` (the setup output prints the exact directory used on this host).
+
+1. Create a secret named `web-tls` in namespace `tls-lab`, of type `kubernetes.io/tls`, from that certificate and key.
+2. Create an Ingress named `web-ingress` in `tls-lab`, on ingress class `nginx`, that routes host `secure.example.com` to service `web` on port 80 and terminates TLS using the `web-tls` secret.
+3. Confirm that an HTTPS request for `https://secure.example.com`, resolved to the ingress controller, returns HTTP 200.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-TLS termination at the Ingress means the controller decrypts HTTPS using a certificate/key supplied as a `kubernetes.io/tls` secret, referenced under `spec.tls`. You generate the cert with openssl, load it into a TLS secret, and bind it to the host in the Ingress.
+TLS termination at the Ingress means the controller decrypts HTTPS using a certificate and key supplied as a `kubernetes.io/tls` secret, referenced under `spec.tls`. The secret must live in the same namespace as the Ingress, and the host in `spec.tls[].hosts` must match the host in `spec.rules[].host` or the controller serves its own fake certificate.
 
 **Solution — Step by Step:**
 
 ```bash
-# 1. Self-signed cert/key for the host
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key -out tls.crt -subj "/CN=secure.example.com/O=secure"
+# 1. TLS secret from the certificate the setup left on disk
+kubectl create secret tls web-tls -n tls-lab \
+  --cert=/opt/course/3/web.crt --key=/opt/course/3/web.key
 
-# 2. TLS secret
-kubectl create secret tls web-tls --cert=tls.crt --key=tls.key -n prod
-
-# 3. Ingress with TLS
-kubectl apply -f - <<'EOF'
+# 2. Ingress with TLS
+kubectl apply -f - <<'YAML'
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: {name: web-ingress, namespace: prod}
+metadata: {name: web-ingress, namespace: tls-lab}
 spec:
+  ingressClassName: nginx
   tls:
   - hosts: [secure.example.com]
     secretName: web-tls
@@ -201,14 +209,20 @@ spec:
       - path: /
         pathType: Prefix
         backend: {service: {name: web, port: {number: 80}}}
-EOF
+YAML
+
+# 3. Prove it serves HTTPS (IP = the ingress controller address)
+IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.clusterIP}')
+curl -sk --resolve secure.example.com:443:$IP https://secure.example.com -o /dev/null -w '%{http_code}\n'
 ```
 
 **Key Points to Remember:**
 
-- Secret **type must be `kubernetes.io/tls`** with keys `tls.crt` and `tls.key` — `create secret tls` does this.
-- `spec.tls[].secretName` binds the cert to the host(s) in `spec.tls[].hosts`.
-- Verify: `kubectl get ingress -n prod` shows the host; `curl -k https://secure.example.com --resolve ...`.
+- Secret **type must be `kubernetes.io/tls`** with keys `tls.crt` and `tls.key`; `kubectl create secret tls` does exactly that.
+- The secret is namespaced: one in `default` referenced from `tls-lab` fails silently.
+- Without `ingressClassName` the controller ignores the Ingress unless its class is the cluster default.
+- Generate a certificate when the exam does not hand you one:
+  `openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.key -out web.crt -subj "/CN=secure.example.com"`.
 
 **Official Documentation:**
 - https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
@@ -272,24 +286,29 @@ kubectl auth can-i get secrets --as=system:serviceaccount:build:ci -n build   # 
 **Question**
 
 
-The pod `legacy` in namespace `app` should not have a ServiceAccount token mounted (it never calls the API). Create a dedicated ServiceAccount `app-sa` with automount disabled, and ensure the pod uses it with no token mounted.
+Pod `legacy` in namespace `app` runs `busybox:1.36` with the command `sleep 3600` as the `default` ServiceAccount, and has an API token mounted at `/var/run/secrets/kubernetes.io/serviceaccount`. The workload never calls the API server.
+
+1. Create a ServiceAccount named `app-sa` in namespace `app` with automounting of its token disabled.
+2. Make pod `legacy` run as `app-sa` with no ServiceAccount token mounted at all. Keep the image `busybox:1.36` and the command `sleep 3600`; `serviceAccountName` is immutable, so recreate the pod.
+3. The pod must be Running when you are done, and `/var/run/secrets/kubernetes.io/serviceaccount` must no longer exist inside the container.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-A mounted SA token is a stealable credential. Setting `automountServiceAccountToken: false` (on the SA or pod) removes `/var/run/secrets/kubernetes.io/serviceaccount/` from the container, shrinking the blast radius of a compromise.
+A mounted ServiceAccount token is a stealable credential. Setting `automountServiceAccountToken: false` on the ServiceAccount, or on the pod, removes `/var/run/secrets/kubernetes.io/serviceaccount/` from the container and shrinks the blast radius of a compromise. `serviceAccountName` is immutable, so an existing pod has to be recreated rather than patched.
 
 **Solution — Step by Step:**
 
 ```bash
+# 1. Dedicated ServiceAccount with automount disabled
 kubectl create serviceaccount app-sa -n app
-kubectl patch serviceaccount app-sa -n app \
-  -p '{"automountServiceAccountToken": false}'
-```
-```yaml
-# Pod uses the SA and (belt-and-suspenders) disables automount at pod level:
+kubectl patch serviceaccount app-sa -n app -p '{"automountServiceAccountToken": false}'
+
+# 2. Recreate the pod on that ServiceAccount
+kubectl delete pod legacy -n app --now
+kubectl apply -f - <<'YAML'
 apiVersion: v1
 kind: Pod
 metadata: {name: legacy, namespace: app}
@@ -297,18 +316,22 @@ spec:
   serviceAccountName: app-sa
   automountServiceAccountToken: false
   containers:
-  - {name: c, image: nginx}
-```
-```bash
-# Verify: the token dir should be absent
-kubectl exec -n app legacy -- ls /var/run/secrets/kubernetes.io/serviceaccount 2>&1 # No such file
+  - name: legacy
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+YAML
+
+# 3. Prove the token is gone
+kubectl exec -n app legacy -- ls /var/run/secrets/kubernetes.io/serviceaccount   # No such file or directory
+kubectl get pod legacy -n app -o jsonpath='{.spec.containers[*].volumeMounts[*].mountPath}{"\n"}'
 ```
 
 **Key Points to Remember:**
 
-- Pod-level `automountServiceAccountToken` overrides the SA-level setting.
-- Give workloads their **own** SA, never rely on `default`.
-- Verify by exec-ing into the pod and confirming the token path is gone.
+- Pod-level `automountServiceAccountToken` overrides the ServiceAccount-level setting; either one alone removes the mount.
+- Give every workload its **own** ServiceAccount; never leave it on `default`.
+- `serviceAccountName` cannot be patched on a running pod — delete and recreate.
+- Verify inside the container, not only in the spec: the token directory must be absent.
 
 **Official Documentation:**
 - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -577,7 +600,22 @@ EOF
 **Question**
 
 
-Enable encryption at rest for Secrets using an `aescbc` provider. Configure the API server to use `/etc/kubernetes/enc/enc.yaml`, then ensure all existing Secrets are encrypted. Verify a Secret is stored encrypted in etcd.
+**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+
+Secrets are stored in etcd in plain text: `kube-apiserver` runs with no
+`--encryption-provider-config`. Namespace `enc-lab` already contains the Secret
+`pre-existing`, which was written before encryption was configured.
+
+1. Write an `EncryptionConfiguration` to `/etc/kubernetes/enc/enc.yaml` that encrypts
+   `secrets` with an `aescbc` provider (a 32-byte base64 key) and keeps `identity` as the
+   last provider.
+2. Wire it into `kube-apiserver` in `/etc/kubernetes/manifests/kube-apiserver.yaml` with
+   `--encryption-provider-config=/etc/kubernetes/enc/enc.yaml`, plus a hostPath volume and
+   volumeMount for `/etc/kubernetes/enc`, and bring the API server back to ready.
+3. Re-encrypt the Secrets that already exist, so that `enc-lab/pre-existing` is stored
+   encrypted too.
+4. Confirm with `etcdctl` (certs under `/etc/kubernetes/pki/etcd/`) that
+   `/registry/secrets/enc-lab/pre-existing` is stored with the `k8s:enc:aescbc` prefix.
 
 **Solution**
 
@@ -609,11 +647,11 @@ resources:
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kas.bak
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
 
-# 4. Re-encrypt existing secrets
+# 4. Re-encrypt the secrets that already exist (the config only affects new writes)
 kubectl get secrets -A -o json | kubectl replace -f -
 
 # 5. Verify in etcd
-sudo ETCDCTL_API=3 etcdctl get /registry/secrets/default/<name> \
+sudo ETCDCTL_API=3 etcdctl get /registry/secrets/enc-lab/pre-existing \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key | hexdump -C | head   # k8s:enc:aescbc:
@@ -639,47 +677,53 @@ sudo ETCDCTL_API=3 etcdctl get /registry/secrets/default/<name> \
 **Question**
 
 
-Using Kyverno (already installed), create a `ClusterPolicy` that blocks any Pod whose container image does not come from `registry.internal/`. The policy must enforce (reject), not just audit.
+Kyverno is already installed in this cluster. Namespace `kyverno-lab` is empty and currently accepts pods from any registry.
+
+1. Create a Kyverno `ClusterPolicy` named `restrict-registries` that blocks any Pod whose container image does not come from `registry.internal/`.
+2. The policy must enforce, that is reject the request, not merely audit it.
+3. Confirm the effect in `kyverno-lab`: `kubectl run bad --image=docker.io/library/nginx:1.27 --dry-run=server` must be rejected, and `kubectl run good --image=registry.internal/nginx:1.27 --dry-run=server` must be accepted.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-Kyverno evaluates `ClusterPolicy` rules at admission. A `validate` rule with `validationFailureAction: Enforce` rejects violating resources. A pattern match on `image` restricts the allowed registry — a common supply-chain/admission control.
+Kyverno evaluates `ClusterPolicy` rules at admission through a validating webhook. A `validate` rule set to `Enforce` rejects the request; `Audit` only reports it. A pattern match on `image` restricts the allowed registry, the classic supply-chain admission control. The webhook also runs for `--dry-run=server`, which is how you test a policy without leaving pods behind.
 
 **Solution — Step by Step:**
 
 ```bash
-kubectl apply -f - <<'EOF'
+kubectl apply -f - <<'YAML'
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata: {name: restrict-registries}
 spec:
-  validationFailureAction: Enforce
+  validationFailureAction: Enforce     # Kyverno 1.13+: validate.failureAction below
   background: false
   rules:
   - name: only-internal-registry
     match: {any: [{resources: {kinds: [Pod]}}]}
     validate:
+      failureAction: Enforce
       message: "images must come from registry.internal/"
       pattern:
         spec:
           containers:
           - image: "registry.internal/*"
-EOF
+YAML
 
-# Test: should be REJECTED
-kubectl run bad --image=nginx
-# Should be ADMITTED
-kubectl run ok --image=registry.internal/nginx:1.27
+# Test both directions without creating anything
+kubectl run bad  --image=docker.io/library/nginx:1.27 -n kyverno-lab --dry-run=server   # rejected
+kubectl run good --image=registry.internal/nginx:1.27 -n kyverno-lab --dry-run=server   # admitted
 ```
 
 **Key Points to Remember:**
 
-- `validationFailureAction: Enforce` blocks; `Audit` only reports — read which the task wants.
-- Patterns support wildcards (`registry.internal/*`); apply to `initContainers`/`ephemeralContainers` too if asked.
-- Verify by applying a violating pod and confirming rejection.
+- `Enforce` blocks, `Audit` only reports. Read which one the task asks for.
+- Kyverno 1.13 moved the setting to `spec.rules[].validate.failureAction`; older releases use `spec.validationFailureAction`. Set the one your cluster's CRD accepts.
+- Patterns take wildcards (`registry.internal/*`). Add `initContainers` and `ephemeralContainers` to the pattern when the task says all containers.
+- A violating Deployment is still accepted; the rejection surfaces when its ReplicaSet creates pods, so read the events, not the Deployment.
+- Verify by admission, not by reading YAML: `--dry-run=server` proves the webhook fires.
 
 **Official Documentation:**
 - https://kyverno.io/docs/ · https://kyverno.io/policies/
@@ -696,7 +740,18 @@ kubectl run ok --image=registry.internal/nginx:1.27
 **Question**
 
 
-The node has the gVisor (`runsc`) runtime configured in containerd. Create a `RuntimeClass` named `gvisor` and run a pod `sandboxed` under it. Confirm the pod runs inside the sandbox.
+**Host:** any node with `kubectl`; the sandboxed pod must land on the worker node named in
+the setup output, which is where gVisor (`runsc`) is installed.
+
+The worker node has the gVisor `runsc` runtime handler configured in containerd, but the
+cluster has no `RuntimeClass` for it, so nothing can use it yet. Namespace `gvisor-lab`
+is empty.
+
+1. Create a cluster-scoped `RuntimeClass` named `gvisor` with `handler: runsc`.
+2. Run a pod named `sandboxed` in namespace `gvisor-lab`, image `busybox:1.36`, command
+   `sleep 3600`, that uses `spec.runtimeClassName: gvisor`.
+3. Confirm the pod is `Running` and that it really is sandboxed: `kubectl exec -n gvisor-lab
+   sandboxed -- dmesg` must report the gVisor kernel, not the host kernel.
 
 **Solution**
 
@@ -716,16 +771,16 @@ handler: runsc
 ---
 apiVersion: v1
 kind: Pod
-metadata: {name: sandboxed}
+metadata: {name: sandboxed, namespace: gvisor-lab}
 spec:
   runtimeClassName: gvisor
   containers:
-  - {name: c, image: nginx}
+  - {name: c, image: busybox:1.36, command: ["sleep", "3600"]}
 EOF
 
 # Verify the sandbox kernel differs from the host:
-kubectl exec sandboxed -- dmesg 2>/dev/null | head    # gVisor signature
-kubectl exec sandboxed -- uname -a
+kubectl exec -n gvisor-lab sandboxed -- dmesg | head    # "Starting gVisor..."
+kubectl exec -n gvisor-lab sandboxed -- uname -a
 ```
 
 **Key Points to Remember:**
@@ -747,38 +802,47 @@ kubectl exec sandboxed -- uname -a
 **Question**
 
 
-Deployment `web` in namespace `prod` runs `nginx:1.18.0`. Use Trivy to confirm it has HIGH/CRITICAL vulnerabilities, then update the deployment to a patched image (`nginx:1.27.0`) that has no CRITICALs. Confirm the rollout.
+Deployment `web` in namespace `trivy-lab` runs `nginx:1.18.0`.
+
+1. Scan the running image with Trivy for HIGH and CRITICAL vulnerabilities and save the output to `/opt/course/13/report.txt` (the setup output prints the exact directory used on this host).
+2. Update deployment `web` to the patched image `nginx:1.27.0`, which has no CRITICALs.
+3. Confirm the rollout completes and the new pod is Running.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-Trivy scans container images for known CVEs in OS packages and libraries. The exam pattern is: scan → identify the vulnerable image actually running → replace it with a clean tag → verify. Trivy docs are NOT allowed in-exam, so the flags must be memorized.
+Trivy scans container images for known CVEs in OS packages and language libraries. The exam pattern is: scan, identify the vulnerable image actually running, replace it with a clean tag, verify the rollout. Trivy docs are not allowed in the exam, so the flags have to be memorised.
 
 **Solution — Step by Step:**
 
 ```bash
-# 1. Confirm the current image is vulnerable
-trivy image --severity HIGH,CRITICAL nginx:1.18.0
+# 1. Find the image that is actually running
+kubectl get deploy web -n trivy-lab -o jsonpath='{.spec.template.spec.containers[*].image}{"\n"}'
 
-# 2. Confirm the replacement is clean of criticals
+# 2. Scan it and save the report deliverable
+trivy image --severity HIGH,CRITICAL nginx:1.18.0 > /opt/course/13/report.txt
+grep -c CRITICAL /opt/course/13/report.txt
+
+# 3. Confirm the replacement is clean of criticals
 trivy image --severity CRITICAL nginx:1.27.0
 
-# 3. Find/replace the running image
-kubectl get deploy web -n prod -o jsonpath='{.spec.template.spec.containers[*].image}'
-kubectl set image deploy/web web=nginx:1.27.0 -n prod
-kubectl rollout status deploy/web -n prod
+# 4. Roll the deployment onto the patched image
+kubectl set image deploy/web nginx=nginx:1.27.0 -n trivy-lab
+kubectl rollout status deploy/web -n trivy-lab
 ```
 
 **Key Points to Remember:**
 
-- `--severity HIGH,CRITICAL` focuses the scan; `--ignore-unfixed` shows only patchable CVEs.
-- The deliverable is a **clean image running** — verify the new pod is Ready on the new tag.
-- Audit all cluster images: `kubectl get pods -A -o=custom-columns=NS:.metadata.namespace,IMG:.spec.containers[*].image`.
+- `--severity HIGH,CRITICAL` focuses the scan; `--ignore-unfixed` shows only the CVEs you can actually patch.
+- `kubectl set image deploy/<name> <container>=<image>` needs the **container** name, which `kubectl create deployment` sets to the image's base name (`nginx` here).
+- The deliverable is both the report file and a clean image **running**: check the new pod is Ready on the new tag.
+- Audit every image in the cluster with
+  `kubectl get pods -A -o custom-columns=NS:.metadata.namespace,IMG:.spec.containers[*].image`.
 
 **Official Documentation:**
-- https://aquasecurity.github.io/trivy/ (not allowed in-exam — memorize flags)
+- https://aquasecurity.github.io/trivy/ (not allowed in-exam; memorise the flags)
 
 ---
 
@@ -791,61 +855,71 @@ kubectl rollout status deploy/web -n prod
 **Question**
 
 
-Only images from the registry `registry.internal` may run cluster-wide. Implement this with admission control. (Either configure the `ImagePolicyWebhook` admission plugin against the provided endpoint, or enforce it with a Kyverno policy if a webhook backend is unavailable.)
+**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+
+Only images cleared by the image bouncer webhook may run on this cluster, but nothing
+enforces that today. The admission configuration `/etc/kubernetes/admission-controllers/admission-config.yaml`
+and its webhook kubeconfig `/etc/kubernetes/admission-controllers/kubeconfig.yaml` already
+exist, yet the config is fail-open and `kube-apiserver` does not use it at all.
+
+1. Edit `/etc/kubernetes/admission-controllers/admission-config.yaml` so the plugin fails
+   closed: `defaultAllow: false`.
+2. Wire the plugin into `kube-apiserver` in `/etc/kubernetes/manifests/kube-apiserver.yaml`:
+   - add `ImagePolicyWebhook` to `--enable-admission-plugins`
+   - add `--admission-control-config-file=/etc/kubernetes/admission-controllers/admission-config.yaml`
+   - add the hostPath volume and volumeMount for `/etc/kubernetes/admission-controllers`,
+     or the API server will not come back up.
+3. Bring the API server back to ready and confirm the plugin now rejects pods:
+   `kubectl run ipw-probe --image=nginx --dry-run=server` must be refused, because the
+   webhook backend cannot clear the image.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-`ImagePolicyWebhook` makes the apiserver consult an external service to allow/deny each image; it needs an `AdmissionConfiguration` file, a webhook kubeconfig, and the plugin enabled — plus volume mounts. Where no backend exists, a Kyverno `validate` policy enforces the same registry allow-list more simply.
+`ImagePolicyWebhook` makes the apiserver consult an external service to allow or deny every image; it needs an `AdmissionConfiguration` file, a webhook kubeconfig, the plugin enabled, and the hostPath volume mount that lets the static pod read both files. `defaultAllow` decides what happens when the backend is unreachable: `false` fails closed, so an unavailable bouncer blocks every new pod.
 
 **Solution — Step by Step:**
 
 ```yaml
-# Option A — ImagePolicyWebhook
-# /etc/kubernetes/admission/admission-config.yaml
+# /etc/kubernetes/admission-controllers/admission-config.yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
 plugins:
 - name: ImagePolicyWebhook
   configuration:
     imagePolicy:
-      kubeConfigFile: /etc/kubernetes/admission/webhook.kubeconfig
+      kubeConfigFile: /etc/kubernetes/admission-controllers/kubeconfig.yaml
       allowTTL: 50
       denyTTL: 50
       retryBackoff: 500
       defaultAllow: false        # fail closed
 ```
-```bash
-# apiserver flags (back up first; add volumes/volumeMounts for /etc/kubernetes/admission):
-#   --enable-admission-plugins=...,ImagePolicyWebhook
-#   --admission-control-config-file=/etc/kubernetes/admission/admission-config.yaml
-```
 ```yaml
-# Option B — Kyverno allowed-registry (simpler, common)
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata: {name: allowed-registry}
-spec:
-  validationFailureAction: Enforce
-  rules:
-  - name: only-internal
-    match: {any: [{resources: {kinds: [Pod]}}]}
-    validate:
-      message: "only registry.internal images allowed"
-      pattern: {spec: {containers: [{image: "registry.internal/*"}]}}
+# /etc/kubernetes/manifests/kube-apiserver.yaml (back it up first)
+    - --enable-admission-plugins=NodeRestriction,ImagePolicyWebhook
+    - --admission-control-config-file=/etc/kubernetes/admission-controllers/admission-config.yaml
+    volumeMounts:
+    - {name: admission, mountPath: /etc/kubernetes/admission-controllers, readOnly: true}
+  volumes:
+  - {name: admission, hostPath: {path: /etc/kubernetes/admission-controllers, type: DirectoryOrCreate}}
+```
+```bash
+# The kubelet restarts the static pod; wait for readiness, then probe admission
+sudo crictl ps | grep kube-apiserver
+curl -sk https://127.0.0.1:6443/readyz
+kubectl run ipw-probe --image=nginx --dry-run=server   # refused by ImagePolicyWebhook
 ```
 
 **Key Points to Remember:**
 
 - ImagePolicyWebhook = config file + webhook kubeconfig + apiserver flags + **volume mounts**; `defaultAllow: false` fails closed.
 - Back up the apiserver manifest; a wrong path here breaks the control plane.
-- Kyverno is the faster path when the task just says "restrict the registry."
+- Without the volume mount the apiserver cannot read the config and refuses to start — check `/var/log/pods` or `crictl logs` when it stays down.
 
 **Official Documentation:**
 - https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#imagepolicywebhook
-- https://kyverno.io/policies/
 
 ---
 
@@ -858,48 +932,69 @@ spec:
 **Question**
 
 
-A pod manifest `app.yaml` scores poorly on security. Run `kubesec` against it, then harden the manifest so it passes the major checks (no privilege escalation, read-only root FS, drop all capabilities, run as non-root). Re-scan to confirm improvement.
+The manifest `/opt/course/15/deploy.yaml` (the setup output prints the exact directory used on this host) defines Deployment `app` in namespace `appsec` and scores poorly on security. It is already applied to the cluster.
+
+1. Run `kubesec` against the manifest and read the advice it reports.
+2. Harden the manifest so its container runs with no privilege escalation, a read-only root filesystem, all capabilities dropped, and as a non-root user.
+3. Reapply the hardened manifest, then re-scan it to confirm the score improved. Both the file and the live Deployment are graded.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-`kubesec` statically scores a workload manifest and lists specific advice (positive points for good settings, criticals for bad ones). You apply the recommended `securityContext` hardening and re-scan to confirm the score rose.
+`kubesec` statically scores a workload manifest and lists specific advice: positive points for good settings, criticals for dangerous ones. You apply the recommended `securityContext` hardening to the file, reapply it, and re-scan to confirm the score rose. The scan reads a file, so the fix belongs in the manifest, not only in a `kubectl patch`.
 
 **Solution — Step by Step:**
 
 ```bash
-kubesec scan app.yaml         # read the "advise" + "critical" lists
-```
-```yaml
-# Hardened pod
-apiVersion: v1
-kind: Pod
-metadata: {name: app}
+# 1. Read the advice
+kubesec scan /opt/course/15/deploy.yaml
+
+# 2. Harden the manifest
+cat > /opt/course/15/deploy.yaml <<'YAML'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: appsec
 spec:
-  securityContext: {runAsNonRoot: true, runAsUser: 1000}
-  containers:
-  - name: c
-    image: nginx
-    securityContext:
-      readOnlyRootFilesystem: true
-      allowPrivilegeEscalation: false
-      capabilities: {drop: ["ALL"]}
-    resources:
-      limits: {cpu: "200m", memory: "128Mi"}
-    volumeMounts: [{name: tmp, mountPath: /tmp}]
-  volumes: [{name: tmp, emptyDir: {}}]
-```
-```bash
-kubesec scan app.yaml         # score should be higher / criticals cleared
+  replicas: 1
+  selector:
+    matchLabels: {app: app}
+  template:
+    metadata:
+      labels: {app: app}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: c
+        image: nginx:1.27
+        securityContext:
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+        resources:
+          limits: {cpu: "200m", memory: "128Mi"}
+        volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {}}]
+YAML
+
+# 3. Reapply and re-scan
+kubectl apply -f /opt/course/15/deploy.yaml
+kubesec scan /opt/course/15/deploy.yaml    # score is now positive
 ```
 
 **Key Points to Remember:**
 
-- High-value fixes: drop `privileged`, set `readOnlyRootFilesystem`, `runAsNonRoot`, `capabilities.drop:[ALL]`, `allowPrivilegeEscalation:false`, add resource limits.
-- `readOnlyRootFilesystem: true` needs an `emptyDir` for any path the app writes (e.g. `/tmp`).
-- The task is graded on the **fixed manifest** — re-scan to prove it.
+- High-value fixes: no `privileged`, `readOnlyRootFilesystem: true`, `runAsNonRoot: true`, `capabilities.drop: [ALL]`, `allowPrivilegeEscalation: false`, `seccompProfile: RuntimeDefault`, plus resource limits.
+- `readOnlyRootFilesystem: true` needs an `emptyDir` for every path the app writes; the stock `nginx` image also writes `/var/cache/nginx` and `/var/run`.
+- Set `runAsNonRoot` on the pod, the container, or both; the container-level value wins.
+- The task is graded on the **fixed manifest**, so edit the file and re-scan to prove it.
 
 **Official Documentation:**
 - https://kubesec.io/ · https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
@@ -915,7 +1010,23 @@ kubesec scan app.yaml         # score should be higher / criticals cleared
 **Question**
 
 
-Falco is running on the node. Add a custom rule that fires at `WARNING` when a shell (`bash`/`sh`) is started inside any container, with an output line that includes the container name and process. Reload Falco without a full restart and confirm the rule triggers.
+**Host:** the worker node named in the setup output, as root (`ssh` to it, then `sudo -i`).
+
+Falco runs on that node, but `/etc/falco/falco_rules.local.yaml` holds no rules of your own.
+Deployment `shell-bot` in namespace `falco-lab` runs on the same node and execs a shell
+inside its container every five seconds, and nothing reports it.
+
+1. In `/etc/falco/falco_rules.local.yaml`, add a rule named `Shell spawned in container`:
+   - `condition`: an exec (`spawned_process`, or `evt.type = execve`) of a shell binary
+     (`proc.name in (bash, sh)`, or the `shell_binaries` list) inside a container, never on
+     the host (`container.id != host`, or the `container` macro).
+   - `output`: text that starts with `Shell spawned in container` and includes
+     `container=%container.name` and `proc=%proc.name`.
+   - `priority: WARNING`.
+2. Reload Falco so it picks the rule up without a full restart:
+   `kill -1 $(cat /var/run/falco.pid)`.
+3. Confirm the alert fires for `shell-bot`:
+   `journalctl -u falco-modern-bpf -u falco -f | grep 'Shell spawned in container'`.
 
 **Solution**
 
@@ -928,24 +1039,24 @@ Falco evaluates kernel syscall events against rules. Custom rules go in `/etc/fa
 
 ```yaml
 # /etc/falco/falco_rules.local.yaml
-- rule: Shell In Container
+- rule: Shell spawned in container
   desc: Detect a shell spawned inside a container
-  condition: container.id != host and proc.name in (bash, sh)
-  output: "Shell in container (container=%container.name proc=%proc.name user=%user.name)"
+  condition: spawned_process and container.id != host and proc.name in (bash, sh)
+  output: "Shell spawned in container (container=%container.name proc=%proc.name user=%user.name)"
   priority: WARNING
 ```
 ```bash
 # Reload without full restart
 sudo kill -1 $(cat /var/run/falco.pid)        # SIGHUP
-# Trigger + observe
-kubectl exec -it <somepod> -- sh
-sudo journalctl -fu falco | grep "Shell in container"
+# Trigger + observe (the unit is falco-modern-bpf on recent builds, falco on older ones)
+kubectl exec -n falco-lab deploy/shell-bot -- sh -c id
+sudo journalctl -u falco-modern-bpf -u falco -f | grep "Shell spawned in container"
 ```
 
 **Key Points to Remember:**
 
 - Put custom rules in `falco_rules.local.yaml`, not the default file.
-- **Reload after editing** (`kill -1 $(cat /var/run/falco.pid)` or `systemctl reload falco`) or the rule won't fire.
+- **Reload after editing** (`kill -1 $(cat /var/run/falco.pid)` or `systemctl restart falco-modern-bpf`) or the rule won't fire — the file on disk proves nothing.
 - Output fields use `%field`; common ones: `%container.name`, `%proc.name`, `%fd.name`, `%user.name`.
 
 **Official Documentation:**
@@ -962,7 +1073,23 @@ sudo journalctl -fu falco | grep "Shell in container"
 **Question**
 
 
-Configure API server auditing: log Secret access at `RequestResponse`, drop read-only (`get`/`list`/`watch`) noise, and log everything else at `Metadata`. Write logs to `/var/log/kubernetes/audit.log`. Confirm the log is being written.
+**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+
+Auditing is switched off on this cluster. `kube-apiserver` runs with no `--audit-*` flags, and
+the policy file `/etc/kubernetes/audit/policy.yaml` exists but its `rules:` list is empty. The
+log directory `/var/log/kubernetes/audit` has already been created for you.
+
+1. Complete `/etc/kubernetes/audit/policy.yaml` so that, evaluated in order, it:
+   - logs access to `secrets` at level `RequestResponse`,
+   - drops read-only noise (`get`, `list`, `watch`) at level `None`,
+   - logs everything else at level `Metadata`.
+2. Wire the policy into `kube-apiserver` in `/etc/kubernetes/manifests/kube-apiserver.yaml`:
+   - `--audit-policy-file=/etc/kubernetes/audit/policy.yaml`
+   - `--audit-log-path=/var/log/kubernetes/audit/audit.log`
+   Add the matching `volumes` and `volumeMounts` for `/etc/kubernetes/audit` (read-only) and
+   `/var/log/kubernetes/audit` (writable), or the API server will not come back up.
+3. Bring the API server back to ready and confirm that `/var/log/kubernetes/audit/audit.log`
+   grows when Secrets are read.
 
 **Solution**
 
@@ -987,18 +1114,20 @@ rules:
 ```yaml
 # kube-apiserver.yaml (back up first) — flags + mounts:
     - --audit-policy-file=/etc/kubernetes/audit/policy.yaml
-    - --audit-log-path=/var/log/kubernetes/audit.log
+    - --audit-log-path=/var/log/kubernetes/audit/audit.log
     - --audit-log-maxage=7
     volumeMounts:
     - {name: audit-policy, mountPath: /etc/kubernetes/audit, readOnly: true}
-    - {name: audit-logs,   mountPath: /var/log/kubernetes}
+    - {name: audit-logs,   mountPath: /var/log/kubernetes/audit}
   volumes:
   - {name: audit-policy, hostPath: {path: /etc/kubernetes/audit, type: DirectoryOrCreate}}
-  - {name: audit-logs,   hostPath: {path: /var/log/kubernetes, type: DirectoryOrCreate}}
+  - {name: audit-logs,   hostPath: {path: /var/log/kubernetes/audit, type: DirectoryOrCreate}}
 ```
 ```bash
 sudo crictl ps | grep apiserver
-sudo tail -f /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource=="secrets")'
+# no jq in the exam: grep the raw JSON lines instead
+kubectl get secrets -A >/dev/null
+sudo grep '"resource":"secrets"' /var/log/kubernetes/audit/audit.log | tail -1
 ```
 
 **Key Points to Remember:**
@@ -1021,34 +1150,49 @@ sudo tail -f /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource=="se
 **Question**
 
 
-Harden deployment `api` in namespace `prod` so its container runs with a read-only root filesystem and cannot escalate privileges, while still being able to write to `/tmp`.
+Deployment `api` in namespace `immutable-lab` runs `nginx` with a writable root filesystem.
+
+1. Harden the deployment so its container runs with a read-only root filesystem and cannot escalate privileges.
+2. Keep the container able to write to `/tmp`, and give nginx the writable paths it needs to start (`/var/cache/nginx` and `/var/run`), using `emptyDir` volumes.
+3. The pod must be Running when you are done, `touch /tmp/probe` inside the container must succeed, and `touch /etc/probe` must fail.
 
 **Solution**
 
 
 **Concept & Explanation:**
 
-A read-only root filesystem prevents an attacker from writing payloads or modifying binaries inside a running container. Any legitimately writable path is provided via an `emptyDir` mount so the app still works.
+A read-only root filesystem stops an attacker writing payloads or modifying binaries inside a running container. Every path the process legitimately writes then has to be provided as a volume. The stock `nginx` image writes its pid file under `/var/run` and its temp files under `/var/cache/nginx`, so without those mounts the container crashes on start; that failure is the lesson, not a bug.
 
 **Solution — Step by Step:**
 
 ```bash
-kubectl patch deploy api -n prod --type='json' -p='[
+kubectl patch deploy api -n immutable-lab --type='json' -p='[
   {"op":"add","path":"/spec/template/spec/containers/0/securityContext","value":{
      "readOnlyRootFilesystem": true,
-     "allowPrivilegeEscalation": false,
-     "runAsNonRoot": true}},
-  {"op":"add","path":"/spec/template/spec/volumes","value":[{"name":"tmp","emptyDir":{}}]},
-  {"op":"add","path":"/spec/template/spec/containers/0/volumeMounts","value":[{"name":"tmp","mountPath":"/tmp"}]}
+     "allowPrivilegeEscalation": false}},
+  {"op":"add","path":"/spec/template/spec/volumes","value":[
+     {"name":"tmp","emptyDir":{}},
+     {"name":"cache","emptyDir":{}},
+     {"name":"run","emptyDir":{}}]},
+  {"op":"add","path":"/spec/template/spec/containers/0/volumeMounts","value":[
+     {"name":"tmp","mountPath":"/tmp"},
+     {"name":"cache","mountPath":"/var/cache/nginx"},
+     {"name":"run","mountPath":"/var/run"}]}
 ]'
-kubectl rollout status deploy/api -n prod
+
+kubectl rollout status deploy/api -n immutable-lab
+
+# Prove the effect
+kubectl exec -n immutable-lab deploy/api -- touch /tmp/probe    # succeeds
+kubectl exec -n immutable-lab deploy/api -- touch /etc/probe    # Read-only file system
 ```
 
 **Key Points to Remember:**
 
-- `readOnlyRootFilesystem: true` + `emptyDir` for writable paths — without the emptyDir the app crashes if it writes.
-- Pair with `allowPrivilegeEscalation: false` and `runAsNonRoot: true` for the full hardening.
-- Verify: `kubectl exec ... -- touch /test` fails; `touch /tmp/test` succeeds.
+- `readOnlyRootFilesystem: true` plus an `emptyDir` for **every** writable path; miss one and the app CrashLoops.
+- Pair it with `allowPrivilegeEscalation: false`, and add `runAsNonRoot: true` and `capabilities.drop: [ALL]` when the task asks for full hardening.
+- The setting is per container, under `spec.template.spec.containers[].securityContext`, not on the pod.
+- Verify by effect: a write outside the mounted paths must fail while the pod stays Running.
 
 **Official Documentation:**
 - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/

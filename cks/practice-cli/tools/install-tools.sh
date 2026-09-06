@@ -12,8 +12,8 @@ gh_latest() { curl -s "https://api.github.com/repos/$1/releases/latest" | grep -
 i_trivy() {
   need trivy && return 0
   apt_install wget apt-transport-https gnupg
-  wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor -o /usr/share/keyrings/trivy.gpg
-  echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" > /etc/apt/sources.list.d/trivy.list
+  wget -qO- https://get.trivy.dev/deb/public.key | gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+  echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://get.trivy.dev/deb generic main" > /etc/apt/sources.list.d/trivy.list
   apt-get update -q >/dev/null && apt_install trivy
 }
 i_kube_bench() {
