@@ -1,0 +1,10 @@
+id=33
+title="Restrict TLS versions and ciphers"
+domain="Cluster Setup"
+domain_short=D1
+difficulty=Hard
+needs="node-root"
+weight=7
+minutes=8
+sources=12
+host=control-plane

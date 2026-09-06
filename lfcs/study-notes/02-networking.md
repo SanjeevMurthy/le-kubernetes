@@ -77,12 +77,8 @@ network:
     eth1:
       dhcp4: false
       addresses: [192.168.56.10/24, "2001:db8:56::10/64"]
-      routes:
-        - to: default
-          via: 192.168.56.1
-      nameservers:
-        addresses: [1.1.1.1, 9.9.9.9]
-        search: [lab.local]
+      routes: [{to: default, via: 192.168.56.1}]
+      nameservers: {addresses: [1.1.1.1, 9.9.9.9], search: [lab.local]}
 EOF
 chmod 600 /etc/netplan/60-eth1.yaml
 netplan get                                   # the merged configuration
@@ -106,16 +102,15 @@ nmcli con up eth1
 
 **Verify.**
 ```bash
-ip -br addr show eth1; ping -c1 192.168.56.1   # live effect
-grep -R '192.168.56.' /etc/netplan/           # Ubuntu persistence
+ip -br addr show eth1; ping -c1 192.168.56.1       # live effect
+grep -R '192.168.56.' /etc/netplan/                # Ubuntu persistence
 nmcli -g ipv4.method,ipv4.addresses con show eth1   # Rocky persistence, expect manual
 ```
 **Gotchas.**
-- `ip addr add` is the classic non-persistent answer. A grader that reboots the host sees nothing.
+- `ip addr add` is the classic non-persistent answer, and a grader that reboots the host sees nothing.
 - Netplan YAML uses two-space indent and no tab characters ever, and the file must be mode 600. A tab makes `netplan apply` fail with a parser error that names the wrong line.
 - `netplan try` reverts automatically if the session dies, which is the safe way to change the interface carrying the SSH session; `netplan apply` does not.
-- `nmcli` needs `ipv4.method manual`. Setting only `ipv4.addresses` leaves the connection on DHCP and the address is discarded.
-- The nmcli connection name and the device name are different things, and `+ipv4.addresses` appends where the bare property replaces the list.
+- `nmcli` needs `ipv4.method manual`, or the connection stays on DHCP and the address is discarded. The connection name and the device name are different things, and `+ipv4.addresses` appends where the bare property replaces the list.
 
 **Docs.** `man 5 netplan`, `man 8 netplan-apply`, `man 8 netplan-try`, `man 1 nmcli`, `man 5 nm-settings-nmcli`, `man 8 ip-address`.
 
@@ -128,15 +123,14 @@ nmcli -g ipv4.method,ipv4.addresses con show eth1   # Rocky persistence, expect 
 **Commands.**
 ```bash
 hostnamectl set-hostname node1.lab.local      # writes /etc/hostname, persistent
-hostnamectl status
-printf '192.168.56.90\tnode9.lab.local node9\n' >> /etc/hosts
+hostnamectl status; printf '192.168.56.90\tnode9.lab.local node9\n' >> /etc/hosts
 
 # DNS belongs in the network configuration, not in /etc/resolv.conf
 # Ubuntu: the nameservers block of the netplan file, then netplan apply
 # Rocky:  nmcli con mod eth1 ipv4.dns "1.1.1.1 9.9.9.9" ipv4.dns-search lab.local
 
 resolvectl status; resolvectl dns; resolvectl query node9
-getent hosts node9                            # follows /etc/nsswitch.conf, like a real lookup
+getent hosts node9                            # follows nsswitch.conf, like a real lookup
 dig +short @1.1.1.1 example.com; nslookup example.com; grep '^hosts:' /etc/nsswitch.conf
 ```
 **Verify.**
@@ -150,10 +144,8 @@ grep -R 'nameservers' -A3 /etc/netplan/ || nmcli -g ipv4.dns con show eth1
 ls -l /etc/resolv.conf                        # normally a symlink into /run/systemd/resolve
 ```
 **Gotchas.**
-- Editing `/etc/resolv.conf` directly is not persistent where `systemd-resolved` owns the file: it is a symlink and it is rewritten. Put the servers in netplan or nmcli.
-- `hostname node1` changes the running name only. `hostnamectl set-hostname` writes `/etc/hostname`.
-- `getent hosts` respects `nsswitch.conf` order, so it proves what an application would see. `dig` talks to DNS directly and skips `/etc/hosts` entirely.
-- Changing the resolver on the host that carries the SSH session can make later tasks fail to resolve the peer name. Test with `getent hosts <peer>` before leaving the host.
+- Editing `/etc/resolv.conf` directly is not persistent where `systemd-resolved` owns the file: it is a symlink and it is rewritten. Put the servers in netplan or nmcli. Likewise `hostname node1` changes the running name only, while `hostnamectl set-hostname` writes `/etc/hostname`.
+- `getent hosts` respects `nsswitch.conf` order, so it proves what an application would see, while `dig` talks to DNS directly and skips `/etc/hosts`. Changing the resolver can break peer name resolution for later tasks, so test with `getent hosts <peer>` before leaving the host.
 
 **Docs.** `man 1 hostnamectl`, `man 5 hostname`, `man 5 hosts`, `man 5 nsswitch.conf`, `man 1 resolvectl`, `man 5 resolved.conf`, `man 1 dig`.
 
@@ -187,15 +179,14 @@ chronyc sources -v; chronyc tracking; chronyc makestep
 chronyc sources | grep time.google.com        # live effect
 timedatectl show -p Timezone --value          # expect Asia/Kolkata
 timedatectl show -p NTPSynchronized --value
-
 systemctl is-enabled chrony 2>/dev/null || systemctl is-enabled chronyd   # persistence
 grep -E '^(server|pool|allow)' /etc/chrony/chrony.conf /etc/chrony.conf 2>/dev/null
 ls -l /etc/localtime                          # symlink into /usr/share/zoneinfo
 ```
 **Gotchas.**
-- `date -s` sets the clock now and fights the daemon, which steps it back. It is never the answer to a time-sync task.
-- `allow <subnet>` is what turns the host into an NTP server for clients. Without it chrony only consumes time.
-- `chrony` and `systemd-timesyncd` conflict. Enabling chrony masks timesyncd on most distributions, but check `timedatectl` for which one is active.
+- `date -s` sets the clock now and fights the daemon, which steps it back, so it is never the answer to a time-sync task.
+- `allow <subnet>` is what turns the host into an NTP server for clients; without it chrony only consumes time.
+- `chrony` and `systemd-timesyncd` conflict; enabling chrony usually masks timesyncd, but check `timedatectl` for which one is active. Serving time also needs 123/udp open.
 - `iburst` only speeds up the first polls, so `chronyc sources` can still show a question mark straight after a restart.
 
 **Docs.** `man 1 timedatectl`, `man 5 chrony.conf`, `man 1 chronyc`, `man 8 chronyd`, `man 8 systemd-timesyncd.service`.
@@ -210,8 +201,7 @@ ls -l /etc/localtime                          # symlink into /usr/share/zoneinfo
 ```bash
 ip -br link; ip -br a                         # is the interface up and addressed
 ip route; ip route get 10.99.22.2             # is there a path, and out of which NIC
-ss -tulpn                                     # what is listening, and on which address
-ss -H -ltn 'sport = :8082'
+ss -tulpn; ss -H -ltn 'sport = :8082'         # what is listening, and on which address
 ping -c3 10.99.22.2; tracepath 10.99.22.2
 nc -zv 10.99.22.1 8082                        # port reachability, no payload
 curl --max-time 3 -sS http://10.99.22.1:8082/
@@ -221,17 +211,15 @@ journalctl -u NetworkManager -b --no-pager | tail; ethtool eth1 | grep Link
 ```
 **Verify.**
 ```bash
-ss -H -ltn | grep ':8082'                     # expect 0.0.0.0:8082 or *:8082, not 127.0.0.1:8082
+ss -H -ltn | grep ':8082'                     # expect 0.0.0.0:8082, not 127.0.0.1:8082
 nft list ruleset | grep -c 8082               # expect no drop rule for the port
-curl --max-time 3 -sS http://10.99.22.1:8082/ # live effect, ideally run from the peer
-getent hosts node2                            # name resolution still works after the fix
+curl --max-time 3 -sS http://10.99.22.1:8082/ # live effect, run this from the peer
 ```
 **Gotchas.**
-- A socket shown as `127.0.0.1:8082` answers only the local host. The service configuration, not the firewall, is the fix.
-- A blocked ICMP reply makes `ping` fail on a host whose TCP port is wide open. Test the port, not the host.
-- Check the return path as well: a peer can reach the host while the host has no route back.
-- `tcpdump -n` avoids reverse DNS lookups, which otherwise stall the capture on a host with a broken resolver.
-- Two causes is the common shape of this task. Keep looking after the first fix and confirm end to end from the peer.
+- A socket shown as `127.0.0.1:8082` answers only the local host, and the fix is the service configuration, not the firewall. `ss -tulpn` names the owning process only when run as root.
+- A blocked ICMP reply makes `ping` fail on a host whose TCP port is wide open, so test the port and not the host.
+- Check the return path as well: a peer can reach the host while the host has no route back. `tcpdump -n` avoids reverse DNS lookups, which stall a capture on a host with a broken resolver.
+- Two causes is the common shape of this task: keep looking after the first fix and confirm end to end from the peer.
 
 **Docs.** `man 8 ss`, `man 8 ip-route`, `man 8 tcpdump`, `man 1 ncat`, `man 8 ethtool`, `man 1 curl`, `man 8 tracepath`.
 
@@ -268,16 +256,13 @@ ssh -L 8443:127.0.0.1:443 node2; ssh -R 9000:127.0.0.1:9000 node2   # local and 
 sshd -T | grep -E 'permitrootlogin no|passwordauthentication no|maxauthtries 3'
 sshd -T -C user=deploy,host=node1,addr=127.0.0.1 | grep passwordauthentication   # expect yes
 ssh -i /root/.ssh/id_deploy -o BatchMode=yes deploy@localhost true && echo key-login-ok
-
 stat -c '%a %U %G' /home/deploy/.ssh/authorized_keys   # expect 600 deploy deploy
 systemctl is-enabled ssh 2>/dev/null || systemctl is-enabled sshd   # persistence
 ```
 **Gotchas.**
-- `sshd -T` prints the effective configuration and is the only honest check. Reading the file misses `Include` files and defaults.
-- OpenSSH takes the first occurrence of a keyword, so a drop-in only wins when its `Include` line comes before the setting in the main file. Ubuntu ships that `Include` at the top; on Rocky check that it is there before relying on `sshd_config.d`.
+- `sshd -T` prints the effective configuration and is the only honest check, because reading the file misses `Include` files and defaults. OpenSSH takes the first occurrence of a keyword, so a drop-in wins only when the `Include` line comes before the setting in the main file: Ubuntu ships it at the top, and Rocky should be checked.
 - `authorized_keys` must be mode 600 and owned by the user, and the home directory must not be group writable, or sshd ignores the key without saying so.
-- Never restart sshd without a second working session open and `sshd -t` clean. A syntax error with no running daemon is unrecoverable over the network.
-- Recent Ubuntu uses socket activation, so `systemctl restart ssh` may not rebind the port. `systemctl restart ssh.socket` does.
+- Never restart sshd without a second working session open and `sshd -t` clean; a syntax error with no running daemon is unrecoverable over the network. Recent Ubuntu uses socket activation, so `systemctl restart ssh.socket` is what rebinds the port.
 
 **Docs.** `man 5 sshd_config`, `man 8 sshd`, `man 5 ssh_config`, `man 1 ssh`, `man 1 ssh-keygen`, `man 1 ssh-copy-id`.
 
@@ -347,8 +332,8 @@ ufw status verbose 2>/dev/null; firewall-cmd --permanent --list-all 2>/dev/null
 for p in 8080 4505 4506; do nft list ruleset | grep -q "$p" && echo "$p referenced"; done
 ```
 **Gotchas.**
-- Ports 8080, 4505 and 4506 must stay reachable. Check the saved file too, because a persisted default-drop policy blocks them on the next boot even if the live ruleset was fine.
-- `nft flush ruleset` deletes the rules ufw and firewalld installed as well, because both front ends drive nftables underneath. Mixing raw `nft` with either one works only until the front end reloads. Choose one tool per host.
+- Ports 8080, 4505 and 4506 must stay reachable. Check the saved file too: a persisted default-drop policy blocks them on the next boot even when the live ruleset was fine. Accept rules go in before the drop policy, or the SSH session dies on the spot.
+- `nft flush ruleset` deletes the rules ufw and firewalld installed too, because both drive nftables underneath. Mixing raw `nft` with either one works only until the front end reloads, so choose one tool per host.
 - `iptables -V` usually reports `nf_tables`, so `iptables` commands become nftables rules in a separate table: read both `iptables -S` and `nft list ruleset`. `-I` inserts at the top, `-A` appends, and an accept appended after a drop never matches.
 - A rule added with `nft add` is gone at the next boot unless the ruleset is written to the distribution file and the `nftables` service is enabled. Check both, not just the file.
 
@@ -407,7 +392,7 @@ systemctl is-enabled nftables; firewall-cmd --permanent --list-forward-ports 2>/
 ```
 **Gotchas.**
 - `sysctl -w net.ipv4.ip_forward=1` is runtime only. The drop-in under `/etc/sysctl.d` is the half that survives the reboot, and a NAT task is graded on both.
-- The prerouting hook never sees locally generated traffic. Testing a redirect with `curl localhost:8081` on the same host fails even when the rule is correct; test from the peer, or add an output chain rule.
+- The prerouting hook never sees locally generated traffic, so `curl localhost:8081` fails even when the rule is correct. Test from the peer, or add an output chain rule.
 - `nat` chains need a priority. Use the named values `dstnat` for prerouting and `srcnat` for postrouting.
 - The nat table is consulted only for the first packet of a connection, so flush conntrack with `conntrack -F` after changing a rule or the old translation persists. Chain priorities are `dstnat` for prerouting and `srcnat` for postrouting.
 - `REDIRECT` sends traffic to a port on this host; `DNAT` sends it to another host. Both, and masquerade, need forwarding on and a filter forward chain that accepts, or no packet moves.
@@ -422,8 +407,7 @@ systemctl is-enabled nftables; firewall-cmd --permanent --list-forward-ports 2>/
 
 **Commands.**
 ```bash
-ip route
-ip -j route                                   # machine readable
+ip route; ip -j route                         # human and machine readable
 ip route get 10.200.0.5                       # which route would actually be used
 ip route add 10.200.0.0/16 via 192.168.56.1 dev eth1    # runtime only
 ip route del 10.200.0.0/16
@@ -447,15 +431,13 @@ nmcli con up eth1
 ```bash
 ip -j route | grep 10.200.0.0/16               # live effect
 ip route get 10.200.0.5                        # expect via 192.168.56.1 dev eth1
-
 grep -A3 'routes' /etc/netplan/*.yaml          # Ubuntu persistence
 nmcli -g ipv4.routes con show eth1             # Rocky persistence
 ```
 **Gotchas.**
-- A route added with `ip route add` is gone at the next boot. Only the netplan file or the nmcli connection persists it.
-- The gateway must already be reachable on a directly connected subnet, otherwise the kernel rejects the route with "Nexthop has invalid gateway".
-- Netplan's `gateway4:` key is deprecated and ignored on recent releases. Write `- to: default` inside `routes:` instead.
-- `+ipv4.routes` appends; plain `ipv4.routes` replaces the whole list and can drop the default route.
+- A route added with `ip route add` is gone at the next boot; only the netplan file or the nmcli connection persists it.
+- The gateway must already be reachable on a directly connected subnet, or the kernel rejects the route with "Nexthop has invalid gateway". `ip route get` shows the route the kernel actually picks, including metric ties that `ip route` hides.
+- Netplan's `gateway4:` key is deprecated and ignored on recent releases; write `- to: default` inside `routes:` instead. In nmcli, `+ipv4.routes` appends where the bare property replaces the whole list.
 
 **Docs.** `man 8 ip-route`, `man 5 netplan`, `man 1 nmcli`, `man 5 nm-settings-nmcli`.
 
@@ -509,7 +491,7 @@ grep -R 'br0' /etc/netplan/                    # Ubuntu persistence
 nmcli -g connection.type,connection.slave-type con show br0-eth1   # Rocky persistence
 ```
 **Gotchas.**
-- A bridge member cannot keep its own IP address. Move the address to the bridge in the same change, or the host loses connectivity the moment the member is enslaved. Work on a NIC that is not carrying the SSH session.
+- A bridge member cannot keep its own IP address: move the address to the bridge in the same change, on a NIC that is not carrying the SSH session.
 - `ip link` alone does not show which bridge a NIC belongs to; `bridge link` and `ip -d link show eth1` do. With STP enabled a new port takes around 30 seconds to start forwarding, so an immediate test can fail on a correct configuration.
 - Bond modes have names and numbers: `active-backup` and `1` are the same. `miimon` must be set or link failures go undetected.
 
@@ -558,10 +540,10 @@ systemctl is-enabled nginx                    # persistence
 getsebool httpd_can_network_connect 2>/dev/null   # Rocky, expect on
 ```
 **Gotchas.**
-- On Rocky an unset `httpd_can_network_connect` gives a 502 with a perfectly correct nginx configuration. It is the single most common silent failure in this recipe.
-- `proxy_pass http://backend;` passes the URI through unchanged; `proxy_pass http://backend/;` with the trailing slash strips the matched location prefix. The two behave differently and the task usually cares.
-- Ubuntu's packaged default site listens on port 80 and answers first. Remove the symlink in `sites-enabled` or the proxy never sees a request.
-- The firewall still applies: a working proxy on the loopback interface proves nothing about reachability from a peer. Most backends also need `proxy_set_header Host $host` to route correctly.
+- On Rocky an unset `httpd_can_network_connect` gives a 502 with a perfectly correct nginx configuration, and it is the most common silent failure here.
+- `proxy_pass http://backend;` passes the URI through unchanged; the same line with a trailing slash strips the matched location prefix. The task usually cares which one is used.
+- Ubuntu's packaged default site listens on port 80 and answers first, so remove its symlink in `sites-enabled`.
+- The firewall still applies: a proxy working on loopback proves nothing about reachability from a peer. Most backends also need `proxy_set_header Host $host` to route correctly. `systemctl reload` keeps connections and `restart` drops them, and neither survives a reboot without `enable`.
 
 **Docs.** `man 8 nginx`, `/usr/share/doc/nginx` for the packaged example configuration, `man 1 haproxy`, `/usr/share/doc/haproxy/configuration.txt.gz`, `man 8 setsebool`.
 
@@ -576,8 +558,7 @@ getsebool httpd_can_network_connect 2>/dev/null   # Rocky, expect on
 # Server
 mkdir -p /srv/share && echo marker > /srv/share/marker
 echo '/srv/share 10.0.0.0/8(rw,sync,no_subtree_check,no_root_squash)' >> /etc/exports
-exportfs -ra                                  # re-export everything after every edit
-exportfs -v
+exportfs -ra; exportfs -v                     # re-export after every edit, then read it back
 systemctl enable --now nfs-kernel-server      # Ubuntu; nfs-server on Rocky
 firewall-cmd --permanent --add-service=nfs --add-service=rpc-bind --add-service=mountd
 firewall-cmd --reload
@@ -594,16 +575,14 @@ exportfs -v | grep /srv/share                 # server side, check rw or ro and 
 findmnt -no FSTYPE,SOURCE /mnt/share          # live effect, expect nfs4 and the server path
 cat /mnt/share/marker
 
-grep /mnt/share /etc/fstab                    # persistence
-findmnt --verify                              # the fstab line is valid
+grep /mnt/share /etc/fstab; findmnt --verify  # persistence, and the fstab line is valid
 umount /mnt/share && mount -a && findmnt /mnt/share   # proves the fstab line really mounts
 ```
 **Gotchas.**
-- `ro` against `rw`, and `root_squash` against `no_root_squash`, are single words that decide the grade. Re-read the task before leaving the host.
-- A space between the network and the opening parenthesis in `/etc/exports` exports the share to the whole world with default options. It is silent and it is wrong.
-- `_netdev` tells systemd the mount needs the network. Without it a boot can hang for a minute and a half waiting for an unreachable server. `x-systemd.automount` defers the mount until first access, which is safer still.
-- The server unit is `nfs-kernel-server` on Ubuntu and `nfs-server` on Rocky, from packages `nfs-kernel-server` and `nfs-utils`.
-- NFSv4 needs only 2049/tcp. NFSv3 also needs 111 and the mountd and statd ports, which is why the firewalld services exist as a set.
+- `ro` against `rw`, and `root_squash` against `no_root_squash`, are single words that decide the grade, so re-read the task before leaving the host. A space between the network and the opening parenthesis in `/etc/exports` silently exports the share to the whole world with default options.
+- `_netdev` tells systemd the mount needs the network; without it a boot can hang waiting for an unreachable server. `x-systemd.automount` defers the mount until first access, which is safer still.
+- The server unit is `nfs-kernel-server` on Ubuntu and `nfs-server` on Rocky, from `nfs-kernel-server` and `nfs-utils`.
+- NFSv4 needs only 2049/tcp; NFSv3 also needs 111 and the mountd and statd ports, which is why the firewalld services come as a set.
 
 **Docs.** `man 5 exports`, `man 8 exportfs`, `man 5 nfs` for the mount options, `man 8 mount.nfs`, `man 5 fstab`, `man 8 showmount`, `man 5 systemd.mount`.
 
