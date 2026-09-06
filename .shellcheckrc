@@ -1,0 +1,5 @@
+# Repo-wide shellcheck settings for the practice CLIs.
+# SC2034: lib/colors.sh defines colour and icon variables consumed by scripts that source it,
+#         so shellcheck cannot see the uses.
+# SC2155: `local x=$(cmd)` is deliberate throughout the CLIs; none of these call sites inspect $?.
+disable=SC2034,SC2155

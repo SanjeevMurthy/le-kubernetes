@@ -42,7 +42,7 @@ else
 fi
 
 echo "Checking only one default StorageClass exists..."
-DEFAULT_COUNT=$(kubectl get storageclass -o json 2>/dev/null | grep -c '"storageclass.kubernetes.io/is-default-class":"true"' || true)
+DEFAULT_COUNT=$(kubectl get storageclass -o jsonpath='{range .items[*]}{.metadata.annotations.storageclass\.kubernetes\.io/is-default-class}{"\n"}{end}' 2>/dev/null | grep -cx true || true)
 if [[ "$DEFAULT_COUNT" -eq 1 ]]; then
   echo "  PASS: Exactly one default StorageClass exists"
   ((PASS++))

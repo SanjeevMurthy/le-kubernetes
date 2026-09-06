@@ -1,16 +1,26 @@
 #!/bin/bash
-# Q15 — Verify
+# Q15 — Static analysis & manifest hardening: Verify
 PASS=0; FAIL=0
-B="kubectl get deploy app -n appsec -o jsonpath"
-RORF=$($B='{.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem}' 2>/dev/null)
-APE=$($B='{.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation}' 2>/dev/null)
-DROP=$(kubectl get deploy app -n appsec -o json 2>/dev/null | grep -o '"drop":\["ALL"\]')
-NONROOT=$($B='{.spec.template.spec.containers[0].securityContext.runAsNonRoot}' 2>/dev/null)
-[[ -z "$NONROOT" ]] && NONROOT=$($B='{.spec.template.spec.securityContext.runAsNonRoot}' 2>/dev/null)
 
-echo "readOnlyRootFilesystem == true ..."; if [[ "$RORF" == "true" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL ($RORF)"; ((FAIL++)); fi
-echo "allowPrivilegeEscalation == false ..."; if [[ "$APE" == "false" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL ($APE)"; ((FAIL++)); fi
-echo "capabilities drop ALL ..."; if [[ -n "$DROP" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL"; ((FAIL++)); fi
-echo "runAsNonRoot == true ..."; if [[ "$NONROOT" == "true" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL ($NONROOT)"; ((FAIL++)); fi
+jp() { kubectl get deploy app -n appsec -o jsonpath="$1" 2>/dev/null; }
+
+RORF=$(jp '{.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem}')
+APE=$(jp '{.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation}')
+DROP=$(jp '{.spec.template.spec.containers[0].securityContext.capabilities.drop[*]}' | tr ' ' '\n' | grep -x 'ALL')
+NONROOT=$(jp '{.spec.template.spec.containers[0].securityContext.runAsNonRoot}')
+[[ -z "$NONROOT" ]] && NONROOT=$(jp '{.spec.template.spec.securityContext.runAsNonRoot}')
+
+echo "readOnlyRootFilesystem == true ..."
+if [[ "$RORF" == "true" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL (got '$RORF')"; ((FAIL++)); fi
+
+echo "allowPrivilegeEscalation == false ..."
+if [[ "$APE" == "false" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL (got '$APE')"; ((FAIL++)); fi
+
+echo "capabilities drop ALL ..."
+if [[ -n "$DROP" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL (capabilities.drop does not contain ALL)"; ((FAIL++)); fi
+
+echo "runAsNonRoot == true ..."
+if [[ "$NONROOT" == "true" ]]; then echo "  PASS"; ((PASS++)); else echo "  FAIL (got '$NONROOT')"; ((FAIL++)); fi
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]]

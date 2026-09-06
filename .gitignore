@@ -30,3 +30,8 @@ dropbox.zip
 minikube/
 x-prompt/
 *todo*.md
+
+# Practice CLI runtime state
+.timer
+.progress
+*.set.results

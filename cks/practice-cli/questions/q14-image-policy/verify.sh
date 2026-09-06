@@ -4,8 +4,8 @@ PASS=0; FAIL=0
 OK=0
 # Option A: Kyverno enforce policy referencing registry.internal
 if kubectl get crd clusterpolicies.kyverno.io &>/dev/null; then
-  if kubectl get clusterpolicy -o json 2>/dev/null | grep -q 'registry.internal' && \
-     kubectl get clusterpolicy -o json 2>/dev/null | grep -qi '"validationFailureAction":"[Ee]nforce"'; then
+  if kubectl get clusterpolicy -o yaml 2>/dev/null | grep -q 'registry\.internal' && \
+     kubectl get clusterpolicy -o jsonpath='{.items[*].spec.validationFailureAction}' 2>/dev/null | grep -qi 'enforce'; then
     OK=1; echo "  PASS: Kyverno Enforce policy restricting registry.internal found"
   fi
 fi

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # minikube commands
 
 # 1. Start Minikube Tunnel
