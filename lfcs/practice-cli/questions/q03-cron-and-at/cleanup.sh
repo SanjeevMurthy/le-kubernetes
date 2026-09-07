@@ -25,9 +25,11 @@ if crontab -l >/dev/null 2>&1; then
 fi
 restore_file "$CRONDIR/root" q03
 
-userdel -r backupop >/dev/null 2>&1
+# Only if setup created it. An account the host already had is not this
+# question's to delete.
+[[ "$(cat "$STATE/created-user" 2>/dev/null)" == yes ]] && userdel -r backupop >/dev/null 2>&1
 rm -f /usr/local/bin/backup.sh /usr/local/bin/cleanup.sh
 rm -f /var/log/lfcs-backup.log /var/log/lfcs-cleanup.log
 rm -rf "${LFCS_STATE_DIR:?}/q03"
 
-echo "Cleanup complete. User backupop, both scripts, both crontabs and the new at jobs are gone."
+echo "Cleanup complete. Both scripts, both crontabs and the new at jobs are gone, and user backupop was removed only if this question created it."

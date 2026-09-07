@@ -15,11 +15,12 @@
 **1. Find the busiest process.**
 
 ```bash
-top -b -n 1 -o %CPU | head -12
-ps -eo pid,pcpu,pmem,comm --sort=-pcpu | head -5
+top -b -n 1 -c -o %CPU | head -12
+ps -eo pid,pcpu,pmem,args --sort=-pcpu | head -5
+pgrep -af lfcs-burner
 ```
 
-Both put the same process at the top. It runs as `lfcs-burner`.
+All three put the same process at the top, and its command line begins with `lfcs-burner`. Its `comm` is `sha256sum`, because the burner was started with `exec -a`, which renames only `argv[0]` and leaves the executable name alone. That is why the commands above read the full command line: `ps -o comm`, and `top` without `-c`, print `sha256sum`, and `pgrep lfcs-burner` without `-f` finds nothing at all. Only `args` and `pgrep -f` see the name.
 
 **2. Write the five files.**
 
@@ -60,7 +61,7 @@ Write only the value asked for. A grader matching a bare number fails on `PID: 1
 cd /opt/course/39
 cat cpu.txt cores.txt load.txt mem.txt procs.txt
 
-ps -p "$(cat cpu.txt)" -o pid,pcpu,comm --no-headers
+ps -p "$(cat cpu.txt)" -o pid,pcpu,args --no-headers   # the lfcs-burner command line
 nproc
 cat /proc/loadavg
 free -m

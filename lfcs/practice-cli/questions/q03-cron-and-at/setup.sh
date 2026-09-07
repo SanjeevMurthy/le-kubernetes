@@ -16,6 +16,17 @@ fi
 command -v at >/dev/null 2>&1 || pkg_install at
 systemctl enable --now atd >/dev/null 2>&1
 
+# Record whether this question created the account before creating it, so
+# cleanup deletes only what it made. A host with a real backupop account keeps
+# it and its home directory. The record is written once, so a second setup run
+# does not overwrite the first answer.
+if [[ ! -f "$STATE/created-user" ]]; then
+  if id backupop >/dev/null 2>&1; then
+    echo no > "$STATE/created-user"
+  else
+    echo yes > "$STATE/created-user"
+  fi
+fi
 id backupop >/dev/null 2>&1 || useradd -m -s /bin/bash backupop
 
 cat > /usr/local/bin/backup.sh <<'SHEOF'

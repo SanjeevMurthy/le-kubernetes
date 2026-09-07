@@ -33,9 +33,11 @@ else
   echo "  Warning: sshd -t still reports an error. The running daemon was left alone."
 fi
 
-userdel -r deploy >/dev/null 2>&1
+# Only if setup created it. An account the host already had is not this
+# question's to delete.
+[[ "$(cat "$STATE/created-user" 2>/dev/null)" == yes ]] && userdel -r deploy >/dev/null 2>&1
 rm -rf "${COURSE_DIR:?}/16"
 rm -rf "${LFCS_STATE_DIR:?}/q16"
 
 echo "Cleanup complete."
-echo "  The original sshd configuration is back, the daemon reloaded it, and the deploy user is gone."
+echo "  The original sshd configuration is back, the daemon reloaded it, and the deploy user was removed only if this question created it."

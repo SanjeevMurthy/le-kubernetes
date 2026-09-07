@@ -24,6 +24,17 @@ list_dropins() {
   return 0
 }
 
+# Record whether this question created the account before creating it, so
+# cleanup deletes only what it made. A host with a real deploy account keeps it
+# and its home directory. The record is written once, so a second setup run does
+# not overwrite the first answer.
+if [[ ! -f "$STATE/created-user" ]]; then
+  if id deploy >/dev/null 2>&1; then
+    echo no > "$STATE/created-user"
+  else
+    echo yes > "$STATE/created-user"
+  fi
+fi
 id deploy >/dev/null 2>&1 || useradd -m -s /bin/bash deploy
 rm -rf /home/deploy/.ssh
 

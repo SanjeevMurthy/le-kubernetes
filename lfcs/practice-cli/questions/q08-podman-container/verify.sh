@@ -13,13 +13,20 @@ http_get() {
   fi
 }
 
+# A rootful publish is a netavark DNAT rule rather than a socket the host holds
+# open, so ss can show nothing at all for a container that is serving perfectly.
+# Connecting to the port is the proof; the socket table is only a hint.
+port_connects() { timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'; }
+
 echo "Checking the container is running..."
 check "a container named web exists" podman container exists web
 check_eq "web is running" "running" "$(pf '{{.State.Status}}')"
 
 echo "Checking it serves the page on 8080..."
+check "port 8080 on the host accepts a TCP connection" port_connects
 check_contains "curl localhost:8080 returns hello" "hello" "$(http_get http://localhost:8080/)"
-check_contains "something is listening on 8080" ":8080" "$(ss -H -ltn 2>/dev/null)"
+echo "  note: ss -ltn reports $(ss -H -ltn 2>/dev/null | grep -c ':8080') listening socket(s) on :8080."
+echo "  Zero there is normal for a rootful publish and is not a failure; the two checks above decide it."
 
 echo "Checking the limits and the mount..."
 check_eq "the memory cap is 256 MB in bytes" "268435456" "$(pf '{{.HostConfig.Memory}}')"

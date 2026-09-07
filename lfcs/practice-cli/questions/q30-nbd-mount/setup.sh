@@ -13,6 +13,30 @@ NS=nbd-peer
 IMG="$STATE/export.img"
 CONF="$STATE/nbd-server.conf"
 
+# The nbd module can be declared for boot in /etc/modules-load.d/*.conf or in
+# /etc/modules, and verify.sh accepts either. Reset both, so an answer left by an
+# earlier run cannot make the persistence check pass for free. Every file this
+# touches is backed up and listed in $STATE/modfiles, so cleanup can put back a
+# declaration the host legitimately had instead of deleting it.
+strip_nbd_boot_config() {
+  local f tmp
+  for f in /etc/modules /etc/modules-load.d/*.conf; do
+    [[ -f "$f" ]] || continue
+    grep -Eq '^[[:space:]]*nbd[[:space:]]*$' "$f" || continue
+    backup_file "$f" q30
+    grep -Fxq "$f" "$STATE/modfiles" 2>/dev/null || echo "$f" >> "$STATE/modfiles"
+    tmp="$f.lfcs-q30"
+    awk '!/^[[:space:]]*nbd[[:space:]]*$/' "$f" > "$tmp" && cat "$tmp" > "$f"
+    rm -f "$tmp"
+    # A drop-in that existed only to load nbd goes away rather than being left
+    # empty; its backup, if it had one, is restored by cleanup.
+    if [[ "$f" == /etc/modules-load.d/* ]] && ! grep -q '[^[:space:]]' "$f"; then
+      rm -f "$f"
+    fi
+  done
+  return 0
+}
+
 if ! command -v nbd-server >/dev/null 2>&1; then
   if [[ "$(distro)" == ubuntu ]]; then pkg_install nbd-server; else pkg_install nbd; fi
 fi
@@ -39,7 +63,10 @@ if [[ -f /etc/fstab ]]; then
     cat "$STATE/fstab.tmp" > /etc/fstab
   rm -f "$STATE/fstab.tmp"
 fi
-rm -f /etc/modules-load.d/nbd.conf
+# Its existence also tells cleanup that setup ran, so cleanup never edits the
+# boot module configuration of a host this question was never set up on.
+[[ -f "$STATE/modfiles" ]] || : > "$STATE/modfiles"
+strip_nbd_boot_config
 rm -rf "$COURSE_DIR/30"
 
 # The exported image, with the marker the candidate has to read back.

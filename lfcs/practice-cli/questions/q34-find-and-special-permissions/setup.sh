@@ -9,7 +9,26 @@ DIR=$(course_dir 34)
 STATE="$LFCS_STATE_DIR/q34"
 mkdir -p "$STATE"
 
+# Record whether this question created the group and the account before creating
+# either, so cleanup deletes only what it made. A host that already has a devs
+# group or a real auditor user keeps them, home directory and all. The records
+# are written once: a second setup run must not overwrite the first answer.
+if [[ ! -f "$STATE/created-group" ]]; then
+  if getent group devs >/dev/null 2>&1; then
+    echo no > "$STATE/created-group"
+  else
+    echo yes > "$STATE/created-group"
+  fi
+fi
 getent group devs >/dev/null 2>&1 || groupadd devs
+
+if [[ ! -f "$STATE/created-user" ]]; then
+  if id auditor >/dev/null 2>&1; then
+    echo no > "$STATE/created-user"
+  else
+    echo yes > "$STATE/created-user"
+  fi
+fi
 id auditor >/dev/null 2>&1 || useradd -m -s /bin/bash auditor
 usermod -aG devs auditor
 
