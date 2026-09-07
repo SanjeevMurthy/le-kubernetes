@@ -6,91 +6,6 @@
 > Allowed documentation: kubernetes.io docs and blog, falco.org, the bom CLI reference, etcd.io,
 > the ingress-nginx user guide, docs.cilium.io and istio.io. Nothing else, and there is no `jq`.
 
-<!-- toc -->
-## Table of Contents
-
-- [Question index](#question-index)
-  - [Q1. NetworkPolicy: Default-Deny + Selective Allow](#q1-networkpolicy-default-deny--selective-allow)
-  - [Q2. CIS Benchmark Remediation with kube-bench](#q2-cis-benchmark-remediation-with-kube-bench)
-  - [Q3. Ingress TLS Termination](#q3-ingress-tls-termination)
-  - [Q4. RBAC Least-Privilege Role + Binding](#q4-rbac-least-privilege-role--binding)
-  - [Q5. ServiceAccount Token Hardening](#q5-serviceaccount-token-hardening)
-  - [Q6. Restrict the API Server (apiserver flags)](#q6-restrict-the-api-server-apiserver-flags)
-  - [Q7. AppArmor Profile on a Pod](#q7-apparmor-profile-on-a-pod)
-  - [Q8. Seccomp RuntimeDefault + Custom Profile](#q8-seccomp-runtimedefault--custom-profile)
-  - [Q9. Enforce Pod Security Admission (restricted)](#q9-enforce-pod-security-admission-restricted)
-  - [Q10. Encrypt Secrets at Rest (EncryptionConfiguration)](#q10-encrypt-secrets-at-rest-encryptionconfiguration)
-  - [Q11. Admission Policy with Kyverno/Gatekeeper](#q11-admission-policy-with-kyvernogatekeeper)
-  - [Q12. Runtime Sandbox with RuntimeClass (gVisor)](#q12-runtime-sandbox-with-runtimeclass-gvisor)
-  - [Q13. Scan Images with Trivy and Remediate](#q13-scan-images-with-trivy-and-remediate)
-  - [Q14. Restrict Images via ImagePolicyWebhook/Registry](#q14-restrict-images-via-imagepolicywebhookregistry)
-  - [Q15. Static Analysis & Manifest Hardening (kubesec)](#q15-static-analysis--manifest-hardening-kubesec)
-  - [Q16. Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules)
-  - [Q17. API Server Audit Logging Policy](#q17-api-server-audit-logging-policy)
-  - [Q18. Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem)
-  - [Q19. Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts)
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-  - [Q20. Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret)
-- [Steps](#steps-1)
-- [Why](#why-1)
-- [Verify](#verify-1)
-- [Docs](#docs-1)
-  - [Q21. ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images)
-- [Steps](#steps-2)
-- [Why](#why-2)
-- [Verify](#verify-2)
-- [Docs](#docs-2)
-  - [Q22. kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings)
-- [Steps](#steps-3)
-- [Why](#why-3)
-- [Verify](#verify-3)
-- [Docs](#docs-3)
-  - [Q23. The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest)
-- [Steps](#steps-4)
-- [Why](#why-4)
-- [Verify](#verify-4)
-- [Docs](#docs-4)
-  - [Q24. Block the cloud metadata endpoint](#q24-block-the-cloud-metadata-endpoint)
-- [Steps](#steps-5)
-- [Why](#why-5)
-- [Verify](#verify-5)
-- [Docs](#docs-5)
-  - [Q25. Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd)
-- [Steps](#steps-6)
-- [Why](#why-6)
-- [Verify](#verify-6)
-- [Docs](#docs-6)
-  - [Q26. Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt)
-- [Steps](#steps-7)
-- [Why](#why-7)
-- [Verify](#verify-7)
-- [Docs](#docs-7)
-  - [Q27. Fix two issues in the Dockerfile and two in the manifest](#q27-fix-two-issues-in-the-dockerfile-and-two-in-the-manifest)
-- [Steps](#steps-8)
-- [Why](#why-8)
-- [Verify](#verify-8)
-- [Docs](#docs-8)
-  - [Q28. Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg)
-- [Steps](#steps-9)
-- [Why](#why-9)
-- [Verify](#verify-9)
-- [Docs](#docs-9)
-  - [Q29. Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount)
-- [Steps](#steps-10)
-- [Why](#why-10)
-- [Verify](#verify-10)
-- [Docs](#docs-10)
-  - [Q30. seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile)
-- [Steps](#steps-11)
-- [Why](#why-11)
-- [Verify](#verify-11)
-- [Docs](#docs-11)
-
-<!-- toc stop -->
-
 ## Question index
 
 | # | Domain | Question | Reports | Needs |
@@ -125,6 +40,10 @@
 | Q28 | D4 | [Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg) | 10 sources | `node-root tool:runsc` |
 | Q29 | D2 | [Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount) | 10 sources | `kubectl` |
 | Q30 | D3 | [seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile) | 5 sources | `node-root` |
+| Q31 | D6 | [Falco: identify the offending pod and stop it](#q31-falco-identify-the-offending-pod-and-stop-it) | 15 sources | `node-root tool:falco` |
+| Q32 | D6 | [Audit: ordered policy and retention flags](#q32-audit-ordered-policy-and-retention-flags) | 13 sources | `node-root` |
+| Q33 | D1 | [Restrict TLS versions and ciphers](#q33-restrict-tls-versions-and-ciphers) | 12 sources | `node-root` |
+| Q34 | D3 | [AppArmor: the profile name is not the file name](#q34-apparmor-the-profile-name-is-not-the-file-name) | 12 sources | `node-root tool:apparmor_parser` |
 
 ---
 
@@ -1322,6 +1241,16 @@ Falco documentation is one of the few sources allowed in the exam. The field nam
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the worker node, as root.
@@ -1447,6 +1376,16 @@ Only the deletion of `db-creds` in `finance` counts. Other Secrets were deleted 
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Set the log path once. On a real exam host this is `/opt/course/20/audit.log`.
@@ -1555,6 +1494,16 @@ Read the kubeconfig before you wire it in. An API server started against an admi
 
 **Solution**
 
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
 
 ## Steps
 
@@ -1747,6 +1696,16 @@ Do not edit anything under `/etc/kubernetes/manifests/` for this question. Every
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the worker node, as root.
@@ -1911,6 +1870,16 @@ The kubelet rescans `/etc/kubernetes/manifests/` roughly every 20 seconds, so gi
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 Everything happens on the control-plane node, as root.
@@ -2034,6 +2003,16 @@ The `app` pods must stay `Running`, and a pod labelled `app=app` must still be a
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 **1. Look at what is there.**
@@ -2150,6 +2129,16 @@ The value is generated fresh every time this question is set up, so it cannot be
 
 **Solution**
 
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
 
 ## Steps
 
@@ -2275,6 +2264,16 @@ Do not delete `key1` from the configuration and do not delete the Secrets.
 
 **Solution**
 
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
 
 ## Steps
 
@@ -2420,6 +2419,16 @@ Nothing is applied to a cluster. Both files are graded as text.
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 **1. Read both files first.** Four lines change in total, so find them before typing anything.
@@ -2523,6 +2532,16 @@ A Pod that merely names the RuntimeClass is not enough. The deliverable has to s
 
 **Solution**
 
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
 
 ## Steps
 
@@ -2640,6 +2659,16 @@ Do not create a ClusterRole or a ClusterRoleBinding for `reporter`.
 **Solution**
 
 
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
 ## Steps
 
 **1. Find every ClusterRoleBinding that names `system:anonymous`.** Do not guess the binding's name. There is no `jq`, so use a go-template.
@@ -2737,6 +2766,111 @@ The kubelet seccomp root on the worker node is `/var/lib/kubelet/seccomp`, and `
 
 **Solution**
 
+
+<!-- toc -->
+## Table of Contents
+
+- [Question index](#question-index)
+  - [Q1. NetworkPolicy: Default-Deny + Selective Allow](#q1-networkpolicy-default-deny--selective-allow)
+  - [Q2. CIS Benchmark Remediation with kube-bench](#q2-cis-benchmark-remediation-with-kube-bench)
+  - [Q3. Ingress TLS Termination](#q3-ingress-tls-termination)
+  - [Q4. RBAC Least-Privilege Role + Binding](#q4-rbac-least-privilege-role--binding)
+  - [Q5. ServiceAccount Token Hardening](#q5-serviceaccount-token-hardening)
+  - [Q6. Restrict the API Server (apiserver flags)](#q6-restrict-the-api-server-apiserver-flags)
+  - [Q7. AppArmor Profile on a Pod](#q7-apparmor-profile-on-a-pod)
+  - [Q8. Seccomp RuntimeDefault + Custom Profile](#q8-seccomp-runtimedefault--custom-profile)
+  - [Q9. Enforce Pod Security Admission (restricted)](#q9-enforce-pod-security-admission-restricted)
+  - [Q10. Encrypt Secrets at Rest (EncryptionConfiguration)](#q10-encrypt-secrets-at-rest-encryptionconfiguration)
+  - [Q11. Admission Policy with Kyverno/Gatekeeper](#q11-admission-policy-with-kyvernogatekeeper)
+  - [Q12. Runtime Sandbox with RuntimeClass (gVisor)](#q12-runtime-sandbox-with-runtimeclass-gvisor)
+  - [Q13. Scan Images with Trivy and Remediate](#q13-scan-images-with-trivy-and-remediate)
+  - [Q14. Restrict Images via ImagePolicyWebhook/Registry](#q14-restrict-images-via-imagepolicywebhookregistry)
+  - [Q15. Static Analysis & Manifest Hardening (kubesec)](#q15-static-analysis--manifest-hardening-kubesec)
+  - [Q16. Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules)
+  - [Q17. API Server Audit Logging Policy](#q17-api-server-audit-logging-policy)
+  - [Q18. Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem)
+  - [Q19. Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts)
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+  - [Q20. Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret)
+- [Steps](#steps-1)
+- [Why](#why-1)
+- [Verify](#verify-1)
+- [Docs](#docs-1)
+  - [Q21. ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images)
+- [Steps](#steps-2)
+- [Why](#why-2)
+- [Verify](#verify-2)
+- [Docs](#docs-2)
+  - [Q22. kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings)
+- [Steps](#steps-3)
+- [Why](#why-3)
+- [Verify](#verify-3)
+- [Docs](#docs-3)
+  - [Q23. The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest)
+- [Steps](#steps-4)
+- [Why](#why-4)
+- [Verify](#verify-4)
+- [Docs](#docs-4)
+  - [Q24. Block the cloud metadata endpoint](#q24-block-the-cloud-metadata-endpoint)
+- [Steps](#steps-5)
+- [Why](#why-5)
+- [Verify](#verify-5)
+- [Docs](#docs-5)
+  - [Q25. Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd)
+- [Steps](#steps-6)
+- [Why](#why-6)
+- [Verify](#verify-6)
+- [Docs](#docs-6)
+  - [Q26. Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt)
+- [Steps](#steps-7)
+- [Why](#why-7)
+- [Verify](#verify-7)
+- [Docs](#docs-7)
+  - [Q27. Fix two issues in the Dockerfile and two in the manifest](#q27-fix-two-issues-in-the-dockerfile-and-two-in-the-manifest)
+- [Steps](#steps-8)
+- [Why](#why-8)
+- [Verify](#verify-8)
+- [Docs](#docs-8)
+  - [Q28. Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg)
+- [Steps](#steps-9)
+- [Why](#why-9)
+- [Verify](#verify-9)
+- [Docs](#docs-9)
+  - [Q29. Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount)
+- [Steps](#steps-10)
+- [Why](#why-10)
+- [Verify](#verify-10)
+- [Docs](#docs-10)
+  - [Q30. seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile)
+- [Steps](#steps-11)
+- [Why](#why-11)
+- [Verify](#verify-11)
+- [Docs](#docs-11)
+  - [Q31. Falco: identify the offending pod and stop it](#q31-falco-identify-the-offending-pod-and-stop-it)
+- [Steps](#steps-12)
+- [Why](#why-12)
+- [Verify](#verify-12)
+- [Docs](#docs-12)
+  - [Q32. Audit: ordered policy and retention flags](#q32-audit-ordered-policy-and-retention-flags)
+- [Steps](#steps-13)
+- [Why](#why-13)
+- [Verify](#verify-13)
+- [Docs](#docs-13)
+  - [Q33. Restrict TLS versions and ciphers](#q33-restrict-tls-versions-and-ciphers)
+- [Steps](#steps-14)
+- [Why](#why-14)
+- [Verify](#verify-14)
+- [Docs](#docs-14)
+  - [Q34. AppArmor: the profile name is not the file name](#q34-apparmor-the-profile-name-is-not-the-file-name)
+- [Steps](#steps-15)
+- [Why](#why-15)
+- [Verify](#verify-15)
+- [Docs](#docs-15)
+
+<!-- toc stop -->
 
 ## Steps
 
@@ -2838,3 +2972,581 @@ cat /opt/course/30/result.txt
 **Allowed:** `https://kubernetes.io/docs/tutorials/security/seccomp/` has a copyable profile and the `securityContext.seccompProfile` block, and `https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context` has the field reference.
 
 Worth memorising: the seccomp root is `/var/lib/kubelet/seccomp`, `localhostProfile` is relative to it, `type` is one of `RuntimeDefault`, `Localhost` or `Unconfined`, and the actions are `SCMP_ACT_ALLOW`, `SCMP_ACT_ERRNO`, `SCMP_ACT_LOG` and `SCMP_ACT_KILL`.
+
+---
+
+### Q31. Falco: identify the offending pod and stop it
+
+**Domain:** Monitoring, Logging and Runtime Security. **Difficulty:** Hard. **Weight:** 7. **Target:** 8 min. **Host:** worker. **Needs:** `node-root tool:falco`.
+
+**Question**
+
+
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+Falco is running on that worker. Namespace `falco-hunt` holds two Deployments scheduled there, `inventory` and `catalog`. One of them keeps reading a sensitive file, which trips the shipped rule **Read sensitive file untrusted**. The other one is an ordinary web server and is doing nothing wrong.
+
+Falco names a container, not a Pod. Start at the alert and work back to Kubernetes.
+
+1. Identify the Pod behind the alerts and write its `<namespace>/<pod-name>` to `/opt/course/31/offender.txt` (or `$COURSE_DIR/31/offender.txt` on this lab), on a single line and with nothing else in the file.
+
+2. Stop that workload by scaling its Deployment to `0` replicas. Do not delete the Deployment, and do not delete the namespace.
+
+3. Leave the innocent Deployment running with `1` replica, and leave the Falco service running.
+
+Scaling both Deployments to zero is not a solution. The graded facts are that you named the right Pod and that you stopped only that one.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the worker node, as root.
+
+```bash
+ssh <worker>
+sudo -i
+```
+
+**1. Read the alerts.** Falco logs to the journal of whichever unit is running. Ask for both, so it does not matter which one this node uses.
+
+```bash
+journalctl -u falco-modern-bpf -u falco --since '-3 min' --no-pager \
+  | grep 'Read sensitive file untrusted' | tail -5
+```
+
+Each line carries `container_id=<12 hex chars>` and `container_name=<name>`. That is the only identity Falco gives you by default, because the Kubernetes metadata collector is not enabled in a stock install.
+
+**2. Take one container ID.**
+
+```bash
+CID=$(journalctl -u falco-modern-bpf -u falco --since '-3 min' --no-pager \
+  | grep 'Read sensitive file untrusted' \
+  | grep -oE 'container_id=[0-9a-f]+' | tail -1 | cut -d= -f2)
+echo "$CID"
+```
+
+**3. Map the container back to its Pod.** The container runtime records the Pod name and namespace as labels on the container.
+
+```bash
+crictl ps --id "$CID"
+crictl inspect "$CID" | grep -E '"io.kubernetes.pod.name"|"io.kubernetes.pod.namespace"'
+```
+
+If `crictl` complains about the runtime endpoint, point it at containerd:
+
+```bash
+crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps --id "$CID"
+```
+
+**4. Confirm from the API side.** The Pod name from step 3 must appear in `falco-hunt`.
+
+```bash
+kubectl get pods -n falco-hunt -o wide
+```
+
+**5. Write the deliverable.**
+
+```bash
+mkdir -p /opt/course/31
+kubectl get pods -n falco-hunt -o wide
+echo "falco-hunt/<pod-name-from-step-3>" > /opt/course/31/offender.txt
+cat /opt/course/31/offender.txt
+```
+
+**6. Stop only that workload.** The Pod belongs to a Deployment, so deleting the Pod would bring an identical one straight back. Scale the Deployment instead.
+
+```bash
+kubectl get pod -n falco-hunt <pod-name> -o jsonpath='{.metadata.ownerReferences[0].name}'   # the ReplicaSet
+kubectl scale deploy inventory -n falco-hunt --replicas=0
+kubectl get deploy,pods -n falco-hunt
+```
+
+`catalog` must still show `1/1`.
+
+## Why
+
+Falco watches syscalls, so it sees a process inside a container and knows nothing about Deployments or Services. The identity it emits is the container ID from the runtime. Every incident that starts with a Falco alert therefore has the same first move: container ID, then `crictl inspect`, then the Pod, then the controller that owns it.
+
+The reason to scale the Deployment rather than delete the Pod is the reason Deployments exist. A ReplicaSet recreates a deleted Pod within seconds, the alert returns, and the responder looks as if they did nothing. Scaling to zero changes the desired state, which is what actually stops the workload.
+
+The reason not to touch `catalog` is that a real cluster is a shared cluster. Stopping everything in the namespace ends the alert and also ends the service the business is running, which converts a contained incident into an outage. Precision is the graded skill here, not speed.
+
+Leaving Falco running matters for the same reason. A responder who stops the detector to stop the noise has removed the only evidence that the next attempt is happening.
+
+## Verify
+
+```bash
+cat /opt/course/31/offender.txt              # falco-hunt/inventory-<hash>
+kubectl get deploy -n falco-hunt             # inventory 0/0, catalog 1/1
+kubectl get pods -n falco-hunt               # only the catalog pod
+systemctl is-active falco-modern-bpf || systemctl is-active falco
+```
+
+## Docs
+
+**Allowed:** `https://falco.org/docs/` for the rule and the output fields.
+
+`crictl` is not in the allowed documentation set, so `crictl --help`, `crictl ps --help` and `crictl inspect <id>` on the node are the reference. Memorise the shape: `crictl ps --id <container-id>` and `crictl inspect <container-id>` with a `grep` for `io.kubernetes.pod.name`.
+
+---
+
+### Q32. Audit: ordered policy and retention flags
+
+**Domain:** Monitoring, Logging and Runtime Security. **Difficulty:** Hard. **Weight:** 8. **Target:** 10 min. **Host:** control-plane. **Needs:** `node-root`.
+
+**Question**
+
+
+**Host:** the control-plane node, root shell (`sudo -i`).
+
+`/etc/kubernetes/audit/policy.yaml` exists but its `rules` list is empty. The directory `/var/log/kubernetes/audit/` exists. `kube-apiserver` currently has no `--audit-*` flags at all. Namespace `prod` holds Secret `db-creds`.
+
+An audit policy is evaluated **first match wins**, so the order of the rules is part of the answer.
+
+1. Write exactly these four rules into `/etc/kubernetes/audit/policy.yaml`, in this order:
+
+   1. `secrets` in namespace `prod` at level `RequestResponse`
+   2. the non-resource URLs `/healthz*`, `/version` and `/metrics` at level `None`
+   3. every `get`, `list` and `watch` at level `None`
+   4. a final catch-all at level `Metadata`
+
+2. Wire the API server to that policy with all five audit flags:
+
+   ```
+   --audit-policy-file=/etc/kubernetes/audit/policy.yaml
+   --audit-log-path=/var/log/kubernetes/audit/audit.log
+   --audit-log-maxage=30
+   --audit-log-maxbackup=10
+   --audit-log-maxsize=100
+   ```
+
+3. Give the static Pod access to both paths:
+
+   - the policy **file** `/etc/kubernetes/audit/policy.yaml` from a `hostPath` of `type: File`, mounted read-only
+   - the log **directory** `/var/log/kubernetes/audit` from a `hostPath` of `type: DirectoryOrCreate`, mounted writable
+
+4. The API server has to come back healthy and the log has to fill. Reading `db-creds` in `prod` must be recorded at `RequestResponse`, and listing pods must not be recorded at all.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+**1. Back the manifest up outside the manifest directory.** A file left in `/etc/kubernetes/manifests/` with any extension is still read by the kubelet, so a backup written next to it can start a second API server.
+
+```bash
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
+```
+
+**2. Write the policy, in order.**
+
+```bash
+cat > /etc/kubernetes/audit/policy.yaml <<'EOF'
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+  - "RequestReceived"
+rules:
+  # 1. The valuable reads, in full, before anything can suppress them.
+  - level: RequestResponse
+    namespaces: ["prod"]
+    resources:
+      - group: ""
+        resources: ["secrets"]
+
+  # 2. Health and metrics polling, dropped.
+  - level: None
+    nonResourceURLs:
+      - "/healthz*"
+      - "/version"
+      - "/metrics"
+
+  # 3. All remaining reads, dropped.
+  - level: None
+    verbs: ["get", "list", "watch"]
+
+  # 4. Everything else at Metadata.
+  - level: Metadata
+EOF
+```
+
+**3. Add the five flags to the API server.**
+
+```bash
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+```yaml
+    - --audit-policy-file=/etc/kubernetes/audit/policy.yaml
+    - --audit-log-path=/var/log/kubernetes/audit/audit.log
+    - --audit-log-maxage=30
+    - --audit-log-maxbackup=10
+    - --audit-log-maxsize=100
+```
+
+**4. Add the mounts and the volumes in the same file.** Two entries under `volumeMounts:` and two under `volumes:`.
+
+```yaml
+    volumeMounts:
+    - mountPath: /etc/kubernetes/audit/policy.yaml
+      name: audit-policy
+      readOnly: true
+    - mountPath: /var/log/kubernetes/audit
+      name: audit-log
+      readOnly: false
+```
+
+```yaml
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/audit/policy.yaml
+      type: File
+    name: audit-policy
+  - hostPath:
+      path: /var/log/kubernetes/audit
+      type: DirectoryOrCreate
+    name: audit-log
+```
+
+**5. Wait for the API server to come back.** The kubelet notices the changed manifest within about twenty seconds and recreates the Pod.
+
+```bash
+watch crictl ps | grep kube-apiserver
+curl -sk https://127.0.0.1:6443/readyz
+kubectl get nodes
+```
+
+If `kubectl` keeps refusing the connection, read the container log:
+
+```bash
+crictl ps -a | grep kube-apiserver
+crictl logs <container-id> 2>&1 | tail -20
+```
+
+**6. Prove the ordering with traffic, not with the file.**
+
+```bash
+kubectl -n prod get secret db-creds
+kubectl -n prod get pods
+sleep 2
+grep '"resource":"secrets"' /var/log/kubernetes/audit/audit.log | tail -1
+grep '"resource":"pods"' /var/log/kubernetes/audit/audit.log | grep -c '"verb":"list"'   # 0
+```
+
+The secret read appears with `"level":"RequestResponse"` and a full `responseObject`. The pod list does not appear at all.
+
+## Why
+
+Audit rules are evaluated top to bottom and the first rule that matches decides the level for that request. That single sentence explains every part of this task. The `None` rule for `get`, `list` and `watch` is the noisiest thing in the policy: it drops the reads that make up most API traffic. If it were written above the secrets rule, it would also drop every read of every Secret, and the policy would record nothing about the one resource it was written to protect. The order is the control.
+
+The `None` rule for the non-resource URLs sits between them because `/healthz` polling arrives several times a second from the kubelet and the load balancer. Those requests carry no `verbs` that the verb rule would catch reliably, so they need their own rule, and they need it before the catch-all turns each one into a `Metadata` line.
+
+`RequestResponse` is the heaviest level, and it is the only one that stores the object that came back. For a Secret that means the value lands in the audit log in clear text, which is exactly why it is scoped to one resource in one namespace rather than applied broadly.
+
+The four retention flags are what keeps the log from filling the disk on the control-plane node. `maxsize` rotates at 100 MB, `maxbackup` keeps ten rotated files, `maxage` deletes anything older than 30 days. An audit log that fills the root filesystem takes etcd down with it, so the flags are part of the answer, not decoration.
+
+The two `hostPath` types differ because the two objects differ. The policy is a file that must already exist, so `type: File` makes the kubelet refuse to start the Pod if the path is wrong instead of silently mounting an empty directory over it. The log path is a directory the API server writes into, so `type: DirectoryOrCreate` is right there.
+
+## Verify
+
+```bash
+grep -n 'level:' /etc/kubernetes/audit/policy.yaml     # RequestResponse, None, None, Metadata in that order
+grep -n 'audit' /etc/kubernetes/manifests/kube-apiserver.yaml
+curl -sk https://127.0.0.1:6443/readyz
+kubectl -n prod get secret db-creds >/dev/null
+kubectl -n prod get pods >/dev/null
+grep '"level":"RequestResponse"' /var/log/kubernetes/audit/audit.log | grep -c '"resource":"secrets"'   # 1 or more
+grep '"resource":"pods"' /var/log/kubernetes/audit/audit.log | grep -c '"verb":"list"'                 # 0
+wc -l /var/log/kubernetes/audit/audit.log
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/`. It carries a complete sample policy that can be copied and cut down, the full list of levels, and the `--audit-log-*` flags with their defaults. Search the page for "Audit policy" and take the example from there rather than typing one from memory.
+
+The flag reference is at `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/`. What is worth memorising is the order rule, since no page states it as prominently as the exam relies on it: first match wins, so specific rules go above general ones and the catch-all goes last.
+
+---
+
+### Q33. Restrict TLS versions and ciphers
+
+**Domain:** Cluster Setup. **Difficulty:** Hard. **Weight:** 7. **Target:** 8 min. **Host:** control-plane. **Needs:** `node-root`.
+
+**Question**
+
+
+**Host:** the control-plane node, root shell (`sudo -i`).
+
+Both `kube-apiserver` and `etcd` currently accept whatever their Go runtime defaults allow, which includes TLS 1.2 and a long list of cipher suites. An auditor wants the control plane pinned down.
+
+1. Configure `kube-apiserver` so that it refuses anything below TLS 1.3, using `--tls-min-version=VersionTLS13` in `/etc/kubernetes/manifests/kube-apiserver.yaml`.
+
+2. Configure `etcd` so that it offers a restricted cipher list, using `--cipher-suites=` in `/etc/kubernetes/manifests/etcd.yaml`. The list must include `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`.
+
+3. Both static Pods must come back and the cluster must keep working: `kubectl get nodes` has to answer.
+
+4. Prove the effect on the API server port with `openssl`:
+
+   ```
+   openssl s_client -connect 127.0.0.1:6443 -tls1_2 </dev/null    # must fail the handshake
+   openssl s_client -connect 127.0.0.1:6443 -tls1_3 </dev/null    # must negotiate TLSv1.3
+   ```
+
+Editing a static Pod manifest restarts the Pod. Give the kubelet up to a minute for each one, and change one file at a time so that a mistake is easy to attribute.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the control-plane node, as root.
+
+**1. Back both manifests up outside `/etc/kubernetes/manifests/`.** The kubelet reads every file in that directory, so a `.bak` left beside the original starts a second copy of the Pod.
+
+```bash
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
+cp /etc/kubernetes/manifests/etcd.yaml /root/etcd.yaml.bak
+```
+
+**2. Pin the API server to TLS 1.3.**
+
+```bash
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+```yaml
+spec:
+  containers:
+  - command:
+    - kube-apiserver
+    - --tls-min-version=VersionTLS13
+```
+
+Wait for it to come back before touching anything else:
+
+```bash
+watch crictl ps | grep kube-apiserver
+curl -sk https://127.0.0.1:6443/readyz
+kubectl get nodes
+```
+
+**3. Restrict the etcd cipher suites.**
+
+```bash
+vim /etc/kubernetes/manifests/etcd.yaml
+```
+
+```yaml
+spec:
+  containers:
+  - command:
+    - etcd
+    - --cipher-suites=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+```
+
+etcd validates the names at start-up and exits on an unknown one, so check the container came up:
+
+```bash
+crictl ps | grep etcd
+kubectl get pods -n kube-system -l component=etcd
+```
+
+If etcd does not come back, read why and fix the name:
+
+```bash
+crictl ps -a | grep etcd
+crictl logs <container-id> 2>&1 | tail -20
+```
+
+**4. Confirm the flags are live, not just written.** The mirror Pod in the API shows the command the kubelet actually started.
+
+```bash
+kubectl get pods -n kube-system -l component=kube-apiserver \
+  -o jsonpath='{.items[0].spec.containers[0].command}' | tr ' ' '\n' | grep tls
+kubectl get pods -n kube-system -l component=etcd \
+  -o jsonpath='{.items[0].spec.containers[0].command}' | tr ' ' '\n' | grep cipher
+```
+
+**5. Test the effect from outside the process.**
+
+```bash
+echo | openssl s_client -connect 127.0.0.1:6443 -tls1_2 2>&1 | head -5
+echo | openssl s_client -connect 127.0.0.1:6443 -tls1_3 2>&1 | grep -E 'Protocol|Cipher'
+```
+
+The first prints an alert such as `tlsv1 alert protocol version` and negotiates `Cipher is (NONE)`. The second prints `Protocol  : TLSv1.3`.
+
+## Why
+
+The API server and etcd both terminate TLS themselves, and both fall back to the Go runtime defaults when no flag says otherwise. Those defaults still allow TLS 1.2 with cipher suites that an auditor will flag, including CBC-mode suites that have a long history of padding oracle attacks. Neither component reads a system-wide crypto policy, so the only place to fix this is the flag on the process.
+
+`--tls-min-version` takes the Go constant name, not a number: `VersionTLS12` or `VersionTLS13`. A value like `1.3` is rejected and the API server will not start, which is the usual way this task is failed.
+
+TLS 1.3 removes cipher negotiation as it existed in 1.2. Its three suites are fixed and Go does not let a program choose among them, which is why `--tls-cipher-suites` on the API server has no effect once the minimum is 1.3, and why the cipher part of this task lands on etcd, which still speaks 1.2 to its peers.
+
+The reason to change one manifest at a time is recovery. Both Pods are static Pods started by the kubelet from the manifest directory. If both are edited at once and the cluster goes dark, there is no `kubectl` left to tell you which file was wrong, and `crictl logs` on two crash-looping containers is a slower path than reverting one known change.
+
+## Verify
+
+```bash
+grep tls-min-version /etc/kubernetes/manifests/kube-apiserver.yaml
+grep cipher-suites /etc/kubernetes/manifests/etcd.yaml
+curl -sk https://127.0.0.1:6443/readyz
+kubectl get nodes
+kubectl get pods -n kube-system -l component=etcd
+echo | openssl s_client -connect 127.0.0.1:6443 -tls1_2 2>&1 | grep -i 'alert\|Cipher is'
+echo | openssl s_client -connect 127.0.0.1:6443 -tls1_3 2>&1 | grep 'Protocol'
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/` for `--tls-min-version` and `--tls-cipher-suites`, including the accepted constant names.
+
+etcd's flags are not in the allowed set, so `--cipher-suites` and the suite names have to come from memory or from `etcd --help` on the node. The suite names are the Go names, in the form `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`, and etcd prints the full list of what it accepts when it rejects one.
+
+---
+
+### Q34. AppArmor: the profile name is not the file name
+
+**Domain:** System Hardening. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** worker. **Needs:** `node-root tool:apparmor_parser`.
+
+**Question**
+
+
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+The file `/etc/apparmor.d/k8s-lab-deny-write` sits on that worker. It has not been loaded into the kernel. A colleague has already written a Pod manifest for it at `/opt/course/34/pod.yaml` (or `$COURSE_DIR/34/pod.yaml` on this lab), but the Pod does not start correctly.
+
+1. Load the profile from that file so it shows up in **enforce** mode in `aa-status`.
+
+2. Fix `pod.yaml` and apply it. The Pod is `guarded` in namespace `apparmor-trap`, and it has to end up **Running** and confined by that profile.
+
+3. A write inside the container (for example `touch /root/x`) must be **denied**, while reading still works.
+
+Do not rename the file, and do not rewrite what it contains. Read it first: everything you need to fix the manifest is in there.
+
+**Solution**
+
+
+## Steps
+
+Everything happens on the worker node, as root.
+
+```bash
+ssh <worker>
+sudo -i
+```
+
+**1. Read the profile file before touching anything.** This is the whole question.
+
+```bash
+cat /etc/apparmor.d/k8s-lab-deny-write
+```
+
+```
+#include <tunables/global>
+profile deny-write-lab flags=(attach_disconnected) {
+  #include <abstractions/base>
+  file,
+  deny /** w,
+}
+```
+
+The file is called `k8s-lab-deny-write`. The profile inside it is called **`deny-write-lab`**. Kubernetes wants the profile name, not the file name.
+
+**2. Load the profile.**
+
+```bash
+apparmor_parser -q /etc/apparmor.d/k8s-lab-deny-write
+```
+
+`-q` loads or replaces quietly. `-r` also replaces an already loaded profile, and `-R` removes one.
+
+**3. Confirm what name the kernel now knows.**
+
+```bash
+aa-status | grep deny
+apparmor_status | head -5
+```
+
+The name in `aa-status` is `deny-write-lab`. There is no profile called `k8s-lab-deny-write` anywhere in the kernel, which is why the original Pod never started: the kubelet cannot find the profile the manifest asked for and leaves the Pod in `Blocked`, `CreateContainerError` or `Pending` depending on the version.
+
+**4. Fix the manifest.**
+
+```bash
+vim /opt/course/34/pod.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: guarded
+  namespace: apparmor-trap
+spec:
+  nodeName: <worker>
+  containers:
+  - name: guarded
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+    securityContext:
+      appArmorProfile:
+        type: Localhost
+        localhostProfile: deny-write-lab
+```
+
+**5. Apply and watch it start.**
+
+```bash
+kubectl delete pod guarded -n apparmor-trap --ignore-not-found
+kubectl apply -f /opt/course/34/pod.yaml
+kubectl get pod guarded -n apparmor-trap -o wide
+```
+
+If it stays `Pending` or reports `CreateContainerError`, the reason is in the events:
+
+```bash
+kubectl describe pod guarded -n apparmor-trap | tail -15
+```
+
+**6. Test the effect.**
+
+```bash
+kubectl exec -n apparmor-trap guarded -- ls /root        # works, reads are allowed
+kubectl exec -n apparmor-trap guarded -- touch /root/x   # Permission denied
+```
+
+The denial is also recorded on the node:
+
+```bash
+dmesg | grep -i apparmor | tail -5
+journalctl -k | grep 'apparmor="DENIED"' | tail -5
+```
+
+## Why
+
+An AppArmor profile has two names that people assume are the same one. The file under `/etc/apparmor.d/` is only a location on disk; the parser reads it and registers whatever comes after the `profile` keyword. `localhostProfile` in a Pod spec is matched against that registered name, so a manifest that names the file fails even though the file exists, is loaded, and is correct. This mismatch is the single most common way this task is failed, and it is worth building the habit of reading the profile's first line rather than the directory listing.
+
+Loading is a separate step from writing. A profile file that has never been through `apparmor_parser` does nothing at all, and nothing in Kubernetes loads it for you: the kubelet only looks up profiles that are already in the kernel. On a multi-node cluster the profile has to be present and loaded on every node the Pod might land on, which is why the Pod here is pinned to one node with `nodeName`.
+
+The failure mode is deliberately quiet. The Pod is accepted by the API server, because the API server does not know what profiles a node has. Only the kubelet on the target node discovers that the profile is missing, so the symptom appears as a Pod that never becomes ready and an event on that node, not as an error from `kubectl apply`.
+
+## Verify
+
+```bash
+grep profile /etc/apparmor.d/k8s-lab-deny-write
+aa-status | grep deny-write-lab
+kubectl get pod guarded -n apparmor-trap -o jsonpath='{.spec.containers[0].securityContext.appArmorProfile.localhostProfile}'
+kubectl get pod guarded -n apparmor-trap
+kubectl exec -n apparmor-trap guarded -- ls /root
+kubectl exec -n apparmor-trap guarded -- touch /root/x    # must fail
+```
+
+## Docs
+
+**Allowed:** `https://kubernetes.io/docs/tutorials/security/apparmor/` for the `securityContext.appArmorProfile` fields and the older `container.apparmor.security.beta.kubernetes.io/<container>` annotation, which still appears in older exam clusters.
+
+The AppArmor manual pages on the node cover the rest: `man apparmor_parser`, `man apparmor.d`, and `aa-status`. What has to be memorised is the relationship: `localhostProfile` takes the name declared after the `profile` keyword inside the file, and the file has to be loaded with `apparmor_parser` on the node the Pod runs on.

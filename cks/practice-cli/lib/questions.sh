@@ -33,6 +33,9 @@ QUESTIONS=(
   "29|Remove anonymous access and scope the ServiceAccount|Cluster Hardening|D2|Medium|q29-rbac-anonymous-and-serviceaccount|kubectl|5|6|10|any"
   "30|seccomp: block mkdir with a Localhost profile|System Hardening|D3|Medium|q30-seccomp-deny-mkdir|node-root|6|8|5|worker"
   "31|Falco: identify the offending pod and stop it|Monitoring, Logging and Runtime Security|D6|Hard|q31-falco-find-and-stop-pod|node-root tool:falco|7|8|15|worker"
+  "32|Audit: ordered policy and retention flags|Monitoring, Logging and Runtime Security|D6|Hard|q32-audit-policy-levels|node-root|8|10|13|control-plane"
+  "33|Restrict TLS versions and ciphers|Cluster Setup|D1|Hard|q33-tls-ciphers-apiserver-etcd|node-root|7|8|12|control-plane"
+  "34|AppArmor: the profile name is not the file name|System Hardening|D3|Medium|q34-apparmor-profile-name-trap|node-root tool:apparmor_parser|6|8|12|worker"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }
