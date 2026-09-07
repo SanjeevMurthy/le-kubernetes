@@ -29,8 +29,8 @@ Eight weeks from the lab build to exam day, starting the day after the CKS exam.
 
 ## Before Sunday 13 December
 
-- [ ] **Book the LFCS exam for Saturday 6 February 2027.** Booking releases the two killer.sh sessions.
-- [ ] Confirm the voucher expiry in the training portal and record it in [`../../roadmap.md`](../../roadmap.md).
+- [ ] **Book the LFCS exam for Saturday 6 February 2027.** Not yet booked. Booking releases the two killer.sh sessions this calendar schedules on 23 January and 3 February.
+- [ ] Voucher expiry is confirmed: **3 March 2027**. Sit the exam no later than **Saturday 13 February** whatever else slips, because that is the last date leaving two retake Saturdays.
 - [ ] Free 50 GB on the Mac and download both installer images: [`../lab-setup/README.md`](../lab-setup/README.md).
 - [ ] Enrol in the KodeKloud LFCS course.
 
@@ -105,7 +105,7 @@ Eight weeks from the lab build to exam day, starting the day after the CKS exam.
 ## After the exam
 
 - [ ] Results arrive by email within 24 hours.
-- [ ] If it did not pass, reschedule the free retake immediately. There are roughly four weeks before the voucher expires, which is enough but not generous.
+- [ ] If it did not pass, reschedule the free retake immediately. Three Saturdays remain before the 3 March expiry: 13, 20 and 27 February. Results arrive within 24 hours and there is no enforced wait, so booking the next Saturday is realistic.
 - [ ] Passing completes the Golden Kubestronaut requirement that sits outside CNCF.
 
 ---
@@ -114,7 +114,7 @@ Eight weeks from the lab build to exam day, starting the day after the CKS exam.
 
 | Situation | What to change |
 |---|---|
-| CKS moved into January | Shift every date here by the same amount and check the LFCS retake still fits before the voucher expires. That is the binding constraint, not the exam date itself. |
+| CKS moved into January | Do **not** shift LFCS with it. Compress the drill weeks instead. The LFCS deadline is the binding constraint: past Saturday 13 February there is no room for a retake before the 3 March expiry. |
 | The lab build overruns 13 Dec | Do Essential Commands and Users from the notes on the Mac, and build the VMs the following weekend. Only the hands-on questions need the lab. |
 | Under 10 hours a week in January | Drop KodeKloud mocks 3 and 4. Keep all three repo mocks and both killer.sh sessions; they are the highest-yield hours. |
-| A domain is still weak on 31 Jan | Move the exam out two weeks rather than sitting it. The free retake is worth more as insurance than as a first attempt. |
+| A domain is still weak on 31 Jan | Move the exam to Saturday 13 February at the latest, and no further. Beyond that a single bad result ends the attempt, because the retake would fall after the 3 March expiry. |

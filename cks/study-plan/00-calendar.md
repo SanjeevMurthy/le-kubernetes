@@ -38,8 +38,8 @@ Twelve weekends from the first study day to exam day. Open this file each Saturd
 
 ## Phase 0 — before Saturday 26 September
 
-- [ ] **Book the CKS exam for Saturday 12 December 2026.** Booking releases the two killer.sh sessions and creates the deadline the rest of this plan depends on.
-- [ ] Confirm the exact voucher expiry date in the training portal and write it at the top of [`../../roadmap.md`](../../roadmap.md).
+- [ ] **Book the CKS exam for Saturday 12 December 2026.** Not yet booked. Booking releases the two killer.sh sessions this calendar schedules on 28 November and 9 December, and creates the deadline the rest of the plan depends on.
+- [ ] Voucher expiry is confirmed: **3 March 2027**. A December attempt leaves eleven retake Saturdays, so there is no deadline pressure on CKS.
 - [ ] Confirm the portal shows an **Exam Simulator** button. If it does not, the voucher may exclude killer.sh and the plan needs a paid session instead.
 - [ ] Build tier 1 and tier 2 labs: [`../lab-setup/README.md`](../lab-setup/README.md).
 - [ ] Import [`../cheatsheets/cks-anki-deck.txt`](../cheatsheets/cks-anki-deck.txt) into Anki. Set new cards to 15 per day.

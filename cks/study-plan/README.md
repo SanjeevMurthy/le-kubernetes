@@ -29,9 +29,9 @@ A dated, weekend-anchored plan to go from CKA-certified to CKS-certified by **Sa
 | Daily reps | The practice CLI in [`../practice-cli/`](../practice-cli/) and the free Killercoda Killer Shell CKS scenarios |
 | Final simulation | Two killer.sh sessions included with the voucher: 28 Nov and 9 Dec |
 | Exam | Saturday 12 December 2026 |
-| Voucher expiry | March 2027, which leaves the free retake and a January second attempt in reach |
+| Voucher expiry | **3 March 2027**, confirmed. A December attempt leaves eleven Saturdays for a retake, so CKS is under no deadline pressure. |
 
-**First action:** book the exam. It releases the killer.sh sessions and turns the calendar into a commitment.
+**First action: book the exam.** It is not yet booked, and until it is there are no killer.sh sessions to schedule on 28 November and 9 December, which this calendar depends on.
 
 ## The three phases
 

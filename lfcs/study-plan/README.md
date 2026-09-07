@@ -26,7 +26,7 @@ A dated plan to pass LFCS on **Saturday 6 February 2027**, starting the day afte
 | Lab | One Ubuntu 24.04 VM and one Rocky 9 VM on this Mac |
 | Final simulation | Two killer.sh sessions: 23 January and 3 February |
 | Exam | Saturday 6 February 2027 |
-| Voucher expiry | March 2027, which leaves roughly four weeks for the free retake |
+| Voucher expiry | **3 March 2027**, confirmed. Sitting on 6 February leaves three retake Saturdays: 13, 20 and 27 February. |
 
 ## The three phases
 

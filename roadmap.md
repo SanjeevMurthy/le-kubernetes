@@ -5,25 +5,48 @@ Two exams, two vouchers, one deadline. CKS first while Kubernetes is fresh from 
 <!-- toc -->
 ## Table of Contents
 
-- [Fill these in first](#fill-these-in-first)
+- [The deadline](#the-deadline)
+  - [Booking is the blocking task](#booking-is-the-blocking-task)
+  - [Retake arithmetic against 3 March](#retake-arithmetic-against-3-march)
 - [The shape of it](#the-shape-of-it)
 - [Booking and activation checklist](#booking-and-activation-checklist)
 - [Why this order](#why-this-order)
-- [Retake arithmetic](#retake-arithmetic)
+- [If something slips](#if-something-slips)
 - [The plans](#the-plans)
 
 <!-- toc stop -->
 
-## Fill these in first
+## The deadline
 
-| Item | Value |
+**Both vouchers expire on Wednesday 3 March 2027.** Everything, including a retake, must be sat before that date.
+
+| | |
 |---|---|
-| CKS voucher expiry | _confirm in the training portal_ |
-| LFCS voucher expiry | _confirm in the training portal_ |
-| CKS exam booked for | Saturday 12 December 2026 |
-| LFCS exam booked for | Saturday 6 February 2027 |
+| CKS voucher expiry | **3 March 2027** |
+| LFCS voucher expiry | **3 March 2027** |
+| CKS exam | Target Saturday 12 December 2026 — **not yet booked** |
+| LFCS exam | Target Saturday 6 February 2027 — **not yet booked** |
 
-Both vouchers were purchased with an expiry in March 2027. The exact dates decide how much retake room the plan really has, so confirm them before booking.
+### Booking is the blocking task
+
+Neither exam is scheduled, and that blocks more than the exam date. Booking is what releases the two killer.sh simulator sessions, and both study calendars schedule those sessions on specific days: 28 November and 9 December for CKS, 23 January and 3 February for LFCS. Until the exams are booked, those days have nothing to put in them.
+
+Book both now, in one sitting. The dates can be moved later; the simulator access cannot be obtained any other way.
+
+### Retake arithmetic against 3 March
+
+The retake is included with each voucher and, on the evidence, is worth planning for rather than hoping to avoid: eight of the 28 CKS candidate write-ups behind this kit failed a first attempt, and every one of them passed the retake.
+
+| Attempt | Planned date | Days to expiry | Retake Saturdays still available |
+|---|---|---|---|
+| CKS | Sat 12 Dec 2026 | 81 | 11 (19 Dec through 27 Feb) |
+| LFCS | Sat 6 Feb 2027 | 25 | 3 (13, 20 and 27 Feb) |
+
+The last usable Saturday before expiry is **27 February 2027**.
+
+**The one hard backstop:** if LFCS slips, sit it no later than **Saturday 13 February 2027**. That still leaves two retake Saturdays. Past that date a single bad result costs the certification, because there is no room for a second attempt.
+
+CKS has no such pressure. Even a December failure leaves eleven Saturdays, so a CKS retake can be taken in January without touching the LFCS plan.
 
 ## The shape of it
 
@@ -39,9 +62,9 @@ Both vouchers were purchased with an expiry in March 2027. The exact dates decid
 
 ## Booking and activation checklist
 
-- [ ] Book CKS for 12 Dec 2026. Booking releases the two killer.sh sessions.
+- [ ] **Book CKS for Sat 12 Dec 2026.** Not yet done. Booking releases the two killer.sh sessions.
 - [ ] Confirm the portal shows an **Exam Simulator** button for CKS. Some voucher schemes exclude killer.sh.
-- [ ] Book LFCS for 6 Feb 2027 and confirm its simulator access too.
+- [ ] **Book LFCS for Sat 6 Feb 2027.** Not yet done. Sit it no later than Sat 13 Feb to keep two retake Saturdays before the 3 March expiry.
 - [ ] Activate CKS killer.sh session 1 on 28 Nov and session 2 on 9 Dec. Each gives 36 hours of access from activation, so do not activate early.
 - [ ] Activate LFCS killer.sh session 1 on 23 Jan and session 2 on 3 Feb.
 - [ ] Keep a KodeKloud subscription active from late September to early February.
@@ -52,13 +75,14 @@ CKS builds directly on CKA and CKAD, so the Kubernetes fluency is already there 
 
 The two exams also fail for different reasons. CKS punishes slow work on node-level tasks. LFCS punishes changes that do not survive a reboot and work done on the wrong host. The two study plans drill those two habits specifically.
 
-## Retake arithmetic
+## If something slips
 
-Each voucher includes one free retake, valid within 12 months of the original purchase. Candidate reports show first-attempt failures are common and retakes almost always pass, so the plan treats the retake as expected insurance rather than a fallback.
+Each voucher includes one free retake, and both vouchers die on 3 March 2027, so the retake must be sat before that date too.
 
-- A CKS failure on 12 Dec leaves January free for the retake, before LFCS study peaks.
-- An LFCS failure on 6 Feb leaves roughly four weeks before the March expiry.
-- If CKS slips past mid-January, shift the LFCS calendar by the same amount and re-check that the LFCS retake still fits before expiry.
+- A CKS failure on 12 Dec leaves eleven Saturdays for the retake. Take it in January, before LFCS drills peak.
+- An LFCS failure on 6 Feb leaves three Saturdays: 13, 20 and 27 February.
+- **If LFCS slips, 13 February is the last date that still leaves two retake Saturdays.** Beyond it, one bad result ends the attempt.
+- If CKS slips into January, do not let LFCS slip with it. Compress the LFCS drill weeks instead, because the LFCS deadline is the binding one.
 
 ## The plans
 
