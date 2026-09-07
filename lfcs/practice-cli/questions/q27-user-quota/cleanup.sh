@@ -22,4 +22,4 @@ free_loop_disk d27
 findmnt -no TARGET /quota >/dev/null 2>&1 || rm -rf /quota
 rm -rf "${LFCS_STATE_DIR:?}/q27"
 
-echo "Cleanup complete. Quotas off, /quota unmounted and removed, /etc/fstab restored, $DEV wiped, loop disk d27 released, user qa removed if this question created it."
+echo "Cleanup complete. Quotas off, /quota unmounted and removed, its /etc/fstab line removed, $DEV wiped, loop disk d27 released, user qa removed if this question created it."

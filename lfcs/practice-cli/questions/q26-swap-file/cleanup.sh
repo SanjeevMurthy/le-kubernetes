@@ -11,4 +11,4 @@ fstab_drop_target /swapfile2
 rm -f /swapfile2
 rm -rf "${LFCS_STATE_DIR:?}/q26"
 
-echo "Cleanup complete. /swapfile2 swapped off and deleted, /etc/fstab restored."
+echo "Cleanup complete. /swapfile2 swapped off and deleted, its /etc/fstab line removed."

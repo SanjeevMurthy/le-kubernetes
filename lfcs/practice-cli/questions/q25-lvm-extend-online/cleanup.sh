@@ -30,4 +30,4 @@ free_loop_disk d25b
 findmnt -no TARGET "$MP" >/dev/null 2>&1 || rm -rf "$MP"
 rm -rf "${LFCS_STATE_DIR:?}/q25"
 
-echo "Cleanup complete. $MP unmounted and removed, lv_logs and vg_ext removed, PV labels cleared, /etc/fstab restored, loop disks d25a and d25b released."
+echo "Cleanup complete. $MP unmounted and removed, lv_logs and vg_ext removed, PV labels cleared, its /etc/fstab line removed, loop disks d25a and d25b released."

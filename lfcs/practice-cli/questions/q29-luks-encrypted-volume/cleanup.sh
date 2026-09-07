@@ -27,4 +27,4 @@ free_loop_disk d29
 findmnt -no TARGET /mnt/secret >/dev/null 2>&1 || rm -rf /mnt/secret
 rm -rf "${LFCS_STATE_DIR:?}/q29"
 
-echo "Cleanup complete. /mnt/secret unmounted, mapping 'secret' closed, /root/secret.key deleted, LUKS header erased from $DEV, /etc/fstab and /etc/crypttab restored, loop disk d29 released."
+echo "Cleanup complete. /mnt/secret unmounted, mapping 'secret' closed, /root/secret.key deleted, LUKS header erased from $DEV, the /mnt/secret line removed from /etc/fstab, /etc/crypttab restored, loop disk d29 released."

@@ -18,4 +18,4 @@ rm -rf "$COURSE_DIR/31"
 findmnt -no TARGET "$MP" >/dev/null 2>&1 || rm -rf "$MP"
 rm -rf "${LFCS_STATE_DIR:?}/q31"
 
-echo "Cleanup complete. The lfcs-logwriter holder killed, $MP unmounted and removed, /etc/fstab restored, loop disk d31 released, $COURSE_DIR/31 removed."
+echo "Cleanup complete. The lfcs-logwriter holder killed, $MP unmounted and removed, its /etc/fstab line removed, loop disk d31 released, $COURSE_DIR/31 removed."

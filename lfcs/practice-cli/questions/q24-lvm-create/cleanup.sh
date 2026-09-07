@@ -29,4 +29,4 @@ free_loop_disk d24b
 rmdir /app 2>/dev/null
 rm -rf "${LFCS_STATE_DIR:?}/q24"
 
-echo "Cleanup complete. /app unmounted, lv_app and vg_data removed, PV labels cleared, /etc/fstab restored, loop disks d24a and d24b released."
+echo "Cleanup complete. /app unmounted, lv_app and vg_data removed, PV labels cleared, its /etc/fstab line removed, loop disks d24a and d24b released."

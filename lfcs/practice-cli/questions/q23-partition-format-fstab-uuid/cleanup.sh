@@ -23,4 +23,4 @@ free_loop_disk d23
 rmdir /data 2>/dev/null
 rm -rf "${LFCS_STATE_DIR:?}/q23"
 
-echo "Cleanup complete. /data unmounted and removed, /etc/fstab restored, $DEV wiped, loop disk d23 released."
+echo "Cleanup complete. /data unmounted and removed, its /etc/fstab line removed, $DEV wiped, loop disk d23 released."

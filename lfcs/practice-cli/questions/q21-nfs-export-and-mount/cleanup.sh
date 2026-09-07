@@ -30,5 +30,5 @@ fi
 rm -rf "${LFCS_STATE_DIR:?}/q21"
 
 echo "Cleanup complete."
-echo "  /mnt/share is unmounted, /etc/exports and /etc/fstab are restored, /srv/share is gone,"
+echo "  /mnt/share is unmounted, /etc/exports is restored and the /mnt/share line is out of /etc/fstab, /srv/share is gone,"
 echo "  the peer namespace is deleted and $UNIT is back the way setup found it."

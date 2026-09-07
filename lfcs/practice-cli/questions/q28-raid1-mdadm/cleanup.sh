@@ -32,5 +32,5 @@ free_loop_disk d28b
 findmnt -no TARGET /mnt/raid >/dev/null 2>&1 || rm -rf /mnt/raid
 rm -rf "${LFCS_STATE_DIR:?}/q28"
 
-echo "Cleanup complete. /mnt/raid unmounted, /dev/md0 stopped, superblocks zeroed, /etc/fstab and $MDCONF restored, loop disks d28a and d28b released."
+echo "Cleanup complete. /mnt/raid unmounted, /dev/md0 stopped, superblocks zeroed, the /mnt/raid line removed from /etc/fstab, $MDCONF restored, loop disks d28a and d28b released."
 echo "If you rebuilt the initramfs during the question, run 'update-initramfs -u' (Ubuntu) or 'dracut -f' (Rocky) once more so it forgets the array too."
