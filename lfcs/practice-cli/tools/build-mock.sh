@@ -7,6 +7,7 @@ N="${1:?usage: build-mock.sh N}"
 SET="$CLI/../mock-exams/mock-$N.set"
 OUT="$CLI/../mock-exams/mock-$N.md"
 TMP="$OUT.tmp"
+trap 'rm -f "$TMP"' EXIT
 
 [[ -f "$SET" ]] || { echo "missing $SET" >&2; exit 1; }
 
@@ -33,6 +34,10 @@ total=0; k=0
     [[ -z "$id" || "$id" == \#* ]] && continue
     d=$(find "$CLI/questions" -mindepth 1 -maxdepth 1 -name "q$id-*" | head -1)
     [[ -n "$d" ]] || { echo "unknown question id '$id' in $SET" >&2; exit 1; }
+    # An incomplete question would silently produce a task with no title or host.
+    for want in meta question.md; do
+      [[ -s "$d/$want" ]] || { echo "question q$id is incomplete (no $want); refusing to build $OUT" >&2; exit 1; }
+    done
     k=$(( k + 1 )); total=$(( total + w ))
     (
       # shellcheck disable=SC1090

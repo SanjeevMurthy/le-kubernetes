@@ -35,3 +35,6 @@ x-prompt/
 .timer
 .progress
 *.set.results
+
+# Generator temp files
+*.tmp

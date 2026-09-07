@@ -6,6 +6,7 @@ set -o pipefail
 CLI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$CLI/lfcs-exam-qa-guide.md"
 TMP="$OUT.tmp"
+trap 'rm -f "$TMP"' EXIT
 
 meta_count=$(find "$CLI/questions" -mindepth 2 -maxdepth 2 -name meta 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$meta_count" -eq 0 ]]; then

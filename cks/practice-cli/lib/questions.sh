@@ -36,6 +36,8 @@ QUESTIONS=(
   "32|Audit: ordered policy and retention flags|Monitoring, Logging and Runtime Security|D6|Hard|q32-audit-policy-levels|node-root|8|10|13|control-plane"
   "33|Restrict TLS versions and ciphers|Cluster Setup|D1|Hard|q33-tls-ciphers-apiserver-etcd|node-root|7|8|12|control-plane"
   "34|AppArmor: the profile name is not the file name|System Hardening|D3|Medium|q34-apparmor-profile-name-trap|node-root tool:apparmor_parser|6|8|12|worker"
+  "35|CiliumNetworkPolicy: allow only GET /health|Minimize Microservice Vulnerabilities|D4|Medium|q35-cilium-l7-policy|kubectl cni-cilium|7|8|8|any"
+  "40|Issue a client certificate to user jane and bind a Role|Cluster Hardening|D2|Medium|q40-csr-user-certificate|kubectl tool:openssl|6|8|3|any"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

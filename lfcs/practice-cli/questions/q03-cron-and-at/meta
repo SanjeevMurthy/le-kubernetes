@@ -1,0 +1,10 @@
+id=03
+title="Scheduled jobs for a user, root, and a one-off"
+domain="Operations Deployment"
+domain_short=D1
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=2
+host=any

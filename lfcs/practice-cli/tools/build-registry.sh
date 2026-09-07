@@ -6,6 +6,7 @@ set -o pipefail
 CLI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$CLI/lib/questions.sh"
 TMP="$OUT.tmp"
+trap 'rm -f "$TMP"' EXIT
 
 # Refuse to write an empty registry. Without this guard a mistake that leaves no
 # meta files (a bad path, a half-finished migration) silently destroys the file.

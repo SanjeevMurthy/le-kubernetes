@@ -1,0 +1,10 @@
+id=37
+title="The API server is down again: a volume is wrong"
+domain="Cluster Hardening"
+domain_short=D2
+difficulty=Medium
+needs="node-root"
+weight=7
+minutes=8
+sources=9
+host=control-plane
