@@ -21,8 +21,40 @@
 | Q9 | D1 | [Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing) | 3 sources | `rocky tool:semanage` |
 | Q10 | D1 | [Write a service unit for an application](#q10-write-a-service-unit-for-an-application) | 2 sources | `` |
 | Q11 | D1 | [A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent) | 2 sources | `` |
+| Q12 | D2 | [Static IPv4 on the second NIC, persistent](#q12-static-ipv4-on-the-second-nic-persistent) | 1 sources | `nic2` |
+| Q13 | D2 | [Persistent static route](#q13-persistent-static-route) | 1 sources | `nic2` |
+| Q14 | D2 | [Hostname, hosts file, DNS servers and search domain](#q14-hostname-hosts-file-dns-servers-and-search-domain) | 3 sources | `` |
+| Q15 | D2 | [Time source, NTP serving, timezone](#q15-time-source-ntp-serving-timezone) | 0 sources | `tool:chronyc` |
+| Q16 | D2 | [Harden sshd, key-only login with one password exception](#q16-harden-sshd-key-only-login-with-one-password-exception) | 2 sources | `` |
+| Q17 | D2 | [Allow only ssh, http, https and icmp, persistent, without blocking the exam ports](#q17-allow-only-ssh-http-https-and-icmp-persistent-without-blocking-the-exam-ports) | 7 sources | `netns` |
+| Q18 | D2 | [Redirect a port and masquerade a subnet, persistent](#q18-redirect-a-port-and-masquerade-a-subnet-persistent) | 7 sources | `netns` |
+| Q19 | D2 | [Put the second NIC into a bridge, persistent](#q19-put-the-second-nic-into-a-bridge-persistent) | 1 sources | `nic2` |
+| Q20 | D2 | [Reverse proxy in front of an application](#q20-reverse-proxy-in-front-of-an-application) | 2 sources | `` |
+| Q21 | D2 | [Export a directory and mount it persistently](#q21-export-a-directory-and-mount-it-persistently) | 3 sources | `tool:exportfs netns` |
+| Q22 | D2 | [The web app is unreachable from the peer, find and fix two causes](#q22-the-web-app-is-unreachable-from-the-peer-find-and-fix-two-causes) | 5 sources | `netns` |
 | Q23 | D3 | [Partition a disk, format it, and mount it by UUID](#q23-partition-a-disk-format-it-and-mount-it-by-uuid) | 2 sources | `disk` |
 | Q24 | D3 | [Volume group with a custom extent size and a mounted logical volume](#q24-volume-group-with-a-custom-extent-size-and-a-mounted-logical-volume) | 4 sources | `disk` |
+| Q25 | D3 | [Grow a mounted logical volume after adding a disk](#q25-grow-a-mounted-logical-volume-after-adding-a-disk) | 4 sources | `disk` |
+| Q26 | D3 | [Add a swap file with a priority, persistent](#q26-add-a-swap-file-with-a-priority-persistent) | 1 sources | `` |
+| Q27 | D3 | [User quota on a filesystem](#q27-user-quota-on-a-filesystem) | 0 sources | `disk` |
+| Q28 | D3 | [Mirror two disks with mdadm and mount the array](#q28-mirror-two-disks-with-mdadm-and-mount-the-array) | 1 sources | `disk tool:mdadm` |
+| Q29 | D3 | [Encrypted volume unlocked with a key file at boot](#q29-encrypted-volume-unlocked-with-a-key-file-at-boot) | 0 sources | `disk tool:cryptsetup` |
+| Q30 | D3 | [Attach a network block device and mount it](#q30-attach-a-network-block-device-and-mount-it) | 0 sources | `netns tool:nbd-client` |
+| Q31 | D3 | [Filesystem nearly full: recover space and find the hidden consumer](#q31-filesystem-nearly-full-recover-space-and-find-the-hidden-consumer) | 2 sources | `disk` |
+| Q32 | D4 | [Clone, branch, ignore, commit, push](#q32-clone-branch-ignore-commit-push) | 1 sources | `tool:git` |
+| Q33 | D4 | [Read a certificate and issue a self-signed one](#q33-read-a-certificate-and-issue-a-self-signed-one) | 4 sources | `tool:openssl` |
+| Q34 | D4 | [Locate files by owner and size, list SUID binaries, set SGID and sticky](#q34-locate-files-by-owner-and-size-list-suid-binaries-set-sgid-and-sticky) | 3 sources | `` |
+| Q35 | D4 | [Reports from a log with grep, sort, uniq, sed and awk](#q35-reports-from-a-log-with-grep-sort-uniq-sed-and-awk) | 3 sources | `` |
+| Q36 | D4 | [Archive with exclusions, extract, symbolic and hard links](#q36-archive-with-exclusions-extract-symbolic-and-hard-links) | 2 sources | `` |
+| Q37 | D4 | [A script with separate stdout and stderr files](#q37-a-script-with-separate-stdout-and-stderr-files) | 2 sources | `` |
+| Q38 | D4 | [A service cannot start because another one owns its port](#q38-a-service-cannot-start-because-another-one-owns-its-port) | 2 sources | `` |
+| Q39 | D4 | [Report CPU hog, load, cores, memory and process count](#q39-report-cpu-hog-load-cores-memory-and-process-count) | 3 sources | `` |
+| Q40 | D4 | [A service fails its file-descriptor limit: raise it with a drop-in](#q40-a-service-fails-its-file-descriptor-limit-raise-it-with-a-drop-in) | 1 sources | `` |
+| Q41 | D5 | [Create users with exact attributes, a system account, and lock one](#q41-create-users-with-exact-attributes-a-system-account-and-lock-one) | 1 sources | `` |
+| Q42 | D5 | [Sudo rules and password ageing](#q42-sudo-rules-and-password-ageing) | 2 sources | `` |
+| Q43 | D5 | [Group collaboration directory with ACLs](#q43-group-collaboration-directory-with-acls) | 1 sources | `` |
+| Q44 | D5 | [System-wide environment, skeleton, and per-user limits](#q44-system-wide-environment-skeleton-and-per-user-limits) | 2 sources | `` |
+| Q45 | D5 | [Resolve users from an LDAP directory](#q45-resolve-users-from-an-ldap-directory) | 0 sources | `ubuntu tool:slapd` |
 
 ---
 
@@ -1135,7 +1167,7 @@ ls -l /etc/systemd/system/multi-user.target.wants/
 1. Use the journal to find out why it fails. Do not guess from the unit file.
 2. Copy the line that explains the failure into `/opt/course/11/error.txt` (`$COURSE_DIR/11/error.txt` on this lab). The exit code or the reason must appear in it verbatim.
 3. Fix the cause and get the service running. It must also still be enabled.
-4. This host currently throws its journal away at every reboot, which is why nobody could look at yesterday's failure. Make the journal persistent, so `journalctl -b -1` works after the next reboot.
+4. This host currently throws its journal away at every reboot, which is why nobody could look at yesterday's failure. Make the journal persistent, so `journalctl -b -1` works after the next reboot. The grader accepts either storage setting that does this: `Storage=persistent`, or `Storage=auto` with `/var/log/journal` in place. It reads the setting out of `/etc/systemd/journald.conf` or a drop-in under `/etc/systemd/journald.conf.d/`, so leaving `Storage=volatile` on disk and only restarting the daemon scores nothing.
 
 Do not change `ExecStart` and do not rewrite the unit to work around the problem.
 
@@ -1198,6 +1230,8 @@ systemctl restart systemd-journald
 journalctl --header | grep -i 'journal file'
 ```
 
+`Storage=auto` is the other correct answer, and the grader takes it: `auto` means "use the disk when `/var/log/journal` exists", so the directory plus `Storage=auto` is persistent too. What fails is leaving `Storage=volatile` in the file, whatever the directory looks like.
+
 ## Why
 
 Exit code 203 is systemd's own code, not the application's. It means systemd could not execute the thing named in `ExecStart` at all: the file does not exist, has no executable bit, has a shebang pointing at a missing interpreter, or is on a filesystem mounted `noexec`. Learning the small set of systemd exit codes turns a vague "it will not start" into a two-command diagnosis: 203 is exec, 200 to 242 are systemd's range, and anything else came from the program itself.
@@ -1232,6 +1266,1485 @@ journalctl -u billing.service -b --no-pager | tail -3
 - `man 5 systemd.exec`, section "Process Exit Codes", for what 203/EXEC means
 - `man 5 systemd.service` for `ExecStart` and `Restart`
 - `man 8 logrotate` and `man 5 logrotate.conf` for application log files, which the journal does not manage
+
+---
+
+### Q12. Static IPv4 on the second NIC, persistent
+
+**Domain:** Networking. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `nic2`.
+
+**Question**
+
+
+This host has two network interfaces. The first one carries the default route. The second one is the lab network interface, and the setup output names it.
+
+Give the second interface an extra static IPv4 address:
+
+- `10.50.0.10/24` on Ubuntu
+- `10.50.0.20/24` on Rocky
+
+The setup output prints the exact address for this host, so read it before you start.
+
+Three conditions decide the grade:
+
+1. The address is live on that interface when you finish. The grader reads `ip -j addr show <nic>` and `ip -j route show dev <nic>`.
+2. The address is still there after a reboot. The grader reads the netplan YAML on Ubuntu and the NetworkManager keyfile on Rocky. An address added with `ip addr add` scores nothing.
+3. Every address the interface already had is still on it. That interface may be carrying your SSH session, and losing its address costs you the host.
+
+Condition 3 is the one that catches people. On Ubuntu a second netplan file that declares `addresses:` for the same interface replaces the list rather than adding to it. On Rocky a bare `nmcli con mod <con> ipv4.addresses ...` replaces the list as well.
+
+Leave the interface's addressing method as you found it. The task is an extra address, not a change of method. On Rocky, if the connection is holding a DHCP lease, `nmcli con mod <con> ipv4.method manual` ends the lease and takes the address it gave you with it, which is condition 3 failed. NetworkManager applies the addresses in `ipv4.addresses` under `auto` as well as under `manual`, so the static address lands on top of the lease. The grader checks only that IPv4 is still enabled on the connection, meaning the method is `manual` or `auto` and not `disabled`, because a disabled connection applies nothing at boot.
+
+Do not touch the interface that carries the default route.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Find the interface and see what it already has.**
+
+```bash
+ip -br addr
+ip -o route show default | awk '{print $5}'    # the NIC to leave alone
+ip -j addr show enp0s8                         # the lab NIC, machine readable
+```
+
+Write down every address already on that interface. One of them is probably the address your session is running over.
+
+**2a. Ubuntu: add the address to the existing netplan file.**
+
+Find the file that already configures the interface, and edit that file rather than adding a new one:
+
+```bash
+grep -l enp0s8 /etc/netplan/*.yaml
+netplan get                                    # the merged configuration, all files together
+vim /etc/netplan/50-cloud-init.yaml
+```
+
+The interface block ends up with both addresses in one list:
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      addresses:
+        - 192.168.56.10/24
+        - 10.50.0.10/24
+```
+
+Two-space indent, no tab characters anywhere, and the file must be mode 600:
+
+```bash
+chmod 600 /etc/netplan/50-cloud-init.yaml
+netplan try                                    # reverts by itself after 120 seconds
+```
+
+Press Enter to keep the change once the session is still alive. `netplan apply` does the same thing without the safety net.
+
+**2b. Rocky: append the address to the connection.**
+
+```bash
+nmcli -t -f NAME,DEVICE con show --active
+nmcli -g ipv4.method con show "System enp0s8"      # auto or manual, and it stays as it is
+nmcli con mod "System enp0s8" +ipv4.addresses 10.50.0.20/24
+nmcli con up "System enp0s8"
+```
+
+The `+` is the whole point. `nmcli con mod <con> ipv4.addresses 10.50.0.20/24` without it throws the existing address away.
+
+Do not add `ipv4.method manual` here. This task adds an address and keeps the ones already on the interface, and on a connection that is holding a DHCP lease `manual` ends the lease, so the address the interface came up with disappears at the next `nmcli con up`. Under `auto` the addresses in `ipv4.addresses` are applied as well as the lease, which is exactly what is wanted. `manual` is right when the interface has no lease to lose, which is the case in a question that replaces DHCP with a fixed address. The one method that would fail here is `disabled`, since then nothing in `ipv4.addresses` is applied at all.
+
+**3. Confirm both halves.**
+
+```bash
+ip -j addr show enp0s8 | grep -o '"local":"[0-9.]*"'
+ip -j route show dev enp0s8
+grep -n '10.50.0' /etc/netplan/*.yaml                                  # Ubuntu
+nmcli -g ipv4.addresses con show "System enp0s8"                       # Rocky
+```
+
+## Why
+
+`ip addr add 10.50.0.10/24 dev enp0s8` puts the address on the interface immediately and records nothing on disk. The next boot starts from the netplan file or the NetworkManager connection, and the address is gone. That single fact is what most of this domain is about, so the grader always reads a file as well as the running kernel.
+
+The reason the task insists on keeping the existing address is that both tools replace rather than merge. Netplan reads every file in `/etc/netplan` in lexical order and merges them key by key: a file named `60-lab.yaml` that sets `addresses:` for `enp0s8` overrides the `addresses:` key set by `50-cloud-init.yaml` instead of extending it. The interface then comes up with only the new address, the management address is gone, and the session dies at `netplan apply`. Editing the file that already owns the interface avoids the problem entirely. NetworkManager has the same trap in a different spelling: the bare property assigns, `+ipv4.addresses` appends, and `-ipv4.addresses` removes one entry. The method is a second way to lose an address on Rocky. `ipv4.method` decides where the interface's addresses come from, and switching a connection from `auto` to `manual` stops the DHCP client, so the leased address is gone the moment the connection is brought up again.
+
+`netplan try` exists for exactly this situation. It applies the configuration, waits 120 seconds for confirmation, and rolls back if the terminal goes away. On the interface carrying the session it is the difference between a mistake that costs 10 seconds and one that costs the host.
+
+The connected route is worth checking as well as the address. An address written with the wrong prefix length still shows up in `ip addr`, but `ip -j route show dev enp0s8` then carries the wrong network, and nothing on that subnet answers.
+
+## Verify
+
+```bash
+ip -j addr show enp0s8
+ip -j route show dev enp0s8            # expect "dst":"10.50.0.0/24"
+ping -c1 -W2 10.50.0.10
+
+grep -R '10.50.0' /etc/netplan/                        # Ubuntu persistence
+nmcli -g ipv4.method,ipv4.addresses con show "System enp0s8"   # Rocky persistence, method manual or auto
+```
+
+## Docs
+
+- `man 5 netplan` for the `ethernets`, `addresses` and `dhcp4` keys and the file merge order
+- `man 8 netplan-try` and `man 8 netplan-apply` for the two ways to activate a change
+- `man 1 nmcli` for `con mod`, and the `+property` and `-property` forms
+- `man 5 nm-settings-nmcli` for `ipv4.method` and `ipv4.addresses`
+- `man 8 ip-address` and `man 8 ip-route` for the runtime commands and the `-j` output
+
+---
+
+### Q13. Persistent static route
+
+**Domain:** Networking. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `nic2`.
+
+**Question**
+
+
+The lab network has a router that reaches a remote range this host cannot see yet.
+
+Add a static route for `10.200.0.0/16` through the gateway on the second network interface. The setup output names the interface and the gateway address, which is the `.1` address of the subnet the interface is already on. On the lab VMs that is `192.168.56.1`.
+
+The route must be there twice over:
+
+1. In the running kernel. The grader reads `ip -j route` and `ip route get 10.200.0.5`.
+2. In the network configuration, so it comes back after a reboot. The grader reads the netplan YAML on Ubuntu and the NetworkManager keyfile on Rocky. A route added with `ip route add` scores nothing. It wants the destination and the gateway inside one route entry: a `routes:` list item with `to:` and `via:` on Ubuntu, or an `ipv4.routes` entry on Rocky. The gateway address sitting in the file as part of the interface address does not count.
+
+Do not change the default route, and do not remove any address the interface already carries.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Look at the routing table first, and find the gateway.**
+
+```bash
+ip route
+ip -br addr show enp0s8          # the interface subnet gives the gateway, here 192.168.56.1
+ip route get 10.200.0.5          # right now this leaves through the default route
+```
+
+**2a. Ubuntu: add a `routes:` list to the netplan file that owns the interface.**
+
+```bash
+grep -l enp0s8 /etc/netplan/*.yaml
+vim /etc/netplan/50-cloud-init.yaml
+```
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      addresses:
+        - 192.168.56.10/24
+      routes:
+        - to: 10.200.0.0/16
+          via: 192.168.56.1
+```
+
+```bash
+chmod 600 /etc/netplan/50-cloud-init.yaml
+netplan try                       # rolls back on its own if the session dies
+```
+
+**2b. Rocky: append the route to the connection.**
+
+```bash
+nmcli -t -f NAME,DEVICE con show --active
+nmcli con mod "System enp0s8" +ipv4.routes "10.200.0.0/16 192.168.56.1"
+nmcli con up "System enp0s8"
+```
+
+`+ipv4.routes` appends. The bare `ipv4.routes` property replaces the whole list, which silently drops any route already there.
+
+**3. Confirm it landed.**
+
+```bash
+ip -j route show 10.200.0.0/16
+ip route get 10.200.0.5           # expect via 192.168.56.1 dev enp0s8
+```
+
+If the gateway is not on a subnet the host is directly connected to, the kernel refuses with "Nexthop has invalid gateway". Fix the address on the interface first, then add the route.
+
+## Why
+
+A route is state in the kernel's forwarding information base. `ip route add` writes it there and nowhere else, so it lives exactly as long as the kernel does. The persistent form is a property of the interface configuration, which is why both netplan and NetworkManager keep routes next to addresses rather than in a file of their own.
+
+Netplan's old `gateway4:` key is deprecated and ignored on current releases. A default route is written as an entry inside `routes:` with `to: default`, and any other route as `to: <cidr>` with `via: <gateway>`. Writing `gateway4:` produces a warning that is easy to miss and a routing table that never changes.
+
+`ip route get` is worth more than `ip route` when checking work. It asks the kernel which route it would actually use for one destination, so it resolves metric ties and more specific prefixes that a printed table hides. If `ip route get 10.200.0.5` still names the default gateway, the new route exists but something more specific or with a lower metric is winning.
+
+The reason the grader reads a file as well is that this is the single most common way to lose marks in this domain. A route that is right now and gone after a reboot is worth nothing on the exam.
+
+## Verify
+
+```bash
+ip -j route show 10.200.0.0/16
+ip route get 10.200.0.5
+
+grep -A3 -n 'routes' /etc/netplan/*.yaml               # Ubuntu persistence
+nmcli -g ipv4.routes con show "System enp0s8"          # Rocky persistence
+```
+
+## Docs
+
+- `man 8 ip-route` for `add`, `get`, `via`, `dev` and metrics
+- `man 5 netplan` for the `routes:` list, `to:` and `via:`
+- `man 1 nmcli` for `con mod` and the `+property` form
+- `man 5 nm-settings-nmcli` for the `ipv4.routes` syntax
+
+---
+
+### Q14. Hostname, hosts file, DNS servers and search domain
+
+**Domain:** Networking. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Setup has renamed this host to `lfcs-unset` and stripped its resolver configuration. Put all of it back.
+
+1. Set the static hostname to `node1.lab.local` on Ubuntu, or `node2.lab.local` on Rocky. The setup output prints the name for this host. It must still be that name after a reboot.
+
+2. Make the name `node9` resolve to `192.168.56.90` without asking a DNS server. `getent hosts node9` must print that address, and `node9.lab.local` must resolve to it too.
+
+3. Configure two DNS servers, `1.1.1.1` and `9.9.9.9`, and the search domain `lab.local`.
+
+The resolver half is graded twice: once live, from `resolvectl dns` and `resolvectl domain` where `systemd-resolved` runs, or from `/etc/resolv.conf` where it does not, and once from the file that survives a reboot. That file is the netplan YAML on Ubuntu, the NetworkManager keyfile on Rocky, or `/etc/systemd/resolved.conf` and its drop-in directory.
+
+Editing `/etc/resolv.conf` by hand does not count. Where `systemd-resolved` owns the machine that file is a symlink into `/run`, and where NetworkManager owns it the file is rewritten on the next connection change. Both throw the edit away.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Set the hostname.**
+
+```bash
+hostnamectl set-hostname node1.lab.local
+hostnamectl status
+```
+
+That writes `/etc/hostname`, so it is persistent already. Fix the loopback alias in `/etc/hosts` at the same time, or `sudo` prints a "unable to resolve host" warning on every call:
+
+```bash
+vim /etc/hosts
+```
+
+```
+127.0.0.1   localhost
+127.0.1.1   node1.lab.local node1
+```
+
+**2. Add the static host entry.**
+
+```bash
+printf '192.168.56.90\tnode9.lab.local node9\n' >> /etc/hosts
+getent hosts node9
+```
+
+`/etc/hosts` is itself the persistent form, so there is no second file to write.
+
+**3a. Ubuntu: put the resolver in the netplan file that owns the interface.**
+
+```bash
+grep -l enp0s8 /etc/netplan/*.yaml
+vim /etc/netplan/50-cloud-init.yaml
+```
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      addresses:
+        - 192.168.56.10/24
+      nameservers:
+        addresses: [1.1.1.1, 9.9.9.9]
+        search: [lab.local]
+```
+
+```bash
+chmod 600 /etc/netplan/50-cloud-init.yaml
+netplan try
+resolvectl status
+```
+
+**3b. Rocky: put the resolver on the connection.**
+
+```bash
+nmcli -t -f NAME,DEVICE con show --active
+nmcli con mod "System enp0s8" ipv4.dns "1.1.1.1 9.9.9.9" ipv4.dns-search lab.local
+nmcli con mod "System enp0s8" ipv4.ignore-auto-dns yes
+nmcli con up "System enp0s8"
+cat /etc/resolv.conf
+```
+
+`/etc/systemd/resolved.conf` with `DNS=1.1.1.1 9.9.9.9` and `Domains=lab.local` is an accepted answer on a host where `systemd-resolved` is the resolver, followed by `systemctl restart systemd-resolved`.
+
+**4. Prove it end to end.**
+
+```bash
+hostnamectl --static
+getent hosts node9
+getent hosts node9.lab.local
+resolvectl dns; resolvectl domain
+```
+
+## Why
+
+Three different mechanisms hide behind the word "name" here, and the exam tends to touch all three in one task.
+
+`hostname node1` changes the name in the running kernel and nothing else. `hostnamectl set-hostname node1.lab.local` sets the same kernel value and writes `/etc/hostname`, which is what makes it survive a reboot. There are three hostnames in systemd terms, static, transient and pretty, and `hostnamectl --static` is the one a grader reads.
+
+`/etc/hosts` is consulted before DNS because `/etc/nsswitch.conf` lists `files` before `dns` on the `hosts` line. That is why `getent hosts node9` is the honest test and `dig node9` is not: `dig` talks to a DNS server directly and never looks at the hosts file, so it can report failure for a name every application on the host resolves perfectly.
+
+The resolver is the part that catches people. On Ubuntu, `systemd-resolved` owns resolution, `/etc/resolv.conf` is a symlink to a stub file in `/run` that only ever contains `127.0.0.53`, and the real servers are per-link settings that `resolvectl dns` prints. Writing servers into `/etc/resolv.conf` on that host changes nothing and is undone at the next boot. On Rocky, NetworkManager writes `/etc/resolv.conf` from the connection profile, so a hand edit survives until the next `nmcli con up` and no longer. In both cases the durable place is the network configuration, which is why netplan and nmcli both have a nameserver setting.
+
+The search domain matters more than it looks. A search list of `lab.local` is what turns `ssh node9` into a lookup for `node9.lab.local`. Changing the resolver on a host is also a good way to break later tasks that reach peers by name, so it is worth testing `getent hosts <peer>` before leaving the host.
+
+## Verify
+
+```bash
+hostnamectl --static                    # node1.lab.local
+cat /etc/hostname                       # the persistent copy
+getent hosts node9                      # 192.168.56.90
+resolvectl dns; resolvectl domain       # live servers and search list
+grep -R -A3 nameservers /etc/netplan/   # Ubuntu persistence
+nmcli -g ipv4.dns,ipv4.dns-search con show "System enp0s8"   # Rocky persistence
+ls -l /etc/resolv.conf                  # normally a symlink, do not edit it
+```
+
+## Docs
+
+- `man 1 hostnamectl` and `man 5 hostname` for the static hostname and its file
+- `man 5 hosts` for the static entry format and `man 5 nsswitch.conf` for the lookup order
+- `man 1 resolvectl` and `man 5 resolved.conf` for `DNS=`, `Domains=` and the stub resolver
+- `man 5 netplan` for the `nameservers:` block
+- `man 5 nm-settings-nmcli` for `ipv4.dns`, `ipv4.dns-search` and `ipv4.ignore-auto-dns`
+
+---
+
+### Q15. Time source, NTP serving, timezone
+
+**Domain:** Networking. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `tool:chronyc`.
+
+**Question**
+
+
+This host has lost its time configuration. Setup has stopped chrony, removed the lab time source from its configuration file and set the timezone to UTC.
+
+Do three things.
+
+1. Make the host take its time from `time.google.com`, polling it quickly at startup. The configuration line the grader expects is `server time.google.com iburst`.
+
+2. Make the host serve time to the lab network `192.168.56.0/24`. Consuming time and serving it are two different settings, and only one of them is on by default.
+
+3. Set the timezone to `Asia/Kolkata`.
+
+Then start chrony and make sure it comes back at the next boot.
+
+The grader checks the running daemon with `chronyc`, the timezone with `timedatectl show -p Timezone --value`, and the chrony configuration file for both directives. The configuration file is `/etc/chrony/chrony.conf` on Ubuntu and `/etc/chrony.conf` on Rocky, and the service is named `chrony` on Ubuntu and `chronyd` on Rocky. Setup prints which one applies here.
+
+`date -s` is not an answer to any part of this. A running time daemon steps the clock back.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Find the file and the unit for this distribution.**
+
+```bash
+ls -l /etc/chrony.conf /etc/chrony/chrony.conf 2>/dev/null
+systemctl list-unit-files | grep -E '^chrony'
+```
+
+Ubuntu ships `/etc/chrony/chrony.conf` and a unit called `chrony`. Rocky ships `/etc/chrony.conf` and a unit called `chronyd`.
+
+**2. Add the source and the allow rule.**
+
+```bash
+vim /etc/chrony/chrony.conf        # /etc/chrony.conf on Rocky
+```
+
+```
+server time.google.com iburst
+allow 192.168.56.0/24
+```
+
+Both lines can also be appended without an editor:
+
+```bash
+printf 'server time.google.com iburst\nallow 192.168.56.0/24\n' >> /etc/chrony/chrony.conf
+```
+
+**3. Start the daemon and make it come back at boot.**
+
+```bash
+systemctl enable --now chrony      # chronyd on Rocky
+systemctl is-active chrony; systemctl is-enabled chrony
+```
+
+**4. Set the timezone.**
+
+```bash
+timedatectl list-timezones | grep -i kolkata
+timedatectl set-timezone Asia/Kolkata
+timedatectl
+```
+
+**5. Watch the source come up.**
+
+```bash
+chronyc sources -v
+chronyc tracking
+chronyc makestep                   # only if the offset is large and you want it corrected now
+```
+
+Straight after a restart the source can still show `?` in the first column while the first exchanges complete. That is normal, and `iburst` is what shortens it.
+
+## Why
+
+Two separate ideas share one configuration file. A `server` or `pool` line makes this host a client of a time source. An `allow` line makes it a server for someone else. A task that says "the host must serve time to the lab network" is only complete with the `allow`, and nothing in `chronyc tracking` shows whether it is there, which is why the grader reads the file.
+
+`date -s` sets the system clock directly and fights the daemon. chronyd notices the jump and slews or steps the clock back, so the change either disappears or leaves the clock oscillating. When the clock is genuinely wrong, `chronyc makestep` asks the daemon to correct it in one jump, which is the supported way to do the same thing.
+
+`timedatectl set-timezone` relinks `/etc/localtime` to the matching file under `/usr/share/zoneinfo`. That symlink is the persistent form, so the timezone half of this task needs no extra file. What does need care is that a host can only have one time daemon: `chrony` and `systemd-timesyncd` conflict, and installing chrony normally masks timesyncd. `timedatectl` shows which one is in charge under "NTP service".
+
+Serving time also needs 123/udp to be reachable. On a host with a default-drop firewall the `allow` line is correct and no client can still use it, which is a good reminder that a networking task usually has a firewall half.
+
+## Verify
+
+```bash
+chronyc sources                       # the configured source is listed
+chronyc tracking                      # the daemon answers, so it read its configuration
+timedatectl show -p Timezone --value  # Asia/Kolkata
+readlink -f /etc/localtime            # /usr/share/zoneinfo/Asia/Kolkata
+
+grep -E '^(server|pool|allow)' /etc/chrony/chrony.conf /etc/chrony.conf 2>/dev/null
+systemctl is-enabled chrony 2>/dev/null || systemctl is-enabled chronyd
+```
+
+## Docs
+
+- `man 5 chrony.conf` for `server`, `pool`, `iburst` and `allow`
+- `man 1 chronyc` for `sources`, `sourcestats`, `tracking` and `makestep`
+- `man 8 chronyd` for how the daemon reads its configuration
+- `man 1 timedatectl` for `set-timezone`, `list-timezones` and `set-ntp`
+- `man 8 systemd-timesyncd.service` for the daemon chrony replaces
+
+---
+
+### Q16. Harden sshd, key-only login with one password exception
+
+**Domain:** Networking. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+A user called `deploy` exists on this host, and a key pair for that user is waiting in `/opt/course/16/`:
+
+- private key `/opt/course/16/id_deploy`
+- public key `/opt/course/16/id_deploy.pub`
+
+Harden the OpenSSH server so that, for everyone:
+
+- root cannot log in over ssh at all
+- password authentication is off
+- at most three authentication attempts are allowed per connection
+
+Then make one exception: the user `deploy` may still authenticate with a password.
+
+Install the public key for `deploy` so that `ssh -i /opt/course/16/id_deploy deploy@localhost` logs in without a password. The `authorized_keys` file must be mode 600 and owned by `deploy`.
+
+The grader reads the effective configuration with `sshd -T`, reads it again with `sshd -T -C user=deploy,host=lab,addr=127.0.0.1` to see the exception, opens a real ssh connection as `deploy`, and greps `/etc/ssh/sshd_config` and `/etc/ssh/sshd_config.d/` for the persistent settings.
+
+Two warnings. Run `sshd -t` before restarting the service, because a syntax error with no running daemon cannot be fixed over the network. And make sure your own login still works after the change. Cleanup restores the original configuration, so nothing here is permanent.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Read the effective configuration before changing it.**
+
+```bash
+sshd -T | grep -E '^(permitrootlogin|passwordauthentication|maxauthtries|pubkeyauthentication)'
+grep -n '^Include' /etc/ssh/sshd_config
+```
+
+The `Include` line tells you whether `/etc/ssh/sshd_config.d/` is read and, just as important, where in the file it sits.
+
+**2. Write the hardening as a drop-in.**
+
+```bash
+printf '%s\n' 'PermitRootLogin no' 'PasswordAuthentication no' 'MaxAuthTries 3' \
+  'PubkeyAuthentication yes' > /etc/ssh/sshd_config.d/90-hardening.conf
+```
+
+**3. Write the exception as a second drop-in that sorts last.**
+
+```bash
+printf '%s\n' 'Match User deploy' '    PasswordAuthentication yes' \
+  > /etc/ssh/sshd_config.d/99-match-deploy.conf
+```
+
+Everything after a `Match` line belongs to that block until the next `Match` or the end of the file, so the block goes last and nothing unconditional may follow it.
+
+**4. Install the key for deploy.**
+
+```bash
+install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+install -m 600 -o deploy -g deploy /opt/course/16/id_deploy.pub /home/deploy/.ssh/authorized_keys
+ls -ld /home/deploy /home/deploy/.ssh
+stat -c '%a %U %G' /home/deploy/.ssh/authorized_keys
+```
+
+**5. Check the syntax, then reload.**
+
+```bash
+sshd -t && echo config-ok
+systemctl reload ssh        # sshd on Rocky
+```
+
+On Ubuntu 24.04 the daemon is socket activated, so `systemctl restart ssh.socket` is what rebinds the port if the listening address or port changed.
+
+**6. Prove all three outcomes.**
+
+```bash
+sshd -T | grep -E 'permitrootlogin|passwordauthentication|maxauthtries'
+sshd -T -C user=deploy,host=lab,addr=127.0.0.1 | grep passwordauthentication   # yes
+ssh -i /opt/course/16/id_deploy -o BatchMode=yes deploy@localhost true && echo key-login-ok
+```
+
+## Why
+
+`sshd -T` prints the configuration the daemon will actually use, with defaults filled in and every `Include` followed. Reading `/etc/ssh/sshd_config` with grep misses both, and on a distribution that ships drop-ins it routinely reports the opposite of the truth. `sshd -T -C ...` goes one step further and evaluates the `Match` blocks for a hypothetical connection, which is the only way to check a conditional rule without opening a session.
+
+Keyword precedence in sshd is unusual: the first occurrence of a keyword wins, not the last. That is the opposite of most configuration systems, and it is why the position of the `Include` line decides whether drop-ins can override the main file at all. Both Ubuntu and Rocky put the `Include` near the top, so a file in `sshd_config.d` wins, and within that directory the files are read in lexical order, so `50-cloud-init.conf` beats `90-hardening.conf` for any keyword both of them set.
+
+The permissions on the key files are a silent failure. sshd refuses an `authorized_keys` file that is group or world writable, or one in a `.ssh` directory that is not 700, or in a home directory that is group writable, and it says nothing to the client beyond "Permission denied (publickey)". The evidence is in `journalctl -u ssh`, and the fix is `chmod`, not more configuration.
+
+`PasswordAuthentication no` on its own is not always the end of password logins. On a PAM host, `KbdInteractiveAuthentication yes` can still ask for a password through the keyboard-interactive path, so a full hardening turns that off as well. This task grades the three keywords a grader would check, but the fourth setting is worth knowing about.
+
+## Verify
+
+```bash
+sshd -t
+sshd -T | grep -E '^(permitrootlogin no|passwordauthentication no|maxauthtries 3)$'
+sshd -T -C user=deploy,host=lab,addr=127.0.0.1 | grep '^passwordauthentication yes$'
+stat -c '%a %U %G' /home/deploy/.ssh/authorized_keys      # 600 deploy deploy
+ssh -i /opt/course/16/id_deploy -o BatchMode=yes deploy@localhost true
+
+grep -Rn 'PasswordAuthentication\|PermitRootLogin\|MaxAuthTries' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
+systemctl is-enabled ssh 2>/dev/null || systemctl is-enabled sshd
+```
+
+## Docs
+
+- `man 5 sshd_config` for `PermitRootLogin`, `PasswordAuthentication`, `MaxAuthTries`, `Include` and `Match`
+- `man 8 sshd` for `-t`, `-T` and `-C`, and for the `authorized_keys` permission rules
+- `man 1 ssh-keygen` and `man 1 ssh-copy-id` for making and installing keys
+- `man 1 ssh` for `-i`, `-o BatchMode=yes` and the verbose output that explains a refused key
+
+---
+
+### Q17. Allow only ssh, http, https and icmp, persistent, without blocking the exam ports
+
+**Domain:** Networking. **Difficulty:** Hard. **Weight:** 8. **Target:** 10 min. **Host:** any. **Needs:** `netns`.
+
+**Question**
+
+
+This is the most reported task family in the whole exam, named by seven independent candidate reports.
+
+Setup has given this host a second, private network. The host is `10.99.17.1` and a peer host is `10.99.17.2`. Six services are listening on the host address: ports `80`, `9999`, `8080`, `4505`, `4506`, and the ssh daemon on `22`.
+
+Build a packet filter for incoming traffic that:
+
+1. accepts ssh on `22/tcp`, http on `80/tcp` and https on `443/tcp`
+2. accepts ICMP, so the host still answers `ping`
+3. accepts traffic that belongs to a connection this host started, and traffic on the loopback interface
+4. **accepts `8080/tcp`, `4505/tcp` and `4506/tcp`**
+5. drops everything else, which for this test means `9999/tcp`
+6. is still there after a reboot
+
+Point 4 is not optional and it is not decoration. The Linux Foundation exam instructions say that ports `8080`, `4505` and `4506` must never be blocked, in an interactive command or in a saved configuration file. `4505` and `4506` are the ports the grading and orchestration layer uses, so a default drop policy without an explicit accept for them ends the exam session. The verifier here opens all three from the peer, so a naive default-drop policy fails this practice question instead of teaching you a habit that would cost you the real one.
+
+Accept rules go in **before** the drop policy. The other order cuts your own session on the spot.
+
+On Ubuntu use `nft` and save the ruleset to `/etc/nftables.conf`, or use `ufw`. On Rocky, `firewalld` is already running and `firewall-cmd --permanent` is the natural tool. Setup prints which one this host has.
+
+The grader tests behaviour from the peer, so the rules have to actually work, and then reads the file that would restore them at the next boot. Writing the file without enabling the service that loads it scores half the task.
+
+If you lock yourself out, open the VirtualBox console and run `nft flush ruleset`, or `ufw disable`, or `firewall-cmd --panic-off`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Read the ruleset before writing anything.**
+
+```bash
+nft list ruleset
+ss -H -ltn
+ufw status 2>/dev/null; firewall-cmd --state 2>/dev/null
+```
+
+**2a. Ubuntu with nft: build the chain in the safe order.**
+
+```bash
+nft add table inet filter
+nft add chain inet filter input '{ type filter hook input priority 0 ; policy accept ; }'
+
+nft add rule inet filter input ct state established,related accept
+nft add rule inet filter input iif lo accept
+nft add rule inet filter input ip protocol icmp accept
+nft add rule inet filter input ip6 nexthdr icmpv6 accept
+nft add rule inet filter input tcp dport { 22, 80, 443 } accept
+nft add rule inet filter input tcp dport { 8080, 4505, 4506 } accept
+
+nft chain inet filter input '{ policy drop ; }'
+```
+
+The chain is created with `policy accept` and switched to `policy drop` only once every accept rule is in place. Doing it the other way round drops the session between the two commands.
+
+Then persist both halves:
+
+```bash
+nft list ruleset > /etc/nftables.conf
+systemctl enable --now nftables
+```
+
+**2b. Ubuntu with ufw, if you prefer the front end.**
+
+```bash
+ufw allow 22/tcp
+ufw allow 80,443/tcp
+ufw allow 8080,4505,4506/tcp
+ufw default deny incoming
+ufw --force enable
+ufw status numbered
+```
+
+**2c. Rocky with firewalld.**
+
+```bash
+firewall-cmd --get-active-zones
+firewall-cmd --permanent --add-service=ssh --add-service=http --add-service=https
+firewall-cmd --permanent --add-port=8080/tcp --add-port=4505/tcp --add-port=4506/tcp
+firewall-cmd --reload
+firewall-cmd --list-all
+systemctl enable firewalld
+```
+
+`--permanent` writes the zone file and changes nothing until `--reload`. Leaving out the reload is the single most common firewalld mistake.
+
+**3. Test from the peer, not from the host.**
+
+```bash
+ip netns exec fw-peer curl -s --max-time 3 http://10.99.17.1:80/          # answers
+ip netns exec fw-peer ping -c1 -W3 10.99.17.1                            # answers
+ip netns exec fw-peer curl -s --max-time 3 http://10.99.17.1:9999/       # times out
+for p in 22 8080 4505 4506; do
+  ip netns exec fw-peer timeout 3 bash -c "exec 3<>/dev/tcp/10.99.17.1/$p" \
+    && echo "$p open" || echo "$p BLOCKED"
+done
+```
+
+**4. Read the saved file back before moving on.**
+
+```bash
+grep -E '8080|4505|4506' /etc/nftables.conf
+systemctl is-enabled nftables
+firewall-cmd --permanent --list-all
+```
+
+## Why
+
+Two halves decide this task, and candidates lose marks on both.
+
+The first is the order of operations. An nftables chain has a policy and a list of rules, and the policy applies to any packet no rule accepted. Setting `policy drop` on a chain that has no accept rules yet drops the packets of the SSH session carrying the command, and there is no second command. Adding the accept rules first, then flipping the policy, means the worst case is a rule that is too permissive rather than a host that cannot be reached. The same logic is why `ufw default deny incoming` comes after the `ufw allow` lines and why `firewall-cmd --permanent` waits for a `--reload`.
+
+The second is that persistence is a pair. `nft add rule` changes the running kernel only. `nft list ruleset > /etc/nftables.conf` writes the file, and `systemctl enable nftables` is what makes something read that file at boot. Doing one without the other looks correct in `nft list ruleset` and comes back empty, or comes back with a drop policy and no accept rules, after a reboot. The saved file deserves its own read: a persisted default drop that omits the exam ports is a rule that has not caused any harm yet and will at the next boot.
+
+Ports 8080, 4505 and 4506 are a hard rule from the Linux Foundation, not lab colour. 4505 and 4506 are the SaltStack publish and return ports that the exam infrastructure uses to reach the machine, and 8080 is used by the exam environment as well. Blocking them, live or in a saved file, ends the session. The habit worth building is to add the accept for all three in the same command as ssh, before anything sets a drop policy, on every firewall task.
+
+One tool per host. ufw and firewalld both generate nftables rules underneath, so `nft flush ruleset` silently deletes what either of them installed and `nft add rule` survives only until the front end reloads. Reading `nft list ruleset` is still the honest way to see what the kernel holds, whichever tool wrote it.
+
+Finally, ICMP is a rule of its own. A host that accepts port 80 and drops ICMP looks unreachable to `ping` while serving pages perfectly, which is why troubleshooting starts at the port and not at the host.
+
+## Verify
+
+```bash
+nft list ruleset
+ss -H -ltn
+
+ip netns exec fw-peer curl -s --max-time 3 http://10.99.17.1:80/
+ip netns exec fw-peer ping -c1 -W3 10.99.17.1
+ip netns exec fw-peer curl -s --max-time 3 http://10.99.17.1:9999/ || echo blocked
+for p in 8080 4505 4506; do ip netns exec fw-peer timeout 3 bash -c "exec 3<>/dev/tcp/10.99.17.1/$p" && echo "$p open"; done
+
+grep -cE 'dport|accept|ACCEPT|port=' /etc/nftables.conf 2>/dev/null
+systemctl is-enabled nftables 2>/dev/null
+ufw status verbose 2>/dev/null
+firewall-cmd --permanent --list-all 2>/dev/null
+```
+
+## Docs
+
+- `man 8 nft` for tables, chains, hooks, priorities, `ct state` and `policy`
+- `man 8 ufw` for `allow`, `default` and `status numbered`
+- `man 1 firewall-cmd` and `man 5 firewalld.zone` for `--permanent`, `--reload` and the zone files
+- `man 8 iptables` and `man 8 iptables-save` for the older syntax a grader still accepts
+- `man 8 netfilter-persistent` for the Debian and Ubuntu iptables save hook
+
+---
+
+### Q18. Redirect a port and masquerade a subnet, persistent
+
+**Domain:** Networking. **Difficulty:** Hard. **Weight:** 7. **Target:** 8 min. **Host:** any. **Needs:** `netns`.
+
+**Question**
+
+
+Setup has built two small networks around this host, so it sits in the middle like a router.
+
+- Inside: peer `10.99.18.2`, host `10.99.18.1`, and the peer's default route points at the host.
+- Outside: peer `10.99.118.2` running a web server, host `10.99.118.1`.
+- An application on this host listens on `10.99.18.1:8080` and answers `nat-ok`.
+
+Do two things, and make both survive a reboot.
+
+1. **Redirect a port.** Traffic arriving on `8081/tcp` must be served by the application already listening on `8080`. After the change, `curl http://10.99.18.1:8081/` run from the inside peer returns the same page as port 8080.
+
+2. **Masquerade the inside network.** Traffic from `10.99.18.0/24` that this host forwards out to the outside network must leave with this host's own address. The outside web server logs the address it sees, and after the change it must log `10.99.118.1` and not `10.99.18.2`.
+
+Forwarding has to be on for masquerade to do anything, and it is graded both live and in a file under `/etc/sysctl.d/`.
+
+Two notes on the exam ports. Redirecting some other port **to** 8080 is fine and is exactly what this task asks. Redirecting or dropping traffic **on** 8080, 4505 or 4506 is not, and the verifier checks that port 8080 still answers directly from the peer.
+
+Test the redirect from the peer. The prerouting hook never sees traffic the host generates itself, so `curl localhost:8081` fails even when the rule is perfect.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Turn forwarding on, now and for the next boot.**
+
+```bash
+sysctl -w net.ipv4.ip_forward=1
+echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/90-forward.conf
+sysctl --system
+sysctl -n net.ipv4.ip_forward
+```
+
+**2a. nftables: one table, two chains, two rules.**
+
+```bash
+nft add table ip nat
+nft add chain ip nat prerouting  '{ type nat hook prerouting priority dstnat ; }'
+nft add chain ip nat postrouting '{ type nat hook postrouting priority srcnat ; }'
+
+nft add rule ip nat prerouting tcp dport 8081 redirect to :8080
+nft add rule ip nat postrouting ip saddr 10.99.18.0/24 oif veth-nat-out masquerade
+```
+
+`oif` can be left out, in which case every interface masquerades traffic from that source network. Naming the outgoing interface is the tidier answer.
+
+**2b. iptables, which a grader accepts just as readily.**
+
+```bash
+iptables -t nat -A PREROUTING -p tcp --dport 8081 -j REDIRECT --to-port 8080
+iptables -t nat -A POSTROUTING -s 10.99.18.0/24 -j MASQUERADE
+iptables -t nat -S
+```
+
+**2c. firewalld on Rocky.**
+
+```bash
+firewall-cmd --permanent --add-forward-port=port=8081:proto=tcp:toport=8080
+firewall-cmd --permanent --add-masquerade
+firewall-cmd --reload
+firewall-cmd --list-all
+```
+
+**3. Persist the ruleset, and the service that reloads it.**
+
+```bash
+nft list ruleset > /etc/nftables.conf          # /etc/sysconfig/nftables.conf on Rocky
+systemctl enable --now nftables
+grep -E 'redirect|masquerade' /etc/nftables.conf
+```
+
+**4. Test from the peer.**
+
+```bash
+ip netns exec nat-peer curl -s --max-time 3 http://10.99.18.1:8081/    # nat-ok
+ip netns exec nat-peer curl -s --max-time 3 http://10.99.118.2/        # reaches the outside
+```
+
+The outside server logs the source address of each request, so the second command is what proves the masquerade.
+
+## Why
+
+The prerouting hook runs before the routing decision, on packets that arrived on a wire. Locally generated traffic never passes through it, which is why `curl localhost:8081` on the host itself returns "connection refused" while the rule is working perfectly for every other machine. Testing a redirect from the host is the classic way to conclude a correct rule is broken and then break it while fixing it.
+
+`REDIRECT` and `DNAT` are neighbours with different jobs. `REDIRECT` sends the packet to a port on the machine that received it, and it needs no destination address. `DNAT` sends it to some other machine, which then also needs a route back through this host, or the reply never returns.
+
+Masquerade is source NAT with the address chosen at send time from the outgoing interface. It only ever sees a packet if the packet is being forwarded, and the kernel only forwards when `net.ipv4.ip_forward` is 1. `sysctl -w` sets that for the running kernel and writes nothing, so a NAT task that works today and fails after a reboot usually fails on this one line rather than on the rules. The persistent form is a file under `/etc/sysctl.d/` followed by `sysctl --system`.
+
+The nat table is consulted for the first packet of a connection only. Once conntrack has an entry, later packets follow the translation already recorded, so changing a rule and retesting the same connection shows the old behaviour. `conntrack -F` clears the table, and opening a fresh connection has the same effect.
+
+nat chains need a priority, and the readable spelling is the named one: `dstnat` for prerouting, `srcnat` for postrouting. A nat chain declared with the filter priority still loads and quietly does the wrong thing relative to the filter rules.
+
+## Verify
+
+```bash
+sysctl -n net.ipv4.ip_forward                       # 1
+nft list ruleset | grep -E 'redirect|dnat|masquerade'
+iptables -t nat -S | grep -E 'REDIRECT|MASQUERADE'
+
+ip netns exec nat-peer curl -s --max-time 3 http://10.99.18.1:8081/
+ip netns exec nat-peer curl -s --max-time 3 http://10.99.18.1:8080/    # still answers directly
+ip netns exec nat-peer curl -s --max-time 3 http://10.99.118.2/
+
+grep -E 'redirect|masquerade|forward-port' /etc/nftables.conf /etc/sysconfig/nftables.conf 2>/dev/null
+grep -R ip_forward /etc/sysctl.conf /etc/sysctl.d/
+systemctl is-enabled nftables 2>/dev/null; firewall-cmd --permanent --list-all 2>/dev/null
+```
+
+## Docs
+
+- `man 8 nft` for the nat table, the `dstnat` and `srcnat` priorities, `redirect` and `masquerade`
+- `man 8 iptables` and `man 8 iptables-extensions` for `REDIRECT`, `DNAT` and `MASQUERADE`
+- `man 1 firewall-cmd` for `--add-forward-port` and `--add-masquerade`
+- `man 5 sysctl.d` and `man 8 sysctl` for the persistent forwarding setting
+- `man 8 conntrack` for flushing translations while testing
+
+---
+
+### Q19. Put the second NIC into a bridge, persistent
+
+**Domain:** Networking. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `nic2`.
+
+**Question**
+
+
+Virtual machines on this host need a layer 2 bridge to sit on. The second network interface is going to carry it. Setup prints the interface name and the address it currently holds.
+
+Build a bridge called `br0`:
+
+1. `br0` exists and is a bridge device
+2. the second interface is a port of `br0`
+3. the address the interface holds today is on `br0` instead, with the same prefix length
+4. the host still reaches its gateway afterwards
+5. all of it survives a reboot, in the netplan YAML on Ubuntu or in NetworkManager connection files on Rocky
+
+A bridge port cannot keep an address of its own, so the address moves to `br0` in the same change. That is the whole difficulty of this task.
+
+**This interface may be carrying your session.** On Ubuntu use `netplan try`, which rolls the change back by itself after 120 seconds if the terminal goes away. On Rocky, either work from the VirtualBox console, or accept that `nmcli con up br0` cuts the connection for a moment and comes back once the bridge has the address. If you do lose the host, the console is still there and `ip link del br0` undoes the live half.
+
+Turn spanning tree off, or a correct bridge takes about 30 seconds to start forwarding and an immediate test looks like a failure.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Write down what the interface has now.**
+
+```bash
+ip -br addr show enp0s8
+ip route
+grep -l enp0s8 /etc/netplan/*.yaml          # Ubuntu
+nmcli -t -f NAME,DEVICE con show --active   # Rocky
+```
+
+**2a. Ubuntu: one netplan file describes both halves of the change.**
+
+Edit the file that already owns the interface, so nothing is left declaring an address on the port:
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      dhcp4: false
+  bridges:
+    br0:
+      interfaces: [enp0s8]
+      addresses:
+        - 192.168.56.10/24
+      parameters:
+        stp: false
+        forward-delay: 0
+```
+
+```bash
+chmod 600 /etc/netplan/50-cloud-init.yaml
+netplan try
+```
+
+`netplan try` applies the change, waits for a confirmation, and rolls back if the session dies. On the interface carrying the session that is the difference between a typo and a lost host.
+
+**2b. Rocky: three connections, added in one go.**
+
+```bash
+nmcli con add type bridge con-name br0 ifname br0 \
+  ipv4.method manual ipv4.addresses 192.168.56.20/24 bridge.stp no
+nmcli con add type ethernet con-name br0-enp0s8 ifname enp0s8 master br0 slave-type bridge
+nmcli con mod "System enp0s8" ipv4.method disabled ipv6.method ignore
+nmcli con up br0
+nmcli con up br0-enp0s8
+```
+
+The old ethernet connection has to stop claiming the address, or NetworkManager brings it back on the port the next time it activates.
+
+**3. Confirm the live state.**
+
+```bash
+ip -d link show br0            # link/ether ... bridge
+bridge link                    # enp0s8 ... master br0 state forwarding
+ip -br addr show br0           # the address is here now
+ip -br addr show enp0s8        # and not here
+ping -c1 192.168.56.1
+```
+
+## Why
+
+A bridge is a software switch. Frames arriving on any port are forwarded to the other ports by destination MAC address, which is what lets virtual machine interfaces share one physical NIC and appear directly on the physical network. Because a port is a switch port rather than a host interface, it cannot hold an IP address: the address belongs to the bridge device, which is the host's own port on that switch. Enslaving an interface without moving its address is the failure mode of this task, and on the interface carrying the session it costs the host.
+
+`ip link` alone will not show the relationship. `bridge link` and `ip -d link show enp0s8` both name the master, and `/sys/class/net/enp0s8/master` is the same fact in the kernel's own words.
+
+Spanning tree is worth turning off in a lab. With STP on, a new port goes through listening and learning states before it forwards, which takes about 30 seconds with the default forward delay. A test run immediately after the change then fails on a configuration that is entirely correct, and the usual reaction is to change something that was right.
+
+Netplan and NetworkManager describe the same result differently. Netplan has a `bridges:` section listing member interfaces, and one file can describe the port and the bridge together, which is why `netplan try` can apply the whole change atomically. NetworkManager models each side as its own connection profile: one of type `bridge` that owns the address, and one of type `ethernet` with `master br0`. Leaving the interface's old connection with a manual address means two profiles fight over the same device.
+
+## Verify
+
+```bash
+ip -d -j link show br0 | grep -o 'bridge'
+test -d /sys/class/net/br0/bridge && echo br0-is-a-bridge
+basename "$(readlink /sys/class/net/enp0s8/master)"    # br0
+ip -j addr show br0
+ping -c1 -W2 192.168.56.1
+
+grep -n -A6 'bridges' /etc/netplan/*.yaml                        # Ubuntu persistence
+nmcli -g connection.type con show br0                            # Rocky persistence
+nmcli -g connection.master,connection.slave-type con show br0-enp0s8
+```
+
+## Docs
+
+- `man 5 netplan` for the `bridges:` section, `interfaces:` and `parameters:`
+- `man 8 bridge` for `bridge link` and the port states
+- `man 8 ip-link` for `type bridge` and `master`
+- `man 1 nmcli` and `man 5 nm-settings-nmcli` for `con add type bridge`, `master` and `slave-type`
+- `man 8 netplan-try` for the rollback that makes this change safe
+
+---
+
+### Q20. Reverse proxy in front of an application
+
+**Domain:** Networking. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+An application on this host listens on `127.0.0.1:9000` and answers `backend-ok`. It is deliberately bound to loopback, so nothing outside the host can reach it directly.
+
+nginx is installed but stopped and disabled, and its packaged default site has been taken out of the way.
+
+Put nginx in front of the application:
+
+1. `curl -s http://localhost/` must return `backend-ok`
+2. nginx must forward to `http://127.0.0.1:9000`
+3. nginx must start at boot
+4. on Rocky the SELinux boolean that lets a web server open outbound connections must be on, and on across a reboot
+
+Do not change the application. It stays on loopback, which is the point of putting a proxy in front of it.
+
+Check the configuration with `nginx -t` before reloading. On Rocky a perfectly correct configuration returns `502 Bad Gateway` until the SELinux boolean is set, and the reason is in the audit log rather than the nginx error log.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Prove the backend works before proxying to it.**
+
+```bash
+ss -H -ltn | grep 9000
+curl -s http://127.0.0.1:9000/        # backend-ok
+```
+
+**2. Write a server block.**
+
+```bash
+vim /etc/nginx/conf.d/app.conf
+```
+
+```
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+On Ubuntu the file can also go in `/etc/nginx/sites-available/app` with a symlink into `sites-enabled/`. Both directories are included from `nginx.conf`.
+
+**3. Check the syntax, then start and enable.**
+
+```bash
+nginx -t
+systemctl enable --now nginx
+systemctl reload nginx
+ss -H -ltn | grep ':80'
+```
+
+**4. Rocky only: let the web server make outbound connections.**
+
+```bash
+getsebool httpd_can_network_connect
+setsebool -P httpd_can_network_connect on
+systemctl restart nginx
+```
+
+**5. Test.**
+
+```bash
+curl -s http://localhost/            # backend-ok
+```
+
+## Why
+
+A reverse proxy exists so the application can stay on loopback. The application then has exactly one way in, through a server that terminates the connection, applies whatever policy is configured, and opens a second connection to the backend. That second connection is what SELinux objects to on Rocky: the `httpd_t` domain is not allowed to open arbitrary network connections, so `proxy_pass` fails with a permission error the client sees as `502 Bad Gateway`, while `nginx -t` reports the configuration is fine and the nginx error log says only "connect() failed". `setsebool -P httpd_can_network_connect on` is the fix, and the `-P` is what makes it survive a reboot. Without `-P` the boolean is set in the running policy only, which is exactly the trap this domain is full of.
+
+`proxy_pass` has one detail worth memorising. Written as `proxy_pass http://127.0.0.1:9000;` with no trailing path, nginx passes the request URI through unchanged. Written as `proxy_pass http://127.0.0.1:9000/;` with a trailing slash, nginx replaces the part of the URI that matched the `location` prefix. For `location /` the two look the same, and for `location /api/` they behave completely differently.
+
+Most backends also need `proxy_set_header Host $host`, because nginx otherwise sends the upstream name in the `Host` header, and a backend that routes by virtual host then answers the wrong site or refuses.
+
+The packaged default site is the other thing that gets in the way. Ubuntu ships a site in `sites-enabled/default` that listens on port 80 with `default_server`, and Rocky ships an equivalent server block inside `nginx.conf`. Whichever server is the default one answers any request whose `Host` header matches no `server_name`, so a new block is quietly ignored until the packaged one is removed or demoted.
+
+`systemctl reload` re-reads the configuration without dropping connections, and `restart` drops them. Neither one has anything to do with the next boot: only `enable` does.
+
+## Verify
+
+```bash
+curl -s http://127.0.0.1:9000/       # backend-ok, the backend itself
+curl -s http://localhost/            # backend-ok, through the proxy
+nginx -t
+ss -H -ltn | grep ':80'
+grep -R proxy_pass /etc/nginx/
+
+systemctl is-enabled nginx
+getsebool httpd_can_network_connect 2>/dev/null                       # Rocky, expect on
+semanage boolean -l 2>/dev/null | grep httpd_can_network_connect      # the persistent value
+```
+
+## Docs
+
+- `man 8 nginx` for the command line, and `/usr/share/doc/nginx` for the packaged example configuration
+- `/usr/share/nginx/html` and `/etc/nginx/nginx.conf` for where the packaged default server lives
+- `man 8 setsebool` and `man 8 getsebool` for the boolean and what `-P` does
+- `man 8 semanage-boolean` for reading the persistent value back
+- `man 1 systemctl` for the difference between `reload`, `restart` and `enable`
+
+---
+
+### Q21. Export a directory and mount it persistently
+
+**Domain:** Networking. **Difficulty:** Hard. **Weight:** 7. **Target:** 8 min. **Host:** any. **Needs:** `tool:exportfs netns`.
+
+**Question**
+
+
+This host is both the NFS server and the NFS client for this task. Setup has created `/srv/share` with a file called `marker` in it, started the NFS server without enabling it, and given the host a second address, `10.99.21.1`, with a peer at `10.99.21.2`.
+
+**Server side.** Export `/srv/share` to the network `10.0.0.0/8`:
+
+- read-write
+- without squashing root, so a root client keeps root privileges on the share
+- synchronous writes
+- the NFS server unit starts at boot, because it is running now but disabled, so a reboot would leave the export unserved
+
+**Client side.** Mount that export at `/mnt/share`:
+
+- the mount is live now, and `/mnt/share/marker` is readable
+- the mount comes back after a reboot, from `/etc/fstab`
+- the fstab line carries `_netdev`, so a boot does not hang waiting for a network that is not up yet
+- `findmnt --verify` reports no problem with the fstab
+
+Mount from `10.99.21.1`, not from `localhost`. The export is offered to `10.0.0.0/8` and `127.0.0.1` is not in that network, so a loopback mount is refused by the server.
+
+The words matter here more than anywhere else in this exam. `ro` against `rw`, and `root_squash` against `no_root_squash`, are single words that decide the grade. Re-read the task before you leave the host.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Write the export.**
+
+```bash
+vim /etc/exports
+```
+
+```
+/srv/share 10.0.0.0/8(rw,sync,no_subtree_check,no_root_squash)
+```
+
+There is no space between `10.0.0.0/8` and the opening parenthesis. With a space, the line exports the directory to that network with default options **and** to the whole world with the options in the parentheses, which is a much larger mistake than it looks.
+
+**2. Re-export and read the table back.**
+
+```bash
+exportfs -ra
+exportfs -v
+exportfs -s
+systemctl enable --now nfs-kernel-server      # nfs-server on Rocky
+```
+
+Setup left the unit running but disabled, so `systemctl enable` is a step that is graded on its own. `--now` covers both halves at once, and `systemctl is-enabled` is what proves the boot half.
+
+**3. Mount it, from the network address.**
+
+```bash
+showmount -e 10.99.21.1
+mkdir -p /mnt/share
+mount -t nfs 10.99.21.1:/srv/share /mnt/share
+findmnt -no FSTYPE,SOURCE /mnt/share
+cat /mnt/share/marker
+```
+
+**4. Make the mount persistent.**
+
+```bash
+vim /etc/fstab
+```
+
+```
+10.99.21.1:/srv/share  /mnt/share  nfs  defaults,_netdev  0 0
+```
+
+```bash
+findmnt --verify
+umount /mnt/share && mount -a && findmnt /mnt/share
+```
+
+Unmounting and running `mount -a` is the only test that proves the fstab line itself works rather than the `mount` command typed earlier.
+
+**5. On Rocky, open the firewall if one is running.**
+
+```bash
+firewall-cmd --permanent --add-service=nfs --add-service=rpc-bind --add-service=mountd
+firewall-cmd --reload
+```
+
+## Why
+
+An `/etc/exports` line is a permission grant, written in a syntax where whitespace changes the meaning. The field order is directory, then one or more client specifications, each immediately followed by its options in parentheses. A space before the parenthesis splits one client specification into two: the named network with default options, and a wildcard client with the options that were meant for the network.
+
+`no_root_squash` is the option worth understanding rather than memorising. By default the server maps requests from the client's root user onto the anonymous user, so root on a client cannot walk through the permissions on the server. `no_root_squash` turns that mapping off, which is genuinely what some tasks ask for and is genuinely dangerous: root on any machine in the exported network is then root on the exported files.
+
+`exportfs -ra` re-reads `/etc/exports` and applies it. Editing the file alone changes nothing for clients already talking to the server, and `exportfs -v` or `exportfs -s` afterwards is what proves the kernel agrees with the file.
+
+On the client side, `_netdev` tells systemd that this mount needs the network, so it is ordered after `network-online.target` and, more importantly, is not attempted during the early boot when the network is not up. Without it, a boot can sit waiting for an unreachable server. `x-systemd.automount` goes further and defers the mount until something touches the directory, which is safer still on a machine that must boot whether or not the server is there.
+
+`findmnt --verify` parses `/etc/fstab` and reports unusable lines before a reboot does. A bad fstab line is one of the few ways to make a Linux host fail to boot from a single-line edit, which is why the check is worth running every time.
+
+## Verify
+
+```bash
+exportfs -s                                   # the export line as the kernel holds it
+exportfs -v | grep /srv/share                 # check rw or ro and the squash setting
+showmount -e 10.99.21.1
+
+findmnt -no FSTYPE,SOURCE /mnt/share          # nfs4 and 10.99.21.1:/srv/share
+cat /mnt/share/marker
+
+grep /mnt/share /etc/fstab                    # persistence, with _netdev
+findmnt --verify
+systemctl is-enabled nfs-kernel-server 2>/dev/null || systemctl is-enabled nfs-server
+```
+
+## Docs
+
+- `man 5 exports` for the syntax, the client specification and every option including `no_root_squash`
+- `man 8 exportfs` for `-ra`, `-v` and `-s`
+- `man 5 nfs` for the client mount options and the version negotiation
+- `man 8 mount.nfs` and `man 5 fstab` for the fstab line
+- `man 8 showmount` for reading a server's export list
+- `man 5 systemd.mount` for `_netdev` and `x-systemd.automount`
+
+---
+
+### Q22. The web app is unreachable from the peer, find and fix two causes
+
+**Domain:** Networking. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `netns`.
+
+**Question**
+
+
+A web application runs on this host as `labapp.service` and should answer on port `8082`. From the peer host it does not answer at all.
+
+- this host is `10.99.22.1`
+- the peer is `10.99.22.2`, in the network namespace `dbg-peer`
+- test from the peer with `ip netns exec dbg-peer curl --max-time 3 http://10.99.22.1:8082/`
+- a working application answers `app-ok`
+
+There are **two** independent causes. Fixing one of them changes nothing that the peer can see, so keep looking after the first.
+
+Fix both, so that:
+
+1. the peer gets `app-ok` from `http://10.99.22.1:8082/`
+2. both fixes survive a reboot. One of them lives in the systemd unit for the application. The other one has been saved into the distribution's nftables file as well as loaded into the running kernel, so deleting the live rule alone leaves it waiting for the next boot.
+
+Then write what you found to `/opt/course/22/causes.txt`, one cause per line, naming the bind address for one and the firewall rule for the other.
+
+Start with `ss -tulpn`. A socket bound to `127.0.0.1` is not a firewall problem, and reaching for `nft` first is how people spend ten minutes on the wrong half.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Confirm the symptom, then work inwards from the host.**
+
+```bash
+ip netns exec dbg-peer curl --max-time 3 -sS http://10.99.22.1:8082/    # times out
+systemctl is-active labapp
+curl --max-time 3 -sS http://127.0.0.1:8082/                            # app-ok, so it runs
+curl --max-time 3 -sS http://10.99.22.1:8082/                           # refused
+```
+
+The application answers on loopback and refuses on the host's own network address. That is the first cause, and it is not a firewall.
+
+**2. Find the bind address.**
+
+```bash
+ss -tulpn | grep 8082
+systemctl cat labapp
+```
+
+`ss` shows `127.0.0.1:8082`, and `systemctl cat` shows why: the unit passes `--bind 127.0.0.1`.
+
+**3. Fix it where it persists, which is the unit.**
+
+```bash
+systemctl edit --full labapp        # or edit /etc/systemd/system/labapp.service
+```
+
+Change the bind address to `0.0.0.0`:
+
+```
+ExecStart=/usr/bin/python3 -u -m http.server 8082 --bind 0.0.0.0 --directory /srv/labapp
+```
+
+```bash
+systemctl daemon-reload
+systemctl restart labapp
+ss -H -ltn | grep 8082              # 0.0.0.0:8082 now
+curl --max-time 3 -s http://10.99.22.1:8082/   # app-ok from the host
+```
+
+The peer still sees nothing. That is the second cause.
+
+**4. Find the rule.**
+
+```bash
+nft list ruleset | grep -n 8082
+tcpdump -ni any port 8082 -c 5 &     # the SYN arrives and nothing answers
+ip netns exec dbg-peer curl --max-time 3 http://10.99.22.1:8082/
+```
+
+**5. Delete the rule from the running kernel and from the file it was saved in.**
+
+```bash
+nft -a list ruleset | grep -B4 8082           # the -a form prints rule handles
+nft delete table inet labq22                  # the whole lab table, in one step
+
+grep -n 8082 /etc/nftables.conf               # /etc/sysconfig/nftables.conf on Rocky
+vim /etc/nftables.conf                        # remove the table block that drops 8082
+nft -f /etc/nftables.conf                     # optional, proves the file still parses
+```
+
+**6. Test from the peer and record the answer.**
+
+```bash
+ip netns exec dbg-peer curl --max-time 3 -s http://10.99.22.1:8082/   # app-ok
+
+mkdir -p /opt/course/22
+cat >/opt/course/22/causes.txt <<'TXT'
+labapp.service bound the socket to 127.0.0.1 instead of 0.0.0.0, so only the host could reach it
+an nft rule dropped tcp dport 8082, live and in the saved nftables configuration file
+TXT
+```
+
+## Why
+
+Two failures that look identical from the client are the shape of this task, and the whole skill is telling them apart without guessing.
+
+A socket bound to `127.0.0.1` accepts connections that arrive over the loopback interface and nothing else. From outside the machine the kernel has nothing listening on that address and port, so it answers with a TCP reset and the client reports "connection refused" immediately. A dropped packet produces no answer at all, so the client waits for its timeout. Refused fast and hung until timeout are two different diagnoses, and `curl --max-time 3` makes the difference visible without a stopwatch.
+
+`ss -tulpn` is the first command for a reason. It prints the local address as well as the port, and with root it names the process holding the socket. If the local address is `127.0.0.1`, the fix is in the application's configuration and no firewall rule will ever help. If it is `0.0.0.0` or `*`, the service is reachable in principle and the problem is between the two machines.
+
+The persistence half is what makes this an LFCS question rather than a puzzle. Deleting a live nft rule fixes the symptom until the next boot, when the saved ruleset is loaded again and the port goes dark a second time. The same is true on the application side: restarting the process by hand with a different bind address works until the unit restarts it with the old one. Both fixes have to land in a file.
+
+`tcpdump -ni any port 8082` settles any remaining doubt about where a packet dies. If the SYN appears in the capture and nothing goes back, the packet reached the host and something on the host dropped it. If it never appears, the problem is routing or the peer. The `-n` matters on a host with a broken resolver, because reverse lookups stall the capture.
+
+## Verify
+
+```bash
+systemctl is-active labapp
+systemctl cat labapp | grep bind
+ss -H -ltn | grep 8082                      # 0.0.0.0:8082, not 127.0.0.1:8082
+
+nft list ruleset | grep -c 8082             # 0
+grep -c 8082 /etc/nftables.conf 2>/dev/null # 0
+
+curl --max-time 3 -s http://10.99.22.1:8082/
+ip netns exec dbg-peer curl --max-time 3 -s http://10.99.22.1:8082/
+cat /opt/course/22/causes.txt
+```
+
+## Docs
+
+- `man 8 ss` for `-t`, `-u`, `-l`, `-p`, `-n` and reading the local address column
+- `man 8 nft` for `list ruleset`, rule handles and `delete`
+- `man 8 tcpdump` for `-n`, `-i any` and a port filter
+- `man 1 systemctl` for `cat`, `edit` and `daemon-reload`
+- `man 5 systemd.service` for `ExecStart` and where a unit's overrides live
+- `man 1 curl` for `--max-time` and the difference between a refusal and a timeout
 
 ---
 
@@ -1391,72 +2904,10 @@ The grader reads `vgs`, `lvs`, `findmnt` and `/etc/fstab` separately, and runs `
 <!-- toc -->
 ## Table of Contents
 
-- [Question index](#question-index)
-  - [Q1. Kernel parameters now and after reboot](#q1-kernel-parameters-now-and-after-reboot)
 - [Steps](#steps)
 - [Why](#why)
 - [Verify](#verify)
 - [Docs](#docs)
-  - [Q2. Find the disk-reading process, record its PID, lower its priority](#q2-find-the-disk-reading-process-record-its-pid-lower-its-priority)
-- [Steps](#steps-1)
-- [Why](#why-1)
-- [Verify](#verify-1)
-- [Docs](#docs-1)
-  - [Q3. Scheduled jobs for a user, root, and a one-off](#q3-scheduled-jobs-for-a-user-root-and-a-one-off)
-- [Steps](#steps-2)
-- [Why](#why-2)
-- [Verify](#verify-2)
-- [Docs](#docs-2)
-  - [Q4. A timer that runs a script every 15 minutes](#q4-a-timer-that-runs-a-script-every-15-minutes)
-- [Steps](#steps-3)
-- [Why](#why-3)
-- [Verify](#verify-3)
-- [Docs](#docs-3)
-  - [Q5. Install, hold, verify, and report packages](#q5-install-hold-verify-and-report-packages)
-- [Steps](#steps-4)
-- [Why](#why-4)
-- [Verify](#verify-4)
-- [Docs](#docs-4)
-  - [Q6. Default target and GRUB timeout, persistent](#q6-default-target-and-grub-timeout-persistent)
-- [Steps](#steps-5)
-- [Why](#why-5)
-- [Verify](#verify-5)
-- [Docs](#docs-5)
-  - [Q7. Define a VM from a disk image and set autostart](#q7-define-a-vm-from-a-disk-image-and-set-autostart)
-- [Steps](#steps-6)
-- [Why](#why-6)
-- [Verify](#verify-6)
-- [Docs](#docs-6)
-  - [Q8. Run a web container with limits and a restart policy that survives reboot](#q8-run-a-web-container-with-limits-and-a-restart-policy-that-survives-reboot)
-- [Steps](#steps-7)
-- [Why](#why-7)
-- [Verify](#verify-7)
-- [Docs](#docs-7)
-  - [Q9. Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing)
-- [Steps](#steps-8)
-- [Why](#why-8)
-- [Verify](#verify-8)
-- [Docs](#docs-8)
-  - [Q10. Write a service unit for an application](#q10-write-a-service-unit-for-an-application)
-- [Steps](#steps-9)
-- [Why](#why-9)
-- [Verify](#verify-9)
-- [Docs](#docs-9)
-  - [Q11. A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent)
-- [Steps](#steps-10)
-- [Why](#why-10)
-- [Verify](#verify-10)
-- [Docs](#docs-10)
-  - [Q23. Partition a disk, format it, and mount it by UUID](#q23-partition-a-disk-format-it-and-mount-it-by-uuid)
-- [Steps](#steps-11)
-- [Why](#why-11)
-- [Verify](#verify-11)
-- [Docs](#docs-11)
-  - [Q24. Volume group with a custom extent size and a mounted logical volume](#q24-volume-group-with-a-custom-extent-size-and-a-mounted-logical-volume)
-- [Steps](#steps-12)
-- [Why](#why-12)
-- [Verify](#verify-12)
-- [Docs](#docs-12)
 
 <!-- toc stop -->
 
@@ -1537,3 +2988,2638 @@ findmnt --verify
 - `man 8 vgs`, `man 8 lvs` for the reporting fields such as `vg_extent_size` and `lv_size`
 - `man 5 fstab` for the mount line
 - `man 8 mkfs.ext4` for the filesystem
+
+---
+
+### Q25. Grow a mounted logical volume after adding a disk
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 6. **Target:** 6 min. **Host:** any. **Needs:** `disk`.
+
+**Question**
+
+
+The log volume `vg_ext/lv_logs` is mounted at `/var/lib/lfcs-logs` and is running out of room. It is 500 MB, and the volume group has almost no free space left. A second spare device has been attached to the host; the setup printed both device names.
+
+Give the log volume another **400 MB**, so it ends up at 900 MB or more, and make the **filesystem** that size too.
+
+Rules:
+
+- `/var/lib/lfcs-logs` must stay mounted for the whole task. An application holds files open there, so unmounting it is not allowed, and the grader can tell.
+- The existing file `/var/lib/lfcs-logs/app.log` must survive untouched.
+- The filesystem must still mount at boot when you are done.
+
+The grader reads `lvs` for the volume size and `df` for the filesystem size, and they are not the same thing. It also compares the mount against the one the setup created, and reads `/etc/fstab`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Look before you type.** Two facts decide everything: how much free space the group has, and what the filesystem is.
+
+```bash
+vgs vg_ext
+lvs vg_ext
+df -hT /var/lib/lfcs-logs
+```
+
+`VFree` on `vg_ext` is under 100 MB, so there is nowhere for another 400 MB to come from yet.
+
+**2. Add the spare device to the group.**
+
+```bash
+B=/dev/loop1                 # use the device the setup printed
+pvcreate "$B"
+vgextend vg_ext "$B"
+vgs vg_ext                   # VFree is now around 1 GB
+```
+
+**3. Grow the volume and the filesystem in one command.**
+
+```bash
+lvextend -r -L +400M /dev/vg_ext/lv_logs
+```
+
+**4. Confirm both halves moved.**
+
+```bash
+lvs --noheadings -o lv_name,lv_size vg_ext
+df -hT /var/lib/lfcs-logs
+findmnt -no TARGET /var/lib/lfcs-logs
+```
+
+If `lvextend` was already run without `-r`, the volume is bigger and the filesystem is not. Fix it without unmounting:
+
+```bash
+resize2fs /dev/vg_ext/lv_logs        # ext2, ext3, ext4: takes the DEVICE
+# xfs_growfs /var/lib/lfcs-logs      # XFS: takes the MOUNT POINT
+```
+
+## Why
+
+`-r` is the whole question. Without it, `lvextend` hands more extents to the volume and stops. The block device is larger, the filesystem inside it still believes it ends where it did, and `df` proves it. This is the failure that looks like success: `lvs` says `900.00m`, the task says grow the volume, and the mark is still lost. Read `df`, never `lvs`, when a task says a filesystem must have more room.
+
+With `-r`, `lvextend` calls `fsadm`, which picks the right tool for the filesystem it finds: `resize2fs` for ext4, `xfs_growfs` for XFS. Knowing what it calls matters because the two tools disagree about their argument. `resize2fs` takes the device, `xfs_growfs` takes the mount point. Handing `xfs_growfs` a device path is a classic exam minute lost to an error message.
+
+Growing online is safe and normal. ext4 and XFS both grow while mounted and in use, which is why nothing here needs an unmount. Neither shrinks online, and XFS never shrinks at all, so the direction of the task decides whether it is routine or impossible.
+
+`+400M` adds 400 MB to the current size. `400M` sets the total to 400 MB, which on a 500 MB volume is a shrink, and a shrink of a mounted ext4 filesystem fails outright. The plus sign carries the whole meaning.
+
+The `/etc/fstab` line does not change, and that is worth understanding rather than ignoring: the volume kept its identity through the resize, so the UUID the line names is still the UUID of the filesystem. If instead you had destroyed and recreated the volume to make it bigger, the new filesystem would have a new UUID, the old line would point at nothing, and the next boot would stop with a failed mount.
+
+## Verify
+
+```bash
+pvs -o pv_name,vg_name
+vgs --noheadings -o vg_name,pv_count,vg_free vg_ext
+lvs --noheadings -o lv_name,lv_size vg_ext
+df -BM --output=size,used,avail /var/lib/lfcs-logs
+findmnt -no SOURCE,TARGET,FSTYPE /var/lib/lfcs-logs
+cat /var/lib/lfcs-logs/app.log | head -1
+grep lfcs-logs /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 lvextend` for `-r`, `-L` and the difference between `+400M` and `400M`
+- `man 8 vgextend` and `man 8 pvcreate` for adding a device to an existing group
+- `man 8 resize2fs` for growing ext4, and note that it takes the device
+- `man 8 xfs_growfs` for growing XFS, and note that it takes the mount point
+- `man 8 fsadm` for what `lvextend -r` actually calls
+- `man 8 lvs`, `man 8 vgs` for the reporting fields
+
+---
+
+### Q26. Add a swap file with a priority, persistent
+
+**Domain:** Storage. **Difficulty:** Easy. **Weight:** 4. **Target:** 5 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+This host needs more swap, and it has no spare partition to give it.
+
+Add swap backed by a file:
+
+- The file is `/swapfile2` and it is **512 MB**.
+- Its permissions are `600` and it is owned by root.
+- It is in use as swap now, at **priority 10**.
+- It comes back as swap, still at priority 10, after a reboot.
+
+Leave the existing swap alone.
+
+The grader reads `swapon --show`, `/proc/swaps`, `stat` and `/etc/fstab`, and runs `findmnt --verify`. Swap that is active but absent from `/etc/fstab` scores nothing, and so does an fstab line without the priority.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Create the file.**
+
+```bash
+fallocate -l 512M /swapfile2
+```
+
+If `fallocate` is unavailable or the filesystem refuses it, fall back to `dd`:
+
+```bash
+dd if=/dev/zero of=/swapfile2 bs=1M count=512 status=progress
+```
+
+**2. Lock the permissions down before anything else touches it.**
+
+```bash
+chmod 600 /swapfile2
+chown root:root /swapfile2
+```
+
+**3. Format it as swap and turn it on at the priority the task named.**
+
+```bash
+mkswap /swapfile2
+swapon -p 10 /swapfile2
+swapon --show
+```
+
+**4. Make it come back after a reboot.**
+
+```bash
+echo "/swapfile2  none  swap  sw,pri=10  0  0" >> /etc/fstab
+findmnt --verify
+```
+
+**5. Prove the fstab line works, without rebooting.**
+
+```bash
+swapoff /swapfile2
+swapon -a
+swapon --show=NAME,TYPE,SIZE,PRIO
+```
+
+## Why
+
+A swap file is a plain file the kernel treats as swap space. `mkswap` writes a header into it, `swapon` hands it to the kernel, and from then on `/proc/swaps` lists it beside any swap partitions.
+
+`chmod 600` comes first for a reason worth stating plainly: swap holds pages evicted from memory, so a readable swap file is a readable copy of whatever was in RAM. `mkswap` warns about insecure permissions, and `swapon` on some kernels refuses the file outright. Doing it before `mkswap` avoids both.
+
+The priority decides which swap area the kernel fills first. Higher wins, and areas of equal priority are used round robin. Without `-p`, the kernel assigns a negative priority, counting down from -2 for each new area, so an unprioritised file lands behind everything already there. That is why the task names a number.
+
+The persistence half is where the marks are. `swapon -p 10` sets the priority for this boot only. In `/etc/fstab` the priority is not a field of its own; it is an option in the fourth field, written `pri=10` next to `sw`. The second field is the mount point, and swap has none, so it is `none`. The last two fields are the dump and fsck flags, both `0`, because neither applies to swap.
+
+`swapon -a` activates every swap entry in `/etc/fstab`, which makes it the honest test of the line you just wrote. Turning the file off and back on with `-a` proves the reboot will do the same thing.
+
+## Verify
+
+```bash
+swapon --show=NAME,TYPE,SIZE,PRIO
+cat /proc/swaps
+free -h
+stat -c '%a %U %s' /swapfile2      # 600 root 536870912
+grep swapfile2 /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 mkswap` for making the swap header, and its warning about permissions
+- `man 8 swapon` for `-p`, `-a`, `--show` and the priority rules
+- `man 5 fstab` for where `pri=` goes and why the mount point is `none`
+- `man 1 fallocate` for allocating the file, and `man 1 dd` for the fallback
+- `man 5 proc` for the `/proc/swaps` columns
+
+---
+
+### Q27. User quota on a filesystem
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `disk`.
+
+**Question**
+
+
+A separate filesystem is mounted at `/quota` and listed in `/etc/fstab`. It was created with no quota support at all. The user `qa` already exists.
+
+Put a user quota on it:
+
+- User quotas are enabled on `/quota`, now and after a reboot.
+- User `qa` has a **soft limit of 51200 blocks** and a **hard limit of 102400 blocks** on `/quota`.
+- `qa` has no inode limits: both inode limits stay `0`.
+
+Nothing about quotas works until the filesystem is mounted with the right option, so start there.
+
+The grader reads `findmnt`, `quotaon -p` and `repquota` for the live half, and `/etc/fstab` for the persistent half, and it runs `findmnt --verify`. Quotas that work now but are missing from `/etc/fstab` score nothing.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Add the mount option to `/etc/fstab` first.** Nothing else works before this.
+
+```bash
+grep /quota /etc/fstab
+sed -i 's|\(^[^#]*[[:space:]]/quota[[:space:]]\+ext4[[:space:]]\+\)defaults|\1defaults,usrquota|' /etc/fstab
+grep /quota /etc/fstab
+```
+
+Editing the line by hand in `vi` is just as good. The fourth field has to end up as `defaults,usrquota`.
+
+**2. Apply the option to the running system without a reboot.**
+
+```bash
+mount -o remount /quota
+findmnt -no OPTIONS /quota | tr ',' '\n' | grep quota
+```
+
+**3. Build the quota accounting file and switch quotas on.**
+
+```bash
+quotacheck -cum /quota
+quotaon /quota
+quotaon -p -u /quota
+```
+
+**4. Set the limits for the user.**
+
+```bash
+setquota -u qa 51200 102400 0 0 /quota
+repquota -u /quota
+```
+
+## Why
+
+Quotas are a property of the mount, not of the filesystem tools. Until the filesystem carries `usrquota`, the kernel does no per-user accounting, and `quotaon` fails with a message about the option being missing. That is why the fstab edit comes first and the remount comes second: the fstab line is what the grader marks, and `mount -o remount` is what makes the same change take effect now, without a reboot and without unmounting anything that is in use.
+
+`quotacheck -cum` creates the accounting file. `-c` creates a new one, `-u` says user quotas, and `-m` skips remounting the filesystem read-only, which matters because a busy filesystem cannot be remounted read-only and the command would otherwise stop. The file appears as `/quota/aquota.user` and holds the usage and limits for every user on that filesystem.
+
+`setquota` takes its four numbers in a fixed order: block soft, block hard, inode soft, inode hard, then the filesystem. Blocks are 1 KB units, so 51200 is 50 MB and 102400 is 100 MB. Passing `0` means no limit, which is why both inode limits are `0` here. `edquota -u qa` opens the same values in an editor and is the interactive equivalent; `setquota` is faster and scriptable, and it does not depend on which editor the exam host has.
+
+Soft and hard differ in what they do when a user reaches them. The hard limit is a wall: the write fails. The soft limit can be exceeded for a grace period, after which it behaves like a hard limit. `repquota` prints both, along with the grace column, which is empty until a soft limit is crossed.
+
+## Verify
+
+```bash
+findmnt -no SOURCE,TARGET,OPTIONS /quota
+quotaon -p -u /quota                 # user quota on /quota (...) is on
+repquota -u /quota
+grep /quota /etc/fstab
+findmnt --verify
+```
+
+To see a limit bite, write as the user until the hard limit stops the write:
+
+```bash
+su - qa -c 'dd if=/dev/zero of=/quota/qa.bin bs=1M count=200'
+```
+
+## Docs
+
+- `man 5 fstab` for where `usrquota` and `grpquota` go
+- `man 8 quotacheck` for `-c`, `-u`, `-g` and `-m`
+- `man 8 quotaon` for turning quotas on and for `-p`
+- `man 8 setquota` for the argument order, and `man 8 edquota` for the editor form
+- `man 8 repquota` for the report columns
+- `man 1 quota` for what a single user sees
+
+---
+
+### Q28. Mirror two disks with mdadm and mount the array
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `disk tool:mdadm`.
+
+**Question**
+
+
+Two spare block devices have been handed to this host. The setup printed both names. Neither carries a filesystem or a RAID superblock.
+
+Build a mirror on them:
+
+- Create a **RAID 1** array called `/dev/md0` from both devices, with 2 active devices.
+- Format the array ext4 and mount it at `/mnt/raid`.
+- Make the mount permanent.
+- Make sure the array itself is defined in the mdadm configuration file for this distribution, so it comes back as `/dev/md0` rather than under some other name.
+
+The configuration file is `/etc/mdadm/mdadm.conf` on Ubuntu and `/etc/mdadm.conf` on Rocky.
+
+The grader reads `/sys/block/md0`, `mdadm --detail`, `findmnt`, the mdadm configuration file and `/etc/fstab`, and it runs `findmnt --verify`. An array that is running but undefined in the configuration file scores nothing, because it is the case that breaks on the next boot.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Name the devices and confirm they are empty.**
+
+```bash
+A=/dev/loop0
+B=/dev/loop1
+lsblk -f "$A" "$B"
+cat /proc/mdstat
+```
+
+**2. Create the mirror.**
+
+```bash
+mdadm --create /dev/md0 --level=1 --raid-devices=2 "$A" "$B"
+```
+
+`mdadm` asks for confirmation when the devices could be part of a boot array; answer `y`. Watch it come up:
+
+```bash
+cat /proc/mdstat
+mdadm --detail /dev/md0
+```
+
+**3. Format and mount it.**
+
+```bash
+mkfs.ext4 /dev/md0
+mkdir -p /mnt/raid
+```
+
+**4. Record the array in the mdadm configuration file.** The path differs by distribution.
+
+```bash
+# Ubuntu
+mdadm --detail --scan >> /etc/mdadm/mdadm.conf
+update-initramfs -u
+
+# Rocky
+mdadm --detail --scan >> /etc/mdadm.conf
+dracut -f
+```
+
+**5. Persist the mount and bring it up from fstab.**
+
+```bash
+echo "/dev/md0  /mnt/raid  ext4  defaults  0  2" >> /etc/fstab
+findmnt --verify
+mount -a
+findmnt -no SOURCE,TARGET,FSTYPE /mnt/raid
+```
+
+## Why
+
+RAID 1 writes every block to both members, so either device alone still holds a complete copy. `--level=1 --raid-devices=2` says exactly that, and `mdadm --detail` reports it back as `Raid Level : raid1` with two active devices. The array size is the size of the smaller member, not the sum, which is the point of a mirror rather than a stripe.
+
+The configuration file is what this question is really about. Each member carries a RAID superblock, so the kernel finds the array at boot whether or not any file mentions it. What the file decides is the **name**. With no `ARRAY` line, the array is assembled under an arbitrary name, usually `/dev/md127`, and an `/etc/fstab` line that says `/dev/md0` then fails at boot. `mdadm --detail --scan` prints the line for you, complete with the array UUID, and appending it is the whole fix.
+
+Rebuilding the initramfs matters for the same reason. The early boot environment carries its own copy of `mdadm.conf`, and on a system where the array is needed early, the stale copy is what assembles it. `update-initramfs -u` on Ubuntu and `dracut -f` on Rocky refresh that copy.
+
+Two commands are worth keeping apart. `mdadm --detail /dev/md0` reports on a running array. `mdadm --examine /dev/loop0` reads the superblock on one member, which is what you use when the array is not running and you need to find out what the device belongs to. `/proc/mdstat` is the fastest overall view and the only one that shows resync progress as a percentage.
+
+## Verify
+
+```bash
+cat /proc/mdstat
+mdadm --detail /dev/md0 | grep -E 'Raid Level|Active Devices|State'
+mdadm --detail --export /dev/md0
+grep ARRAY /etc/mdadm/mdadm.conf /etc/mdadm.conf 2>/dev/null
+findmnt -no SOURCE,TARGET,FSTYPE /mnt/raid
+grep /mnt/raid /etc/fstab
+findmnt --verify
+```
+
+To watch the mirror survive a failure, fail and remove one member, then add it back:
+
+```bash
+mdadm /dev/md0 --fail /dev/loop1 --remove /dev/loop1
+cat /proc/mdstat                       # still running, degraded
+mdadm /dev/md0 --add /dev/loop1
+cat /proc/mdstat                       # resyncing
+```
+
+## Docs
+
+- `man 8 mdadm` for `--create`, `--detail`, `--examine`, `--scan`, `--fail` and `--add`
+- `man 5 mdadm.conf` for the `ARRAY` line and where the file lives
+- `man 4 md` for the driver, the levels and `/proc/mdstat`
+- `man 8 update-initramfs` on Ubuntu, `man 8 dracut` on Rocky
+- `man 5 fstab` for the mount line
+
+---
+
+### Q29. Encrypted volume unlocked with a key file at boot
+
+**Domain:** Storage. **Difficulty:** Hard. **Weight:** 7. **Target:** 8 min. **Host:** any. **Needs:** `disk tool:cryptsetup`.
+
+**Question**
+
+
+A spare block device has been handed to this host. The setup printed its name.
+
+Turn it into an encrypted volume that needs no one at the console:
+
+- Encrypt the device with LUKS. Any passphrase will do; you choose it.
+- Create a key file `/root/secret.key`, mode `600`, owned by root, and add it as a second way to unlock the volume.
+- Unlock the volume under the name `secret`, so it appears as `/dev/mapper/secret`.
+- Format it ext4 and mount it at `/mnt/secret`.
+- Make both halves permanent: `/etc/crypttab` unlocks it from the key file at boot, naming the container by **UUID**, and `/etc/fstab` mounts `/dev/mapper/secret` at `/mnt/secret`.
+
+The `/etc/fstab` line must name `/dev/mapper/secret`, not the raw device. The raw device is still encrypted at that point in the boot; only the mapper name has a filesystem on it.
+
+The grader reads `cryptsetup status`, `blkid`, `stat`, `findmnt`, `/etc/crypttab` and `/etc/fstab`, and it runs `findmnt --verify`. It also tests the key file against the volume, so a key file that exists but unlocks nothing scores nothing.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Name the device once, and be sure it is the spare one.**
+
+```bash
+DISK=/dev/loop0          # use the device the setup printed
+lsblk -f "$DISK"
+```
+
+**2. Put a LUKS header on it.** This destroys whatever was there and asks for `YES` in capitals, then a passphrase twice.
+
+```bash
+cryptsetup luksFormat "$DISK"
+```
+
+**3. Make the key file before adding it, and lock it down first.**
+
+```bash
+dd if=/dev/urandom of=/root/secret.key bs=1024 count=4
+chmod 600 /root/secret.key
+chown root:root /root/secret.key
+```
+
+**4. Add the key file as a second way in.** This asks for the passphrase you just chose, because you have to prove you can already open the volume.
+
+```bash
+cryptsetup luksAddKey "$DISK" /root/secret.key
+cryptsetup luksDump "$DISK" | grep -i keyslot
+```
+
+**5. Open it, format it and mount it.**
+
+```bash
+cryptsetup luksOpen "$DISK" secret --key-file /root/secret.key
+ls -l /dev/mapper/secret
+mkfs.ext4 /dev/mapper/secret
+mkdir -p /mnt/secret
+mount /dev/mapper/secret /mnt/secret
+```
+
+**6. Write both persistence files.**
+
+```bash
+UUID=$(blkid -s UUID -o value "$DISK")
+echo "secret  UUID=$UUID  /root/secret.key  luks" >> /etc/crypttab
+echo "/dev/mapper/secret  /mnt/secret  ext4  defaults  0  2" >> /etc/fstab
+
+findmnt --verify
+```
+
+**7. Prove the pair works without rebooting.**
+
+```bash
+umount /mnt/secret
+cryptsetup close secret
+cryptsetup luksOpen --test-passphrase --key-file /root/secret.key "$DISK" && echo "key file opens it"
+systemctl daemon-reload
+cryptdisks_start secret 2>/dev/null || cryptsetup luksOpen "$DISK" secret --key-file /root/secret.key
+mount -a
+findmnt -no SOURCE,TARGET /mnt/secret
+```
+
+## Why
+
+There are two layers here and each has its own persistence file, which is the whole reason this task is worth marks.
+
+The lower layer is the LUKS container. `/etc/crypttab` describes it in four fields: the name to open it as, the device holding the header, the key to open it with, and options. The name field is not decoration; it becomes `/dev/mapper/<name>`. Writing `secret` there is what makes `/dev/mapper/secret` exist at boot.
+
+The upper layer is the filesystem inside the opened container, and it belongs in `/etc/fstab` like any other. The line has to name `/dev/mapper/secret`. Naming the raw device instead is the classic mistake: at the moment fstab is processed the raw device is a wall of ciphertext with no filesystem on it, so the mount fails and the boot stalls. Ordering is handled for you, because systemd generates a dependency from the crypttab entry to the mapper device, and the fstab mount waits for it.
+
+The key file exists so the machine can unlock itself. A passphrase means someone types it at every boot; a key file readable only by root means the volume opens unattended. That is also why the mode matters: `600` and root-owned, since anything wider hands the volume to any local user. LUKS keeps up to eight key slots, so the passphrase and the key file both stay valid, and `cryptsetup luksDump` shows which slots are in use.
+
+`--test-passphrase` opens nothing and creates no mapping. It only answers the question "would this key work", which makes it the right way to check a key file without disturbing a running mapping.
+
+## Verify
+
+```bash
+blkid -s TYPE -o value "$DISK"        # crypto_LUKS
+cryptsetup status secret
+cryptsetup luksDump "$DISK" | head -20
+stat -c '%a %U' /root/secret.key       # 600 root
+findmnt -no SOURCE,TARGET,FSTYPE /mnt/secret
+cat /etc/crypttab
+grep secret /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 cryptsetup` for `luksFormat`, `luksAddKey`, `luksOpen`, `luksDump`, `--key-file` and `--test-passphrase`
+- `man 5 crypttab` for the four fields and the option list
+- `man 5 fstab` for the mount line that goes with it
+- `man 8 blkid` for reading the container UUID
+- `man 4 urandom` for the source of the key material
+
+---
+
+### Q30. Attach a network block device and mount it
+
+**Domain:** Storage. **Difficulty:** Hard. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `netns tool:nbd-client`.
+
+**Question**
+
+
+A storage host on the lab network is exporting a block device over NBD:
+
+- server `10.99.30.2`, port `10809`
+- export name `export`
+
+Attach it to this machine and mount it:
+
+- Load the kernel module that NBD needs.
+- Connect the export to `/dev/nbd0`.
+- Mount `/dev/nbd0` at `/mnt/nbd`. It already holds an ext4 filesystem with a file called `marker.txt` on it; do not reformat it.
+- Copy the contents of `marker.txt` into `/opt/course/30/token.txt`.
+
+Then make the attachment survive a reboot as far as it sensibly can:
+
+- The `nbd` module must load at boot, from a file under `/etc/modules-load.d/` or from `/etc/modules`.
+- `/etc/fstab` must carry a line for `/mnt/nbd` with both `_netdev` and `noauto` in its options.
+
+`noauto` is deliberate. `/etc/fstab` cannot run `nbd-client`, so the device does not exist yet when the boot processes fstab; an automatic entry would stall the boot instead of helping it. The line documents the mount and makes `mount /mnt/nbd` work once the device is attached.
+
+The grader reads `nbd-client -c`, `findmnt`, `/etc/modules-load.d/`, `/etc/modules` and `/etc/fstab`, and it runs `findmnt --verify`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Load the module. Nothing works before this.**
+
+```bash
+modprobe nbd
+ls /dev/nbd0
+```
+
+**2. Clear any stale attachment, then connect.**
+
+```bash
+nbd-client -d /dev/nbd0
+nbd-client 10.99.30.2 10809 /dev/nbd0 -name export
+```
+
+**3. Confirm the device is really there before mounting it.**
+
+```bash
+nbd-client -c /dev/nbd0          # prints the pid when connected
+lsblk /dev/nbd0
+blkid /dev/nbd0
+```
+
+**4. Mount it and read the marker.**
+
+```bash
+mkdir -p /mnt/nbd
+mount /dev/nbd0 /mnt/nbd
+cat /mnt/nbd/marker.txt
+
+mkdir -p /opt/course/30
+cp /mnt/nbd/marker.txt /opt/course/30/token.txt
+```
+
+**5. Make the module load at boot.**
+
+```bash
+echo nbd > /etc/modules-load.d/nbd.conf
+```
+
+**6. Record the mount in fstab, with the two options that make it safe.**
+
+```bash
+echo "/dev/nbd0  /mnt/nbd  ext4  defaults,_netdev,noauto  0  0" >> /etc/fstab
+findmnt --verify
+```
+
+To detach when you are finished:
+
+```bash
+umount /mnt/nbd
+nbd-client -d /dev/nbd0
+```
+
+## Why
+
+NBD puts a block device at the other end of a TCP connection. The server exports a file or a device, the client attaches it as `/dev/nbdN`, and from that point everything above it behaves like a local disk: `blkid` reads it, `mount` mounts it, `lsblk` lists it. Unlike NFS, which shares a filesystem, NBD shares the blocks and leaves the filesystem to the client, which is why the export already has ext4 on it and reformatting would destroy what the server holds.
+
+The module is not loaded by default on either distribution, and without it `/dev/nbd0` does not exist at all. That is the first failure to recognise: `nbd-client` complaining about the device usually means `modprobe nbd` was skipped. `/etc/modules-load.d/*.conf` is what systemd reads at boot to load modules by name, one per line; `/etc/modules` is the older Debian file and still works.
+
+`nbd-client -d` before connecting is the habit worth keeping. A device left attached by an earlier attempt refuses a new connection, and the error does not say so clearly. Disconnecting first costs nothing when there was nothing attached.
+
+The persistence half is a compromise, and understanding why is the point of the question. `/etc/fstab` describes mounts; it cannot run `nbd-client`, so at the moment the boot reads fstab there is no `/dev/nbd0` to mount. An ordinary entry would therefore fail, and on a system waiting for local filesystems it can stall the boot. `_netdev` marks the mount as needing the network, which delays it until networking is up. `noauto` stops the boot from trying at all, leaving `mount /mnt/nbd` to work the moment you attach the device by hand. A genuinely automatic NBD mount needs a systemd unit that runs `nbd-client` and is ordered before the mount unit, which is more than any exam task has asked for.
+
+## Verify
+
+```bash
+lsmod | grep '^nbd '
+nbd-client -c /dev/nbd0
+lsblk -no NAME,SIZE /dev/nbd0
+findmnt -no SOURCE,TARGET,FSTYPE /mnt/nbd
+cat /opt/course/30/token.txt
+cat /etc/modules-load.d/nbd.conf
+grep /mnt/nbd /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 nbd-client` for connecting, `-name`, `-c` and `-d`
+- `man 1 nbd-server` and `man 5 nbd-server` for what the far end is doing
+- `man 8 modprobe` and `man 5 modules-load.d` for loading the module now and at boot
+- `man 5 fstab` for `_netdev` and `noauto`
+- `man 8 findmnt`, `man 8 lsblk` for checking the result
+
+---
+
+### Q31. Filesystem nearly full: recover space and find the hidden consumer
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `disk`.
+
+**Question**
+
+
+The filesystem mounted at `/srv/data` is over 80 percent full and an application on it is about to start failing writes.
+
+Bring it back under control:
+
+- Get `/srv/data` under **60 percent** used.
+- Everything under `/srv/data/tmp` is scratch and can be deleted.
+- Nothing under `/srv/data/archive` may be deleted. Those files are the point of the filesystem.
+- Write the full path of the single largest **remaining** file on `/srv/data` into `/opt/course/31/biggest.txt`, on one line and nothing else.
+- Leave `/srv/data` mounted, and leave its `/etc/fstab` line working.
+
+Deleting the scratch directory alone will not get you under 60 percent. Some of the space is held by something `du` cannot see.
+
+The grader reads `df`, scans `/proc` for processes holding deleted files on `/srv/data`, reads your answer file, and reads `/etc/fstab`. It also runs `findmnt --verify`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Confirm which filesystem is full, and by how much.**
+
+```bash
+df -hT /srv/data
+df -i /srv/data          # inodes, in case space is free but writes still fail
+```
+
+**2. Find the big directories, staying on this one filesystem.**
+
+```bash
+du -xh --max-depth=1 /srv/data | sort -h
+du -xh --max-depth=1 /srv/data/tmp | sort -h | tail
+```
+
+**3. Delete the scratch directory, which is what you were told you may remove.**
+
+```bash
+rm -rf /srv/data/tmp/*
+df -h /srv/data          # better, but still not under 60%
+```
+
+**4. Ask why `df` and `du` now disagree.** Add up what `du` sees and compare it with what `df` reports as used. The difference is space held by files that have been unlinked but are still open.
+
+```bash
+lsof +L1 | grep /srv/data
+```
+
+Without `lsof`, the same answer comes out of `/proc`:
+
+```bash
+ls -l /proc/[0-9]*/fd/* 2>/dev/null | grep '(deleted)' | grep /srv/data
+```
+
+**5. Release it by stopping the process that holds the descriptor.**
+
+```bash
+lsof +L1 | grep /srv/data          # note the PID in the second column
+kill <pid>
+df -h /srv/data                    # the space comes back at once
+```
+
+For a real service, restart it rather than killing it: `systemctl restart <unit>`. The descriptor is closed either way.
+
+**6. Find the largest remaining file and record it.**
+
+```bash
+find /srv/data -xdev -type f -printf '%s %p\n' | sort -rn | head -5
+mkdir -p /opt/course/31
+echo /srv/data/archive/backup.tar > /opt/course/31/biggest.txt
+```
+
+`find -printf` is GNU only. A portable alternative:
+
+```bash
+find /srv/data -xdev -type f -exec ls -s {} + | sort -rn | head -5
+```
+
+## Why
+
+`df` asks the filesystem how many blocks are allocated. `du` walks the directory tree and adds up the files it can see. They normally agree, and the interesting cases are the ones where they do not.
+
+A deleted file that a process still has open is the classic disagreement. Unlinking removes the name from the directory, so `du` can no longer find it, but the inode and every block it owns survive until the last descriptor closes. The space is genuinely consumed and genuinely invisible. `lsof +L1` lists exactly these files: `+L` filters on link count, and `1` means fewer than one link, which is the definition of unlinked. The output gives the PID, so the fix follows immediately.
+
+`du -x` matters more than it looks. Without it, `du /` walks into every mounted filesystem it meets, so the numbers describe several filesystems at once and the minute you spent is wasted. `-x` keeps the walk on one device, which is the one `df` was complaining about. `find -xdev` is the same idea for `find`.
+
+`df -i` is the other disagreement worth knowing. A filesystem with millions of tiny files can run out of inodes while `df -h` still shows free space. Writes fail with "No space left on device" and the block usage looks fine. Only `df -i` shows it, and the fix is to delete files rather than free bytes.
+
+Killing the holder is the blunt version of the fix. Restarting the service is the version you would use in production, and it is what an exam task usually means by "make the space available again". Truncating the file through its descriptor is the third option when neither is possible: `: > /proc/<pid>/fd/<n>` empties it in place without disturbing the process.
+
+## Verify
+
+```bash
+df -hT /srv/data
+du -xh --max-depth=1 /srv/data | sort -h
+lsof +L1 | grep /srv/data          # no output
+cat /opt/course/31/biggest.txt
+findmnt -no SOURCE,TARGET /srv/data
+grep /srv/data /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 lsof` for `+L1` and the column layout
+- `man 1 du` for `-x`, `--max-depth` and `-h`
+- `man 1 df` for `-h`, `-i`, `-T` and `--output`
+- `man 1 find` for `-xdev`, `-size`, `-printf` and `-exec`
+- `man 1 sort` for `-h` and `-rn`
+- `man 5 proc` for `/proc/<pid>/fd` and what the `(deleted)` suffix means
+
+---
+
+### Q32. Clone, branch, ignore, commit, push
+
+**Domain:** Essential Commands. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `tool:git`.
+
+**Question**
+
+
+A shared bare repository sits at `/opt/course/32/repo.git` (`$COURSE_DIR/32/repo.git` on this lab). It holds one commit on `main`.
+
+1. Clone it to `/opt/course/32/work`.
+2. Record the commit identity `LFCS Candidate <lfcs@example.com>` in a git configuration file, so the identity is stored rather than typed once for a single command.
+3. Create the branch `feature/lfcs` and switch to it.
+4. Add a `.gitignore` at the top of the working tree that ignores every file whose name ends in `.log`, and nothing else.
+5. Commit the `.gitignore` on `feature/lfcs`.
+6. Push the branch so that `feature/lfcs` also exists inside `repo.git`.
+
+The grader reads `git rev-parse`, `git log`, `git check-ignore`, `git ls-files`, the branch as it exists inside `repo.git`, and the git configuration file that carries the email address.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Clone the repository.**
+
+```bash
+git clone /opt/course/32/repo.git /opt/course/32/work
+cd /opt/course/32/work
+```
+
+**2. Set the identity before making any commit.**
+
+```bash
+git config --global user.name "LFCS Candidate"
+git config --global user.email "lfcs@example.com"
+```
+
+`--local` writes `.git/config` inside this repository only, and is equally acceptable here:
+
+```bash
+git config user.name "LFCS Candidate"
+git config user.email "lfcs@example.com"
+```
+
+**3. Create and switch to the branch.**
+
+```bash
+git checkout -b feature/lfcs
+git switch -c feature/lfcs      # the same thing in newer syntax
+```
+
+**4. Write the ignore rule and commit it.**
+
+```bash
+printf '*.log\n' > .gitignore
+git add .gitignore
+git status
+git commit -m "Ignore log files"
+```
+
+**5. Push the branch and record the upstream.**
+
+```bash
+git push -u origin feature/lfcs
+```
+
+## Why
+
+Git refuses to create a commit until it knows who is making it. Without `user.name` and `user.email` it prints "Please tell me who you are" and writes nothing, which is the usual way this task stalls. Set the identity first, as the account that must own the commit, because running the commit through `sudo` records root instead.
+
+`--global` writes `~/.gitconfig` and follows the account into every repository. `--local` writes `.git/config` in one repository. Either counts as recording the identity; `git -c user.email=... commit` does not, because it applies to one command and leaves nothing behind.
+
+A `.gitignore` only stops untracked files from being staged. It never removes a file that git already tracks, so a file added by mistake needs `git rm --cached <file>` as well. The `.gitignore` itself must be added and committed, since it is an ordinary tracked file.
+
+`git push -u origin feature/lfcs` creates the branch in the bare repository and records the upstream, so a later bare `git push` from that branch works. A bare repository has no working tree, which is why it is the right shape for a shared repository and why `git --git-dir=repo.git` is the way to inspect it.
+
+## Verify
+
+```bash
+git -C /opt/course/32/work rev-parse --abbrev-ref HEAD       # feature/lfcs
+git -C /opt/course/32/work log -1 --format='%h %an <%ae> %s'
+git -C /opt/course/32/work check-ignore -v run.log           # the rule that matches
+git -C /opt/course/32/work ls-files .gitignore               # tracked, not just present
+git --git-dir=/opt/course/32/repo.git branch --list 'feature/*'
+git --git-dir=/opt/course/32/repo.git show feature/lfcs:.gitignore
+git config --get user.email
+```
+
+## Docs
+
+- `man 1 git` for the command list, and `git help -a` for every subcommand offline
+- `man 1 git-config` for `user.name`, `user.email` and the difference between `--global` and `--local`
+- `man 1 git-clone`, `man 1 git-checkout`, `man 1 git-switch`, `man 1 git-commit`, `man 1 git-push`
+- `man 5 gitignore` for the pattern syntax, and `man 1 git-check-ignore` for proving which rule matched
+
+---
+
+### Q33. Read a certificate and issue a self-signed one
+
+**Domain:** Essential Commands. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `tool:openssl`.
+
+**Question**
+
+
+Part one. Another team handed over the certificate `/opt/course/33/server.crt` (`$COURSE_DIR/33/server.crt` on this lab) and wants two facts about it.
+
+1. Write to `/opt/course/33/answer.txt` the certificate's common name and its `notAfter` date, exactly as `openssl` prints the date. Two lines are enough, and nothing else is read from the file.
+
+Part two. A lab service on this host needs a certificate of its own.
+
+2. Create `/etc/ssl/lab` and put a self-signed certificate and its private key there as `lab.crt` and `lab.key`.
+3. The key must be RSA 2048. The subject common name must be `lab.local`. The certificate must be valid for 365 days.
+4. The service starts unattended, so the key must carry no passphrase. The key must be owned by root with mode `600`.
+
+The grader reads `answer.txt`, `openssl x509`, `openssl rsa` and `stat`, and it compares the modulus of the key with the modulus of the certificate. A key that does not belong to the certificate fails, and so does a key any account other than root can read.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Read the two fields off the supplied certificate.**
+
+```bash
+openssl x509 -in /opt/course/33/server.crt -noout -subject -enddate
+```
+
+```
+subject=C = IN, ST = KA, L = Bengaluru, O = Shop Ltd, CN = shop.example
+notAfter=Sep  5 10:11:12 2036 GMT
+```
+
+**2. Write both lines to the deliverable without retyping them.**
+
+```bash
+openssl x509 -in /opt/course/33/server.crt -noout -subject -enddate \
+  > /opt/course/33/answer.txt
+cat /opt/course/33/answer.txt
+```
+
+**3. Create the directory and issue the self-signed pair in one command.**
+
+```bash
+mkdir -p /etc/ssl/lab
+openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+  -keyout /etc/ssl/lab/lab.key \
+  -out /etc/ssl/lab/lab.crt \
+  -subj "/CN=lab.local"
+```
+
+**4. Lock the key down.**
+
+```bash
+chown root:root /etc/ssl/lab/lab.key
+chmod 600 /etc/ssl/lab/lab.key
+```
+
+**5. Prove the key belongs to the certificate.**
+
+```bash
+openssl x509 -noout -modulus -in /etc/ssl/lab/lab.crt | openssl sha256
+openssl rsa  -noout -modulus -in /etc/ssl/lab/lab.key | openssl sha256
+```
+
+The two hashes must be identical.
+
+## Why
+
+`-noout` suppresses the base64 body, which is the only reason the interesting fields stay on screen. `-subject` and `-enddate` together are the whole answer to the reported exam task "report the common name and the expiry", and redirecting that command into the answer file avoids transcription mistakes in a date.
+
+`req -x509` issues a certificate directly instead of a signing request, and `-days` belongs to it because a request carries no validity period at all. `-newkey rsa:2048` generates the key and the certificate in one step, so the two are guaranteed to match. `-nodes` means "no DES", which leaves the private key unencrypted; without it openssl prompts for a passphrase and the service then cannot start without a human typing it at boot.
+
+`-subj` must begin with a slash and separate components with slashes. `CN=lab.local` without the leading slash is rejected outright.
+
+Comparing the modulus is the only reliable proof that a key and a certificate belong together. File names, sizes and timestamps prove nothing, and a mismatched pair fails at the moment the service starts its TLS listener rather than at the moment the files are copied. The same trick works for a signing request with `openssl req -noout -modulus`.
+
+A private key that any account can read is a graded failure on its own, so `chmod 600` is part of the task and not housekeeping. The conventional locations differ by distribution: Ubuntu uses `/etc/ssl/certs` and `/etc/ssl/private`, Rocky uses `/etc/pki/tls/certs` and `/etc/pki/tls/private`. This task names `/etc/ssl/lab` explicitly, so use that path on both.
+
+## Verify
+
+```bash
+cat /opt/course/33/answer.txt
+
+openssl x509 -in /etc/ssl/lab/lab.crt -noout -subject -dates
+diff <(openssl x509 -noout -modulus -in /etc/ssl/lab/lab.crt) \
+     <(openssl rsa  -noout -modulus -in /etc/ssl/lab/lab.key) && echo MATCH
+stat -c '%a %U:%G %n' /etc/ssl/lab/lab.key      # expect 600 root:root
+openssl x509 -in /etc/ssl/lab/lab.crt -noout -text | grep 'Public-Key'
+```
+
+## Docs
+
+- `man 1 openssl` for the command layout, and `openssl x509 -help` or `openssl req -help` for the full option list offline
+- `man 1 openssl-x509` for `-noout`, `-subject`, `-enddate`, `-modulus` and `-checkend`
+- `man 1 openssl-req` for `-x509`, `-newkey`, `-nodes`, `-days`, `-subj` and `-addext`
+- `man 1 openssl-rsa` for reading a private key and printing its modulus
+- `man 1 openssl-verify` for validating a certificate against a CA file
+- `man 5 config` for the field names that `-subj` uses
+
+---
+
+### Q34. Locate files by owner and size, list SUID binaries, set SGID and sticky
+
+**Domain:** Essential Commands. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+The tree under `/opt/course/34/data` (`$COURSE_DIR/34/data` on this lab) holds files belonging to several accounts. The account `auditor` and the group `devs` already exist.
+
+1. Copy every regular file under `/opt/course/34/data` that is owned by `auditor` and larger than 1 MiB into `/opt/course/34/found/`. Copy nothing else, and keep each file's original mode, owner and timestamps.
+2. Write the full path of every SUID binary under `/usr/bin` to `/opt/course/34/suid.txt`, one path per line and nothing else on the line.
+3. Turn `/opt/course/34/shared` into a collaboration directory: group `devs`, mode `3775`, so that files created inside it inherit the group `devs` and only a file's own owner can delete it.
+
+The grader compares the contents of `found/` and the mode, owner and timestamp of each file in it, counts the lines of `suid.txt` against the SUID binaries it finds itself, reads `stat` on `shared`, and creates one file inside `shared` as `auditor` to confirm the group is inherited.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Find the files first, then act on them.**
+
+```bash
+find /opt/course/34/data -type f -user auditor -size +1M
+```
+
+Read that list before copying anything. When it looks right, add the action:
+
+```bash
+mkdir -p /opt/course/34/found
+find /opt/course/34/data -type f -user auditor -size +1M -exec cp -p {} /opt/course/34/found/ \;
+```
+
+**2. List the SUID binaries.**
+
+```bash
+find /usr/bin -type f -perm -4000 > /opt/course/34/suid.txt
+cat /opt/course/34/suid.txt
+```
+
+**3. Build the shared directory.**
+
+```bash
+chgrp devs /opt/course/34/shared
+chmod 3775 /opt/course/34/shared
+stat -c '%A %a %U:%G %n' /opt/course/34/shared
+```
+
+`chmod g+s,+t /opt/course/34/shared` sets the same two bits symbolically, on top of whatever mode the directory already has.
+
+## Why
+
+`-size +1M` counts in MiB units and rounds each file up, so `+1M` means strictly larger than one whole MiB and a 200 KiB file never matches. `-user auditor` matches by owner name, and `-type f` keeps directories out of the result, which matters because the action that follows would otherwise fire on a directory too.
+
+`cp` without `-p` resets ownership, mode and timestamps on the copy. Any task that says "preserve" means `cp -p`, or `cp -a` when symbolic links and recursion are involved as well.
+
+`-exec cmd {} \;` runs the command once per file, with the semicolon escaped so the shell does not eat it. `-exec cmd {} +` batches many paths into one invocation, which is faster but wrong for `cp` into a directory only in the sense that it changes nothing here; both forms work for this copy. For `rm` the batching form is the usual choice.
+
+The three `-perm` forms are different questions. `-perm -4000` means "at least these bits are set" and is the one that finds SUID files. `-perm /4000` means "any of these bits". A bare `-perm 4000` means "exactly this mode" and matches almost nothing.
+
+A numeric mode is absolute, so `chmod 775` would clear SUID, SGID and sticky. The fourth digit carries them: `1` is sticky, `2` is SGID, `4` is SUID, and `3775` is SGID plus sticky on top of `rwxrwxr-x`. SGID on a directory makes new files inherit the directory's group, which is what makes a shared project directory work at all. The sticky bit on a group-writable or world-writable directory stops one account deleting another account's file, and `/tmp` at mode `1777` is the model.
+
+## Verify
+
+```bash
+ls -l /opt/course/34/found
+stat -c '%a %U:%G %y %n' /opt/course/34/found/*
+
+wc -l < /opt/course/34/suid.txt
+find /usr/bin -type f -perm -4000 | wc -l        # the same number
+
+stat -c '%A %a %U:%G %n' /opt/course/34/shared   # expect drwxrwsr-t and 3775
+sudo -u auditor touch /opt/course/34/shared/probe
+stat -c '%U:%G %n' /opt/course/34/shared/probe   # group devs
+rm -f /opt/course/34/shared/probe
+```
+
+## Docs
+
+- `man 1 find`, above all its EXPRESSION section for `-perm`, `-size`, `-user`, `-type` and the two `-exec` forms
+- `man 1 cp` for `-p` and `-a`
+- `man 1 chmod` for numeric and symbolic modes, and for the fourth digit
+- `man 1 chgrp` and `man 1 chown`
+- `man 1 stat` for the `%A`, `%a`, `%U` and `%G` format specifiers
+- `man 7 inode` for what the SUID, SGID and sticky bits mean on files and on directories
+
+---
+
+### Q35. Reports from a log with grep, sort, uniq, sed and awk
+
+**Domain:** Essential Commands. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Three input files sit in `/opt/course/35` (`$COURSE_DIR/35` on this lab): `access.log`, `urls.txt` and `data.csv`. Each line of `access.log` starts with the client address and carries the HTTP status code in the field after the quoted request.
+
+1. Write `/opt/course/35/top-ips.txt`: the five client addresses that appear most often in `access.log`, most frequent first, in the layout `uniq -c` produces, which is the count followed by the address.
+2. Write `/opt/course/35/errors.txt`: every line of `access.log` whose status code is in the 500 range, unchanged and in the order they appear in the log.
+3. Edit `urls.txt` in place so that every `http://` becomes `https://`, and leave the original untouched beside it as `urls.txt.bak`.
+4. Write `/opt/course/35/col3.txt`: the third comma separated field of every line of `data.csv` except the header line, in the original order.
+
+The grader compares each output with the result it computes from the same inputs, so extra labels, sorted output where none was asked for, or a missing backup all fail.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. The five most frequent client addresses.**
+
+```bash
+cd /opt/course/35
+awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -5 > top-ips.txt
+cat top-ips.txt
+```
+
+**2. Every 5xx line, in log order.**
+
+```bash
+grep -E ' 5[0-9]{2} ' access.log > errors.txt
+wc -l < errors.txt
+```
+
+**3. Rewrite the URLs in place, keeping a backup.**
+
+```bash
+grep -c 'http://' urls.txt          # read the file before changing it
+sed 's,http://,https://,g' urls.txt # dry run, output only
+sed -i.bak 's,http://,https://,g' urls.txt
+grep -c 'http://' urls.txt          # expect 0
+ls urls.txt urls.txt.bak
+```
+
+**4. The third field of the CSV, header excluded.**
+
+```bash
+awk -F, 'NR > 1 {print $3}' data.csv > col3.txt
+```
+
+## Why
+
+`uniq` collapses only adjacent duplicates, so the first `sort` is mandatory and is the step most often left out. The second `sort -rn` is numeric and descending, which puts the largest count first; a plain `sort -r` would compare the counts as text and put `9` above `40`.
+
+`grep -c` counts matching lines rather than matches, which is the right count here because one log line carries one status code. When a line can match more than once the honest form is `grep -o pattern file | wc -l`.
+
+The spaces inside `' 5[0-9]{2} '` are what keep the pattern on the status field. Without them the same three digits match inside a byte count, a path or a timestamp. `grep -E` takes the unescaped `{2}`; basic grep needs `\{2\}` instead, so pick one dialect per command and stay in it.
+
+`sed -i.bak` edits in place and leaves the original beside it under the new suffix. Plain `sed -i` has no undo at all. Running the expression once without `-i` and reading the output is the habit that prevents a wrong expression from destroying `/etc/fstab` or `sshd_config`.
+
+`sed` takes any delimiter after `s`, so `s,http://,https://,g` avoids escaping every slash. `https://` does not contain the string `http://`, so a second run of the same command changes nothing, and grepping for `http://` afterwards is a real check.
+
+In awk, `-F,` splits on a literal comma, `$3` is the third field, `NR` is the record number so `NR > 1` skips the header, and `$0` would be the whole line.
+
+## Verify
+
+```bash
+cd /opt/course/35
+cat top-ips.txt && wc -l < top-ips.txt            # expect exactly 5 lines
+awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -5   # the same thing
+
+wc -l < errors.txt
+grep -cE ' 5[0-9]{2} ' access.log                 # the same number
+
+grep -c 'http://' urls.txt                        # expect 0
+grep -c 'http://' urls.txt.bak                    # the original count
+diff <(awk -F, 'NR > 1 {print $3}' data.csv) col3.txt && echo MATCH
+```
+
+## Docs
+
+- `man 1 grep` for `-E`, `-c`, `-o` and `-v`
+- `man 1 sed` for `-i`, the `s` command and its delimiters
+- `man 1 awk`, often a link to `man 1 gawk` or `man 1 mawk`, for `-F`, fields, `NR` and `NF`
+- `man 1 sort` for `-n`, `-r` and `-h`, and `man 1 uniq` for `-c`
+- `man 1 cut`, `man 1 tr`, `man 1 wc` and `man 1 head` for the rest of the pipeline
+- `man 7 regex` for the regular expression syntax itself
+
+---
+
+### Q36. Archive with exclusions, extract, symbolic and hard links
+
+**Domain:** Essential Commands. **Difficulty:** Easy. **Weight:** 4. **Target:** 5 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Everything for this task is under `/opt/course/36` (`$COURSE_DIR/36` on this lab): a `project` directory, an archive named `bundle.tar.xz`, and a file named `notes.txt`.
+
+1. Create `/opt/course/36/project.tar.gz`, a gzip compressed tar archive of the `project` directory that contains none of its `.tmp` files.
+2. Extract `bundle.tar.xz` into a new directory `/opt/course/36/extracted`, so that `/opt/course/36/extracted/v2` exists.
+3. Create `/opt/course/36/current` as a symbolic link that resolves to `/opt/course/36/extracted/v2`.
+4. Create `/opt/course/36/notes.hard` as a hard link to `notes.txt`, so that both names refer to one inode.
+
+The grader lists the archive with `tar`, reads the extracted file, resolves the symbolic link with `readlink -f`, and compares inode numbers and link counts with `stat`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Build the gzip archive without the temporary files.**
+
+```bash
+cd /opt/course/36
+tar czf project.tar.gz --exclude='*.tmp' project
+tar tzf project.tar.gz
+```
+
+**2. Extract the xz archive into a new directory.**
+
+```bash
+mkdir -p /opt/course/36/extracted
+tar tJf bundle.tar.xz                       # list before extracting
+tar xJf bundle.tar.xz -C /opt/course/36/extracted
+ls /opt/course/36/extracted/v2
+```
+
+**3. Point a symbolic link at the extracted directory.**
+
+```bash
+ln -s /opt/course/36/extracted/v2 /opt/course/36/current
+readlink -f /opt/course/36/current
+```
+
+**4. Add a hard link to the notes file.**
+
+```bash
+ln /opt/course/36/notes.txt /opt/course/36/notes.hard
+stat -c '%i %h %n' /opt/course/36/notes.txt /opt/course/36/notes.hard
+```
+
+## Why
+
+The tar flags are a small alphabet: `c` create, `x` extract, `t` list, `f` the archive file, `z` gzip, `j` bzip2, `J` xz, `v` verbose, `p` preserve permissions. Tar picks the compressor from the flag and not from the file name, so `tar czf x.tar.xz` quietly writes gzip data under a misleading name. GNU tar also accepts `-a` to choose from the suffix.
+
+`--exclude` takes a shell pattern and must be quoted, otherwise the shell expands `*.tmp` against the current directory before tar ever sees it. Listing the finished archive with `tar tzf` is the only proof the exclusion worked.
+
+Extraction needs `-C` because tar strips the leading slash and unpacks relative to the working directory. Extracting as root with `-p` keeps the stored permissions.
+
+A symbolic link stores a path. It can cross filesystems, can point at a directory, and breaks silently when its target moves, so an absolute target is the safer choice. A hard link is a second directory entry for one inode: it cannot cross a filesystem, cannot point at a directory, and the file's data survives until the last name is removed. Identical inode numbers and a link count of 2 are what prove a hard link; `ls -l` shows the count in the second column.
+
+## Verify
+
+```bash
+cd /opt/course/36
+file project.tar.gz                       # gzip compressed data
+tar tzf project.tar.gz | grep -c '\.tmp$' # expect 0
+cat extracted/v2/VERSION
+
+test -L current && readlink -f current    # /opt/course/36/extracted/v2
+stat -c '%i %h %n' notes.txt notes.hard   # same inode, link count 2
+```
+
+## Docs
+
+- `man 1 tar` for the operation letters, `--exclude` and `-C`
+- `man 1 gzip`, `man 1 xz` and `man 1 zip` for the standalone compressors
+- `man 1 ln` for `-s` and for the hard link rules
+- `man 1 readlink` for `-f`
+- `man 1 stat` for `%i` and `%h`
+- `man 7 symlink` for how the kernel resolves a symbolic link
+
+---
+
+### Q37. A script with separate stdout and stderr files
+
+**Domain:** Essential Commands. **Difficulty:** Easy. **Weight:** 4. **Target:** 5 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Write `/opt/course/37/report.sh` (`$COURSE_DIR/37/report.sh` on this lab). It must be executable, start with the `#!/bin/bash` shebang, and behave the same no matter which directory it is run from.
+
+Running it must:
+
+1. Write the output of `df -h` to `/opt/course/37/report.txt`, replacing whatever that file held before.
+2. Append the output of `free -m` to the same file.
+3. Append the current date to the same file, as the last line.
+4. Run `ls /opt/course/37/missing`, a path that does not exist.
+5. Send the error output of every command in the script to `/opt/course/37/errors.txt` instead of to the terminal.
+6. Print `DONE` on standard output, and nothing else.
+
+The grader checks the shebang and the executable bit, parses the script with `bash -n`, then runs it from a different directory and reads its standard output, its standard error, and both files it produced.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Write the script.**
+
+```bash
+cat > /opt/course/37/report.sh <<'SCRIPT'
+#!/bin/bash
+OUT=/opt/course/37/report.txt
+ERR=/opt/course/37/errors.txt
+
+df -h    >  "$OUT" 2>  "$ERR"
+free -m  >> "$OUT" 2>> "$ERR"
+ls /opt/course/37/missing >> "$OUT" 2>> "$ERR"
+date     >> "$OUT" 2>> "$ERR"
+
+echo DONE
+SCRIPT
+```
+
+**2. Make it executable and check it parses.**
+
+```bash
+chmod 755 /opt/course/37/report.sh
+bash -n /opt/course/37/report.sh
+```
+
+**3. Run it from somewhere else, which is how it will be graded.**
+
+```bash
+cd /tmp && /opt/course/37/report.sh
+```
+
+A shorter form redirects both streams once, at the top of the script, and every later command inherits them:
+
+```bash
+#!/bin/bash
+exec > /opt/course/37/report.txt 2> /opt/course/37/errors.txt
+df -h
+free -m
+ls /opt/course/37/missing
+date
+echo DONE >&2      # careful: with exec, DONE would land in errors.txt
+```
+
+That variant needs a saved copy of the original standard output to print `DONE` to the terminal, so the plain per-command redirections above are the safer answer under time pressure.
+
+## Why
+
+Redirections are applied left to right, which is why `> out.txt 2>&1` sends both streams to the file and `2>&1 > out.txt` does not: in the second form stderr is aimed at wherever stdout pointed at that moment, which is still the terminal.
+
+`>` truncates its target the instant the shell parses the line, before the command runs at all, so the first redirection resets `report.txt` and every later one must use `>>` or the file ends up holding only the last command's output.
+
+Two separate destinations are the whole point of this task. `&>` and `> file 2>&1` merge the streams, which would put the `ls` error message in the middle of the report. Keeping `2>` pointed at a second file is what lets the report stay readable and the failure stay visible.
+
+The `ls` on a path that does not exist is deliberate: it proves the error redirection is real. Without a command that actually fails, an empty `errors.txt` says nothing about whether stderr was captured or simply never used.
+
+Absolute paths inside the script are what make it independent of the working directory. A relative `report.txt` would land wherever the caller happened to be. A `#!/bin/bash` shebang and mode 755 are what turn the text file into something a unit, a cron job or a timer can execute directly.
+
+## Verify
+
+```bash
+ls -l /opt/course/37/report.sh          # expect -rwxr-xr-x
+head -1 /opt/course/37/report.sh        # expect #!/bin/bash
+bash -n /opt/course/37/report.sh
+
+cd /tmp && /opt/course/37/report.sh     # prints DONE and nothing else
+head -3 /opt/course/37/report.txt       # the df header
+tail -1 /opt/course/37/report.txt       # the date
+cat /opt/course/37/errors.txt           # the ls error message
+```
+
+## Docs
+
+- `man 1 bash`, its REDIRECTION section, for `>`, `>>`, `2>`, `2>&1`, `&>` and `exec`
+- `man 1 df`, `man 1 free` and `man 1 date` for the three commands the report runs
+- `man 1 chmod` for the executable bit
+- `man 1 test` and `man 1 bash` under SHELL BUILTIN COMMANDS for `set -euo pipefail` when a script grows
+
+---
+
+### Q38. A service cannot start because another one owns its port
+
+**Domain:** Essential Commands. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+`webapp.service` will not start on this host. It is meant to serve on TCP port 8090 and it fails every time it is started. Another unit is already listening there.
+
+1. Find out which unit holds port 8090 and why `webapp.service` fails.
+2. Write the name of that unit, and nothing else, to `/opt/course/38/answer.txt` (`$COURSE_DIR/38/answer.txt` on this lab). Use the full unit name, for example `something.service`.
+3. Stop that unit and make sure it can never start again: not now, not at the next boot, and not when another unit pulls it in as a dependency.
+4. Get `webapp.service` running, and make sure it comes back at the next boot.
+
+The grader reads `systemctl is-active`, `systemctl is-enabled`, the mask symlink under `/etc/systemd/system`, the enable symlink for `webapp`, the listener on port 8090, and what that listener answers.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Ask the journal what the failure actually was.**
+
+```bash
+systemctl status webapp.service --no-pager -l
+journalctl -u webapp.service -b --no-pager | tail -20
+```
+
+```
+OSError: [Errno 98] Address already in use
+webapp.service: Main process exited, code=exited, status=1/FAILURE
+```
+
+**2. Find who owns the port.**
+
+```bash
+ss -tlpn | grep ':8090'
+```
+
+```
+LISTEN 0 5 0.0.0.0:8090 0.0.0.0:* users:(("python3",pid=1234,fd=3))
+```
+
+The process id is enough to name the unit:
+
+```bash
+systemctl status 1234 --no-pager
+ps -o unit= -p 1234
+```
+
+Both report `legacy.service`.
+
+**3. Record the answer.**
+
+```bash
+mkdir -p /opt/course/38
+echo legacy.service > /opt/course/38/answer.txt
+```
+
+**4. Stop the old unit and make it unstartable.**
+
+```bash
+systemctl disable --now legacy.service
+systemctl mask legacy.service
+systemctl is-enabled legacy.service        # masked
+```
+
+**5. Start the application and make it persistent.**
+
+```bash
+systemctl enable --now webapp.service
+systemctl is-active webapp.service
+curl -s http://127.0.0.1:8090/
+```
+
+## Why
+
+"Address already in use" is the one error message that points at another process rather than at the unit that failed. `ss -tlpn` is the fastest way to turn the port into a process id: `-t` TCP, `-l` listening, `-p` the owning process, `-n` numeric ports so nothing is translated into a service name. `systemctl status <pid>` then walks from the process back to the cgroup and prints the unit that owns it, which is quicker than reading unit files.
+
+`stop` and `disable` are not the same as unstartable. `stop` ends this run. `disable` removes the `WantedBy` symlink so the unit is not pulled in at boot. Neither stops another unit from starting it as a dependency, and neither stops a person running `systemctl start`. `mask` is the one that does: it replaces the unit with a symlink to `/dev/null` under `/etc/systemd/system`, and every attempt to start it then fails with "Unit is masked". `systemctl is-enabled` reports `masked`, which is what a grader reads, and `systemctl unmask` is the way back.
+
+Masking works here because `legacy.service` ships in the vendor directory `/usr/lib/systemd/system`. The symlink in `/etc/systemd/system` shadows it, exactly the way a local override shadows a packaged unit. A unit whose only file already sits in `/etc/systemd/system` cannot be masked without moving it first.
+
+The persistent half of this task is two symlinks: `/etc/systemd/system/legacy.service` pointing at `/dev/null`, and `/etc/systemd/system/multi-user.target.wants/webapp.service` pointing at the unit. A host where `webapp` was only started, never enabled, comes back after a reboot with the port free and nothing serving on it.
+
+## Verify
+
+```bash
+cat /opt/course/38/answer.txt
+systemctl is-enabled legacy.service        # masked
+readlink /etc/systemd/system/legacy.service   # /dev/null
+systemctl is-active legacy.service         # inactive
+
+systemctl is-active webapp.service         # active
+systemctl is-enabled webapp.service        # enabled
+ss -H -ltn | grep ':8090'
+curl -s http://127.0.0.1:8090/             # webapp-ok
+```
+
+## Docs
+
+- `man 1 systemctl` for `mask`, `unmask`, `disable`, `enable --now`, `is-active`, `is-enabled` and `status <pid>`
+- `man 1 journalctl` for `-u` and `-b`
+- `man 8 ss` for `-t`, `-l`, `-p` and `-n`
+- `man 5 systemd.unit` for the unit directory search order and what masking does to it
+- `man 5 systemd.service` for `Type`, `ExecStart` and `Restart`
+
+---
+
+### Q39. Report CPU hog, load, cores, memory and process count
+
+**Domain:** Essential Commands. **Difficulty:** Easy. **Weight:** 4. **Target:** 5 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Something on this host is burning CPU and the capacity team wants five numbers. Write each one to its own file under `/opt/course/39` (`$COURSE_DIR/39` on this lab). Each file holds the bare value with no label around it.
+
+1. `cpu.txt`: the PID of the process using the most CPU right now.
+2. `cores.txt`: the number of CPU cores this host has.
+3. `load.txt`: the load averages over 1, 5 and 15 minutes, on one line separated by spaces.
+4. `mem.txt`: the available memory in MiB, as `free -m` reports available memory.
+5. `procs.txt`: the total number of processes running on the host.
+
+The grader reads each file, finds the busy process itself, and compares. Memory and the process count move between the moment the answer is written and the moment it is read, so those two are accepted within a margin. The PID and the core count are not.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Find the busiest process.**
+
+```bash
+top -b -n 1 -c -o %CPU | head -12
+ps -eo pid,pcpu,pmem,args --sort=-pcpu | head -5
+pgrep -af lfcs-burner
+```
+
+All three put the same process at the top, and its command line begins with `lfcs-burner`. Its `comm` is `sha256sum`, because the burner was started with `exec -a`, which renames only `argv[0]` and leaves the executable name alone. That is why the commands above read the full command line: `ps -o comm`, and `top` without `-c`, print `sha256sum`, and `pgrep lfcs-burner` without `-f` finds nothing at all. Only `args` and `pgrep -f` see the name.
+
+**2. Write the five files.**
+
+```bash
+mkdir -p /opt/course/39
+cd /opt/course/39
+
+ps -eo pid,pcpu --sort=-pcpu --no-headers | head -1 | awk '{print $1}' > cpu.txt
+nproc > cores.txt
+cut -d' ' -f1-3 /proc/loadavg > load.txt
+free -m | awk '/^Mem:/ {print $7}' > mem.txt
+ps -e --no-headers | wc -l > procs.txt
+
+for f in *.txt; do printf '%s: ' "$f"; cat "$f"; done
+```
+
+The load line can also come from `uptime`:
+
+```bash
+uptime | awk -F'load average:' '{print $2}' | tr -d ',' > load.txt
+```
+
+## Why
+
+`top -b -n 1` runs top in batch mode for a single iteration, which is what makes it usable in a pipeline; `-o %CPU` sorts by processor use. The first iteration of top reports CPU time since boot rather than an instantaneous rate, so a second iteration, or `ps --sort=-pcpu`, gives a steadier answer on a host that has been up for a while.
+
+`nproc` counts the CPUs available to the current process, which is the number to divide the load average by before calling a load high. A load of 8 on 8 cores is exactly full, not overloaded. The load average counts runnable and uninterruptible tasks, so heavy disk waiting raises it without any CPU being busy.
+
+`/proc/loadavg` always prints the three averages with a dot as the decimal separator, while `uptime` follows the locale and can print commas. When a grader is going to parse the file, the procfs form is the safer source.
+
+Read the `available` column of `free -m`, not `free`. Page cache is counted as used but is reclaimable the moment an application asks for memory, so `free` understates what a new process can actually get. On the `free -m` table, `available` is the seventh field of the `Mem:` row.
+
+Write only the value asked for. A grader matching a bare number fails on `PID: 1234`, and that is a whole task lost for a label nobody wanted.
+
+## Verify
+
+```bash
+cd /opt/course/39
+cat cpu.txt cores.txt load.txt mem.txt procs.txt
+
+ps -p "$(cat cpu.txt)" -o pid,pcpu,args --no-headers   # the lfcs-burner command line
+nproc
+cat /proc/loadavg
+free -m
+ps -e --no-headers | wc -l
+```
+
+## Docs
+
+- `man 1 top` for `-b`, `-n` and `-o`
+- `man 1 ps` and its STANDARD FORMAT SPECIFIERS section for `-eo` and `--sort`
+- `man 1 nproc`, `man 1 uptime`, `man 1 free`
+- `man 5 proc` for `/proc/loadavg`, `/proc/cpuinfo` and `/proc/meminfo`
+- `man 1 vmstat` and `man 1 pidstat` when the question is about sustained pressure rather than one instant
+
+---
+
+### Q40. A service fails its file-descriptor limit: raise it with a drop-in
+
+**Domain:** Essential Commands. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+`fdhog.service` is a packaged unit. Its unit file is `/usr/lib/systemd/system/fdhog.service` and it refuses to start: the application needs a hundred open file descriptors and the unit does not allow that many.
+
+1. Raise the service's open file limit to `65536` and its task limit to `4096`.
+2. Do it without editing `/usr/lib/systemd/system/fdhog.service`, because the next package upgrade would overwrite that file.
+3. Leave the service running, and make sure the raised limits are still in force after a reboot.
+
+The grader reads `systemctl show`, `systemctl is-active`, the limits of the running process under `/proc`, the drop-in file under `/etc/systemd/system/fdhog.service.d/`, and the vendor unit file, which must still be exactly as it shipped.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Read what the unit has now and what it is complaining about.**
+
+```bash
+systemctl status fdhog.service --no-pager -l
+journalctl -u fdhog.service -b --no-pager | tail -10
+systemctl show fdhog.service -p LimitNOFILE -p TasksMax
+```
+
+```
+LimitNOFILE=16
+TasksMax=...
+```
+
+**2. Write the drop-in.**
+
+```bash
+mkdir -p /etc/systemd/system/fdhog.service.d
+cat > /etc/systemd/system/fdhog.service.d/limits.conf <<'DROPIN'
+[Service]
+LimitNOFILE=65536
+TasksMax=4096
+DROPIN
+```
+
+`systemctl edit fdhog.service` opens an editor on `/etc/systemd/system/fdhog.service.d/override.conf` and writes the same thing. Either filename is fine as long as it ends in `.conf`.
+
+**3. Reload and restart, then confirm.**
+
+```bash
+systemctl daemon-reload
+systemctl restart fdhog.service
+systemctl show fdhog.service -p LimitNOFILE -p TasksMax
+systemctl cat fdhog.service            # the vendor unit and every drop-in that applied
+```
+
+## Why
+
+A drop-in is a fragment that systemd merges on top of the vendor unit. Anything in `/etc/systemd/system/<unit>.d/*.conf` wins over `/usr/lib/systemd/system/<unit>`, and the vendor file stays untouched, so a package upgrade replaces the unit and keeps the local change. Editing the vendor file instead loses the change at the next upgrade, and `systemctl edit --full` copies the whole unit into `/etc` where it then stops picking up vendor fixes entirely.
+
+`daemon-reload` alone changes nothing for a running process. Limits are applied by the kernel when the process is created, so the service has to restart before it sees the new ceiling. `systemctl show` reports what the next start will use; `/proc/<pid>/limits` reports what the running process actually got, and those two disagree exactly when a reload has happened but a restart has not.
+
+Neither `ulimit` nor `/etc/security/limits.conf` reaches this service. PAM applies `limits.conf` at login, and systemd starts services with no login session at all, so a `nofile` line in `limits.conf` for the service account has no effect whatsoever. `LimitNOFILE` is the systemd spelling; `nofile` is the PAM spelling; mixing them silently does nothing. The login side of that pair is drilled in Q44.
+
+`LimitNOFILE=65536` sets both the soft and the hard limit. `LimitNOFILE=4096:65536` sets soft and hard separately, which is what an application that raises its own limit at start wants. `TasksMax` is a cgroup control rather than an rlimit, so it caps threads and processes together, and `DefaultLimitNOFILE` in `/etc/systemd/system.conf` is the host-wide fallback for units that set nothing.
+
+## Verify
+
+```bash
+systemctl is-active fdhog.service                       # active
+systemctl show fdhog.service -p LimitNOFILE -p TasksMax # 65536 and 4096
+systemctl cat fdhog.service                             # lists the drop-in path
+cat /etc/systemd/system/fdhog.service.d/*.conf
+
+MAINPID=$(systemctl show -p MainPID --value fdhog.service)
+grep 'Max open files' /proc/"$MAINPID"/limits
+journalctl -u fdhog.service -b --no-pager | tail -3     # "opened 100 descriptors"
+```
+
+## Docs
+
+- `man 5 systemd.exec` for every `Limit*` directive and the `soft:hard` syntax
+- `man 5 systemd.resource-control` for `TasksMax`, `MemoryMax` and `CPUQuota`
+- `man 5 systemd.unit` for drop-in directories and the order in which they are merged
+- `man 1 systemctl` for `edit`, `cat`, `show`, `daemon-reload` and `restart`
+- `man 5 systemd-system.conf` for `DefaultLimitNOFILE`
+- `man 5 proc` for `/proc/<pid>/limits`
+
+---
+
+### Q41. Create users with exact attributes, a system account, and lock one
+
+**Domain:** Users and Groups. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+Three account tasks on this host. Every attribute below is graded on its own line, so a nearly correct account still loses the parts that are wrong.
+
+1. Create the group `devs` with GID `3001` and the group `qa` with GID `3002`.
+2. Create the user `ana` with all of these attributes:
+   - UID `2001`
+   - primary group `devs`
+   - supplementary group `qa`
+   - login shell `/bin/bash`
+   - home directory `/home/ana`, created and owned by her
+   - comment field `Ana Diaz`
+   - account expiry date `2027-06-30`
+   Then set her password to `Lfcs2026Pass`, because an account with no password cannot log in at all.
+3. Create the system account `svc-batch`: a UID below 1000 and a shell that refuses logins. It needs no home directory.
+4. The account `bob` already exists. Lock his password so he cannot log in, without deleting the account and without changing his shell.
+
+The grader reads `getent passwd`, `getent group`, `id`, `ls -ld`, `chage -l` and `passwd -S`, one attribute at a time.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. The groups first, because a primary group must exist before the user does.**
+
+```bash
+groupadd -g 3001 devs
+groupadd -g 3002 qa
+```
+
+**2. Every attribute of ana in one command.**
+
+```bash
+useradd -u 2001 -g devs -G qa -s /bin/bash -m -d /home/ana \
+        -c 'Ana Diaz' -e 2027-06-30 ana
+echo 'ana:Lfcs2026Pass' | chpasswd
+```
+
+**3. The system account.**
+
+```bash
+useradd -r -M -s /usr/sbin/nologin svc-batch     # Ubuntu
+useradd -r -M -s /sbin/nologin svc-batch         # Rocky
+```
+
+**4. Lock bob.**
+
+```bash
+usermod -L bob
+passwd -S bob        # the second field becomes L
+```
+
+`passwd -l bob` does the same thing. `usermod -U bob` or `passwd -u bob` unlocks it again.
+
+## Why
+
+Each flag has exactly one command that proves it, and a task like this is graded flag by flag:
+
+| Attribute | Flag | Proof |
+|---|---|---|
+| UID | `-u 2001` | `id -u ana` |
+| Primary group | `-g devs` | `id -gn ana` |
+| Supplementary group | `-G qa` | `id -nG ana` |
+| Shell | `-s /bin/bash` | `getent passwd ana \| cut -d: -f7` |
+| Home | `-m -d /home/ana` | `getent passwd ana \| cut -d: -f6`, then `ls -ld` |
+| Comment | `-c 'Ana Diaz'` | `getent passwd ana \| cut -d: -f5` |
+| Expiry | `-e 2027-06-30` | `chage -l ana` |
+| Password set | `chpasswd` | `passwd -S ana` shows `P` |
+
+`-m` creates the home directory and copies `/etc/skel` into it. Rocky sets `CREATE_HOME yes` in `/etc/login.defs` so it happens without the flag, and Ubuntu does not, so always type `-m`.
+
+`usermod -G` replaces every supplementary group the account had; `usermod -aG` appends. Dropping the `-a` is the usual way an account silently loses its administrator group. On a fresh `useradd`, plain `-G` is correct because there is nothing to lose yet.
+
+`-e` and `chage -E` expire the account, and both take `YYYY-MM-DD`. `chage -M` expires the password instead, which is a different thing: a task that names a calendar date almost always means the account. `chage -l` prints the date back in a different format, which is normal.
+
+`-r` creates a system account, taking a UID from the range below `UID_MIN` in `/etc/login.defs` and creating no home directory by default. A service account also needs a shell that refuses logins, and the path differs: `/usr/sbin/nologin` on Ubuntu, `/sbin/nologin` on Rocky.
+
+Locking puts a `!` in front of the password hash in `/etc/shadow`, so no password can ever match. It does not stop key based ssh logins, which is why hardening tasks also set the shell to `nologin` or expire the account.
+
+None of this needs a service restart. The accounts live in `/etc/passwd`, `/etc/shadow` and `/etc/group`, which is where the change persists.
+
+## Verify
+
+```bash
+getent group devs qa
+id ana
+getent passwd ana
+ls -ld /home/ana
+LC_ALL=C chage -l ana | grep -i 'Account expires'
+passwd -S ana                    # P in the second field
+
+getent passwd svc-batch
+passwd -S bob                    # L in the second field
+```
+
+## Docs
+
+- `man 8 useradd` for `-u`, `-g`, `-G`, `-s`, `-m`, `-d`, `-c`, `-e`, `-r` and `-M`
+- `man 8 usermod` for `-aG`, `-L` and `-U`, and `man 8 userdel` for `-r`
+- `man 8 groupadd` for `-g` and `-r`
+- `man 1 chage` for `-E`, `-M`, `-m`, `-W` and `-l`
+- `man 1 passwd` for `-S`, `-l` and `-u`, and `man 8 chpasswd` for setting a password non-interactively
+- `man 5 passwd`, `man 5 shadow`, `man 5 group` and `man 5 login.defs` for the files behind all of it
+
+---
+
+### Q42. Sudo rules and password ageing
+
+**Domain:** Users and Groups. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+The accounts `ana` and `opsman` exist. `opsman` is a member of the group `ops`.
+
+Sudo rules. Put both of these in files under `/etc/sudoers.d/`. `/etc/sudoers` itself must not change, and `visudo -c` must report every file parsed OK when you are done.
+
+1. `ana` may run any command as any user, and she is prompted for her own password when she does.
+2. Members of the group `ops` may run exactly `/usr/bin/systemctl restart nginx` as root, with no password prompt, and nothing else.
+
+Password policy.
+
+3. Accounts created from now on must get a maximum password age of 90 days by default. That is a system-wide setting in `/etc/login.defs`.
+4. `ana`'s own password must expire after 60 days, may not be changed more often than every 7 days, and must warn her 14 days ahead.
+5. A new password anywhere on this host must be at least 12 characters. That is `minlen` in `/etc/security/pwquality.conf`.
+
+The grader runs `visudo -c`, reads `sudo -l -U ana` and `sudo -l -U opsman`, compares `/etc/sudoers` with the copy taken before you started, checks the mode and owner of the files you added, and reads `chage -l ana`, `/etc/login.defs` and `/etc/security/pwquality.conf`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. The full sudo rule for ana, in its own drop-in file.**
+
+```bash
+visudo -f /etc/sudoers.d/ana
+```
+
+```
+ana     ALL=(ALL:ALL) ALL
+```
+
+The same file written without an editor, then validated immediately:
+
+```bash
+cat > /etc/sudoers.d/ana <<'SUDO'
+ana     ALL=(ALL:ALL) ALL
+SUDO
+chown root:root /etc/sudoers.d/ana
+chmod 440 /etc/sudoers.d/ana
+visudo -c -f /etc/sudoers.d/ana
+```
+
+**2. The restricted rule for the ops group.**
+
+```bash
+cat > /etc/sudoers.d/ops <<'SUDO'
+%ops    ALL=(root) NOPASSWD: /usr/bin/systemctl restart nginx
+SUDO
+chown root:root /etc/sudoers.d/ops
+chmod 440 /etc/sudoers.d/ops
+visudo -c
+```
+
+**3. The system-wide default password age.**
+
+```bash
+sed -i.bak -E 's/^[#[:space:]]*PASS_MAX_DAYS.*/PASS_MAX_DAYS\t90/' /etc/login.defs
+grep '^PASS_MAX_DAYS' /etc/login.defs
+```
+
+**4. ana's own ageing.**
+
+```bash
+chage -M 60 -m 7 -W 14 ana
+LC_ALL=C chage -l ana
+```
+
+**5. The minimum password length.**
+
+```bash
+sed -i -E 's/^[#[:space:]]*minlen[[:space:]]*=.*/minlen = 12/' /etc/security/pwquality.conf
+grep '^minlen' /etc/security/pwquality.conf
+```
+
+If the line is not in the file at all, append `minlen = 12`.
+
+## Why
+
+`/etc/sudoers` is read as a whole, so one syntax error in it locks every account out of sudo on that host. `visudo` is the only safe way to touch any sudo file, because it parses before it saves and refuses to write a broken result. `visudo -c` re-checks `/etc/sudoers` and every file it includes; `visudo -c -f <file>` checks one file on its own.
+
+A drop-in under `/etc/sudoers.d/` is read only because `/etc/sudoers` ends with an include directive: `@includedir /etc/sudoers.d` on Ubuntu, `#includedir /etc/sudoers.d` on Rocky. The leading `#` there is the directive itself, not a comment, which surprises people who delete it while tidying.
+
+Three ways to make a drop-in file silently do nothing, all of them without a warning anywhere:
+
+- any mode other than `0440`, or an owner other than `root:root`
+- a dot anywhere in the filename, so `ana.conf` and `10-ops.rules` are both skipped
+- a name ending in `~`, which is why an editor backup left behind is harmless but a renamed original is not
+
+Command paths in a rule must be absolute. `NOPASSWD: systemctl` matches nothing at all. `%name` is a group and a bare name is a user. `(ALL:ALL)` names the run-as user and the run-as group. Rules are evaluated in order and the last match wins, so a later blanket rule quietly overrides an earlier restriction; read `sudo -l -U user` rather than the files when checking what a person can actually do.
+
+`/etc/login.defs` sets defaults for accounts created afterwards. It does not touch an account that already exists, which is why `chage` is a separate step for ana rather than a consequence of step 3. `chage -M` is the password age and `chage -E` is the account expiry date, and mixing them up answers a different question than the one asked.
+
+`pwquality.conf` is read by `pam_pwquality` when a password is set, so it constrains new passwords only. Existing short passwords keep working until they are changed. On Ubuntu the module comes from `libpam-pwquality`; on Rocky it is installed already.
+
+Every change here is a file. Nothing needs restarting, and if no file changed then nothing was done.
+
+## Verify
+
+```bash
+visudo -c
+sudo -l -U ana
+sudo -l -U opsman
+stat -c '%a %U:%G %n' /etc/sudoers.d/*
+grep -E '^[#@]includedir' /etc/sudoers
+
+grep '^PASS_MAX_DAYS' /etc/login.defs
+LC_ALL=C chage -l ana
+grep '^minlen' /etc/security/pwquality.conf
+```
+
+## Docs
+
+- `man 5 sudoers`, above all SUDOERS FILE FORMAT and the EXAMPLES section at the end
+- `man 8 visudo` for `-c` and `-f`
+- `man 8 sudo` for `-l`, `-U` and `-n`
+- `man 1 chage` for `-M`, `-m`, `-W`, `-I` and `-l`
+- `man 5 login.defs` for `PASS_MAX_DAYS`, `PASS_MIN_DAYS` and `PASS_WARN_AGE`
+- `man 5 pwquality.conf` and `man 8 pam_pwquality` for `minlen` and the credit options
+
+---
+
+### Q43. Group collaboration directory with ACLs
+
+**Domain:** Users and Groups. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+`/srv/projects` is the development team's directory and `/srv/projects/alpha` is one project inside it. The accounts and groups already exist: `ana` is in the group `devs`, and `qauser` is in the group `qa`.
+
+1. `/srv/projects` must belong to the group `devs`, and the owner and that group must have full access while every other account gets nothing through the mode bits. Files created inside it must inherit the group `devs`.
+2. The group `qa` must be able to read and traverse `/srv/projects` itself, and must automatically get read and traverse access to everything created inside it from now on. `qa` must never get write access.
+3. `ana` must have full access to the existing directory `/srv/projects/alpha`, which the mode bits alone do not give her.
+4. The ACL mask must not reduce any of the permissions granted above. An entry that grants `r-x` and takes effect as `r--` is wrong.
+
+The grader reads `stat` and `getfacl -p`, works out the effective permission of each named entry after the mask, and then creates a file inside `/srv/projects` as root and checks that `qauser` can read it and that the file's group is `devs`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. The mode bits first, because a later `chmod` rewrites the ACL mask.**
+
+```bash
+chgrp devs /srv/projects
+chmod 2770 /srv/projects
+stat -c '%A %a %U:%G %n' /srv/projects     # drwxrws--- 2770
+```
+
+**2. Give the qa group read and traverse, now and on everything created later.**
+
+```bash
+setfacl -m g:qa:r-x /srv/projects          # the directory itself
+setfacl -m d:g:qa:r-x /srv/projects        # inherited by new files and directories
+```
+
+`setfacl -d -m g:qa:r-x /srv/projects` is the same thing written the other way.
+
+**3. Give ana full access to the existing project directory.**
+
+```bash
+setfacl -m u:ana:rwx /srv/projects/alpha
+```
+
+**4. Read the result, mask included.**
+
+```bash
+getfacl -p /srv/projects
+getfacl -p /srv/projects/alpha
+```
+
+If any line comes back with `#effective:` showing less than was granted, raise the mask:
+
+```bash
+setfacl -m m::rwx /srv/projects/alpha
+```
+
+## Why
+
+Mode `2770` is SGID plus `rwxrwx---`. The SGID bit on a directory makes every new entry inherit the directory's group instead of the creator's primary group, which is the whole mechanism behind a shared project directory. Others get nothing, so the only way `qa` can reach anything inside is an ACL.
+
+An access ACL applies to the object it is set on. A default ACL applies to entries created inside it afterwards, and to nothing that already exists. That is why this task needs both: `g:qa:r-x` so `qa` can traverse the directory today, and `d:g:qa:r-x` so files made tomorrow carry the same entry. Existing files inside would need `setfacl -R -m g:qa:r-x` as well, which is the third form most tasks end up using.
+
+The mask is a ceiling over every named user, every named group and the owning group. An entry can grant `rwx` and still take effect as `r--`, and `getfacl` marks that with `#effective:` on the line. Setting the mask explicitly with `m::rwx` is the fix, and `setfacl` also recalculates it automatically whenever an entry is added, which is why the mask is usually right until a `chmod` touches the group bits and quietly narrows it again. Run `chmod` first and the ACLs afterwards.
+
+A trailing `+` in `ls -l` is the only visible sign that an object carries an ACL at all, so read `ls -ld` before trusting the nine permission bits in front of it.
+
+ACLs live in an extended attribute on the filesystem, so they persist by themselves with no configuration file anywhere. `cp` drops them unless `-a` or `--preserve=xattr` is used, and `tar` needs `--acls`. ext4 and xfs support ACLs by default on current kernels.
+
+## Verify
+
+```bash
+stat -c '%A %a %U:%G %n' /srv/projects
+ls -ld /srv/projects /srv/projects/alpha    # trailing + on both
+
+getfacl -p /srv/projects
+getfacl -p /srv/projects/alpha
+getfacl /srv/projects | grep -E '^mask|effective'
+
+touch /srv/projects/probe
+stat -c '%G %n' /srv/projects/probe         # devs, from the SGID bit
+sudo -u qauser test -r /srv/projects/probe && echo QA-CAN-READ
+sudo -u ana test -w /srv/projects/alpha && echo ANA-CAN-WRITE
+rm -f /srv/projects/probe
+```
+
+## Docs
+
+- `man 1 setfacl` and its EXAMPLES section for `-m`, `-d`, `-R`, `-x`, `-k`, `-b` and `m::`
+- `man 1 getfacl` for `-p` and for reading the `#effective:` annotations
+- `man 5 acl` for the mask rules and how default ACLs are inherited
+- `man 1 chmod` for the SGID bit and for what a numeric mode does to the mask
+- `man 1 stat` and `man 7 inode` for the mode bits themselves
+
+---
+
+### Q44. System-wide environment, skeleton, and per-user limits
+
+**Domain:** Users and Groups. **Difficulty:** Medium. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** ``.
+
+**Question**
+
+
+The account `ana` exists and uses `/bin/bash`.
+
+1. Every login shell on this host, for every account, must have `EDITOR` set to `vim` and `HISTSIZE` set to `5000`.
+2. Every account's own `bin` directory inside its home must be on `PATH` at login. For `ana` that means `/home/ana/bin`, and the same rule must work for any other account without naming it.
+3. Every account created from now on must start with a `bin` directory in its home. Then create the account `newbie` with a home directory, to show that it does.
+4. `ana` alone must be limited to 100 processes with a hard ceiling of 200, and her sessions must start with 4096 open file descriptors.
+
+The grader runs `su - ana -c '...'` for the environment and the limits, because the shell that wrote the files has already read its own startup files and would report the old values. It also reads the files under `/etc/profile.d/` and `/etc/security/limits.d/`, and looks for `/etc/skel/bin` and `/home/newbie/bin`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. The system-wide environment, in a new file under `/etc/profile.d/`.**
+
+```bash
+cat > /etc/profile.d/lab.sh <<'PROF'
+export EDITOR=vim
+export HISTSIZE=5000
+export PATH="$HOME/bin:$PATH"
+PROF
+chmod 644 /etc/profile.d/lab.sh
+```
+
+**2. The skeleton directory, and an account that proves it works.**
+
+```bash
+mkdir -p /etc/skel/bin
+useradd -m -s /bin/bash newbie
+ls -ld /home/newbie/bin
+```
+
+**3. The per-user limits.**
+
+```bash
+cat > /etc/security/limits.d/90-ana.conf <<'LIM'
+# <domain>  <type>  <item>   <value>
+ana         soft    nproc    100
+ana         hard    nproc    200
+ana         soft    nofile   4096
+LIM
+chmod 644 /etc/security/limits.d/90-ana.conf
+```
+
+**4. Test as the account, not in the shell that wrote the files.**
+
+```bash
+su - ana -c 'echo "$EDITOR $HISTSIZE"; echo "$PATH"'
+su - ana -c 'ulimit -Su; ulimit -Hu; ulimit -Sn'
+```
+
+## Why
+
+A login shell reads `/etc/profile`, which sources every `*.sh` under `/etc/profile.d/`, and then the first of `~/.bash_profile`, `~/.bash_login` or `~/.profile` that exists. A non-login interactive shell reads `/etc/bash.bashrc` on Ubuntu or `/etc/bashrc` on Rocky, and then `~/.bashrc`. An ssh command with no tty reads neither, which is why an exported variable sometimes vanishes for a script that worked by hand.
+
+Put system-wide changes in a new file under `/etc/profile.d/` rather than in `/etc/profile` itself, because a package update replaces `/etc/profile`. Both distributions source `/etc/profile.d/` after their own `HISTSIZE` assignment, so a value set there wins.
+
+`$HOME/bin` inside the profile script expands at login, for whoever is logging in. Hardcoding `/home/ana/bin` would satisfy a test run as ana and fail the requirement, which asks for a rule that works for any account.
+
+`/etc/environment` is the other place a variable can live, but it is not a script. `pam_env` parses plain `KEY=value` lines: no `export`, no `$VAR` expansion, no command substitution, so a `PATH` line that references `$HOME` cannot go there.
+
+`/etc/skel` is copied into a home directory at the moment the account is created, and never again. Adding a file to it does nothing for accounts that already exist, which is why the task also asks for a new account as proof.
+
+Limits come from a file under `/etc/security/limits.d/` in the form `domain type item value`, applied by `pam_limits` at the next login. `@name` is a group, a bare name is an account, and `*` is the fallback that does not cover root. The soft limit is what a session starts with, the hard limit is the ceiling it may raise itself to, and only root can raise a hard limit. Set both when lowering a hard limit below the current soft value, because a hard limit under the running soft limit is rejected outright.
+
+Two more limits facts worth carrying into the exam: the item is `nproc` for processes and `nofile` for open files, so the `nproc` here has nothing to do with the `nproc` command that counts CPUs; and services started by systemd never read this file at all, because they have no login session. Their limits are a unit drop-in, which is Q40.
+
+The persistence in this whole task is the two files, one under `/etc/profile.d/` and one under `/etc/security/limits.d/`. An `export` typed at a prompt or a `ulimit` call in a shell dies with that shell.
+
+## Verify
+
+```bash
+su - ana -c 'echo "$EDITOR"'        # vim
+su - ana -c 'echo "$HISTSIZE"'      # 5000
+su - ana -c 'echo "$PATH"'          # begins with /home/ana/bin
+su - ana -c 'ulimit -Su; ulimit -Hu; ulimit -Sn'   # 100, 200, 4096
+
+ls -ld /etc/skel/bin /home/newbie/bin
+grep -rn 'EDITOR\|HISTSIZE\|bin' /etc/profile.d/lab.sh
+grep -rn ana /etc/security/limits.conf /etc/security/limits.d/
+grep -rn pam_limits /etc/pam.d/
+```
+
+## Docs
+
+- `man 1 bash`, its INVOCATION section, for which startup file each kind of shell reads
+- `man 5 environment` and `man 8 pam_env` for `/etc/environment`
+- `man 8 useradd` for the `SKEL` setting, and `man 5 login.defs` for `CREATE_HOME` and `UMASK`
+- `man 5 limits.conf` and its worked examples, and `man 8 pam_limits`
+- `man 1 bash` under the `ulimit` builtin for `-S`, `-H`, `-n` and `-u`
+- `man 1 su` for why `su -` is the only honest way to test a login change
+
+---
+
+### Q45. Resolve users from an LDAP directory
+
+**Domain:** Users and Groups. **Difficulty:** Hard. **Weight:** 7. **Target:** 10 min. **Host:** ubuntu. **Needs:** `ubuntu tool:slapd`.
+
+**Question**
+
+
+An LDAP directory is running on this host at `ldap://localhost`. Its base is `dc=lab,dc=local` and it holds one account, `ldapuser`, with UID `5001` under `ou=People`. Anonymous read access is allowed, so no bind credentials are needed. This host does not resolve that account yet.
+
+1. Configure `sssd` so this host looks accounts up in that directory. Use `id_provider = ldap`, `ldap_uri = ldap://localhost` and `ldap_search_base = dc=lab,dc=local`.
+2. `/etc/sssd/sssd.conf` must be owned by root with mode `0600`. sssd refuses to start with any other mode.
+3. `sssd` must be running now and must start at the next boot.
+4. `/etc/nsswitch.conf` must consult `sss` for `passwd`, `group` and `shadow`.
+5. The proof is that `getent passwd ldapuser` returns the account with UID `5001`, while `ldapuser` still does not appear anywhere in `/etc/passwd`.
+
+The directory has no TLS certificate, so the connection is plain LDAP. Say so in the configuration rather than leaving sssd to fail quietly.
+
+The grader reads `getent passwd`, `id`, `systemctl is-active`, `systemctl is-enabled`, `stat` on the configuration file, `/etc/sssd/sssd.conf` and `/etc/nsswitch.conf`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Question index](#question-index)
+  - [Q1. Kernel parameters now and after reboot](#q1-kernel-parameters-now-and-after-reboot)
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+  - [Q2. Find the disk-reading process, record its PID, lower its priority](#q2-find-the-disk-reading-process-record-its-pid-lower-its-priority)
+- [Steps](#steps-1)
+- [Why](#why-1)
+- [Verify](#verify-1)
+- [Docs](#docs-1)
+  - [Q3. Scheduled jobs for a user, root, and a one-off](#q3-scheduled-jobs-for-a-user-root-and-a-one-off)
+- [Steps](#steps-2)
+- [Why](#why-2)
+- [Verify](#verify-2)
+- [Docs](#docs-2)
+  - [Q4. A timer that runs a script every 15 minutes](#q4-a-timer-that-runs-a-script-every-15-minutes)
+- [Steps](#steps-3)
+- [Why](#why-3)
+- [Verify](#verify-3)
+- [Docs](#docs-3)
+  - [Q5. Install, hold, verify, and report packages](#q5-install-hold-verify-and-report-packages)
+- [Steps](#steps-4)
+- [Why](#why-4)
+- [Verify](#verify-4)
+- [Docs](#docs-4)
+  - [Q6. Default target and GRUB timeout, persistent](#q6-default-target-and-grub-timeout-persistent)
+- [Steps](#steps-5)
+- [Why](#why-5)
+- [Verify](#verify-5)
+- [Docs](#docs-5)
+  - [Q7. Define a VM from a disk image and set autostart](#q7-define-a-vm-from-a-disk-image-and-set-autostart)
+- [Steps](#steps-6)
+- [Why](#why-6)
+- [Verify](#verify-6)
+- [Docs](#docs-6)
+  - [Q8. Run a web container with limits and a restart policy that survives reboot](#q8-run-a-web-container-with-limits-and-a-restart-policy-that-survives-reboot)
+- [Steps](#steps-7)
+- [Why](#why-7)
+- [Verify](#verify-7)
+- [Docs](#docs-7)
+  - [Q9. Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing)
+- [Steps](#steps-8)
+- [Why](#why-8)
+- [Verify](#verify-8)
+- [Docs](#docs-8)
+  - [Q10. Write a service unit for an application](#q10-write-a-service-unit-for-an-application)
+- [Steps](#steps-9)
+- [Why](#why-9)
+- [Verify](#verify-9)
+- [Docs](#docs-9)
+  - [Q11. A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent)
+- [Steps](#steps-10)
+- [Why](#why-10)
+- [Verify](#verify-10)
+- [Docs](#docs-10)
+  - [Q12. Static IPv4 on the second NIC, persistent](#q12-static-ipv4-on-the-second-nic-persistent)
+- [Steps](#steps-11)
+- [Why](#why-11)
+- [Verify](#verify-11)
+- [Docs](#docs-11)
+  - [Q13. Persistent static route](#q13-persistent-static-route)
+- [Steps](#steps-12)
+- [Why](#why-12)
+- [Verify](#verify-12)
+- [Docs](#docs-12)
+  - [Q14. Hostname, hosts file, DNS servers and search domain](#q14-hostname-hosts-file-dns-servers-and-search-domain)
+- [Steps](#steps-13)
+- [Why](#why-13)
+- [Verify](#verify-13)
+- [Docs](#docs-13)
+  - [Q15. Time source, NTP serving, timezone](#q15-time-source-ntp-serving-timezone)
+- [Steps](#steps-14)
+- [Why](#why-14)
+- [Verify](#verify-14)
+- [Docs](#docs-14)
+  - [Q16. Harden sshd, key-only login with one password exception](#q16-harden-sshd-key-only-login-with-one-password-exception)
+- [Steps](#steps-15)
+- [Why](#why-15)
+- [Verify](#verify-15)
+- [Docs](#docs-15)
+  - [Q17. Allow only ssh, http, https and icmp, persistent, without blocking the exam ports](#q17-allow-only-ssh-http-https-and-icmp-persistent-without-blocking-the-exam-ports)
+- [Steps](#steps-16)
+- [Why](#why-16)
+- [Verify](#verify-16)
+- [Docs](#docs-16)
+  - [Q18. Redirect a port and masquerade a subnet, persistent](#q18-redirect-a-port-and-masquerade-a-subnet-persistent)
+- [Steps](#steps-17)
+- [Why](#why-17)
+- [Verify](#verify-17)
+- [Docs](#docs-17)
+  - [Q19. Put the second NIC into a bridge, persistent](#q19-put-the-second-nic-into-a-bridge-persistent)
+- [Steps](#steps-18)
+- [Why](#why-18)
+- [Verify](#verify-18)
+- [Docs](#docs-18)
+  - [Q20. Reverse proxy in front of an application](#q20-reverse-proxy-in-front-of-an-application)
+- [Steps](#steps-19)
+- [Why](#why-19)
+- [Verify](#verify-19)
+- [Docs](#docs-19)
+  - [Q21. Export a directory and mount it persistently](#q21-export-a-directory-and-mount-it-persistently)
+- [Steps](#steps-20)
+- [Why](#why-20)
+- [Verify](#verify-20)
+- [Docs](#docs-20)
+  - [Q22. The web app is unreachable from the peer, find and fix two causes](#q22-the-web-app-is-unreachable-from-the-peer-find-and-fix-two-causes)
+- [Steps](#steps-21)
+- [Why](#why-21)
+- [Verify](#verify-21)
+- [Docs](#docs-21)
+  - [Q23. Partition a disk, format it, and mount it by UUID](#q23-partition-a-disk-format-it-and-mount-it-by-uuid)
+- [Steps](#steps-22)
+- [Why](#why-22)
+- [Verify](#verify-22)
+- [Docs](#docs-22)
+  - [Q24. Volume group with a custom extent size and a mounted logical volume](#q24-volume-group-with-a-custom-extent-size-and-a-mounted-logical-volume)
+- [Steps](#steps-23)
+- [Why](#why-23)
+- [Verify](#verify-23)
+- [Docs](#docs-23)
+  - [Q25. Grow a mounted logical volume after adding a disk](#q25-grow-a-mounted-logical-volume-after-adding-a-disk)
+- [Steps](#steps-24)
+- [Why](#why-24)
+- [Verify](#verify-24)
+- [Docs](#docs-24)
+  - [Q26. Add a swap file with a priority, persistent](#q26-add-a-swap-file-with-a-priority-persistent)
+- [Steps](#steps-25)
+- [Why](#why-25)
+- [Verify](#verify-25)
+- [Docs](#docs-25)
+  - [Q27. User quota on a filesystem](#q27-user-quota-on-a-filesystem)
+- [Steps](#steps-26)
+- [Why](#why-26)
+- [Verify](#verify-26)
+- [Docs](#docs-26)
+  - [Q28. Mirror two disks with mdadm and mount the array](#q28-mirror-two-disks-with-mdadm-and-mount-the-array)
+- [Steps](#steps-27)
+- [Why](#why-27)
+- [Verify](#verify-27)
+- [Docs](#docs-27)
+  - [Q29. Encrypted volume unlocked with a key file at boot](#q29-encrypted-volume-unlocked-with-a-key-file-at-boot)
+- [Steps](#steps-28)
+- [Why](#why-28)
+- [Verify](#verify-28)
+- [Docs](#docs-28)
+  - [Q30. Attach a network block device and mount it](#q30-attach-a-network-block-device-and-mount-it)
+- [Steps](#steps-29)
+- [Why](#why-29)
+- [Verify](#verify-29)
+- [Docs](#docs-29)
+  - [Q31. Filesystem nearly full: recover space and find the hidden consumer](#q31-filesystem-nearly-full-recover-space-and-find-the-hidden-consumer)
+- [Steps](#steps-30)
+- [Why](#why-30)
+- [Verify](#verify-30)
+- [Docs](#docs-30)
+  - [Q32. Clone, branch, ignore, commit, push](#q32-clone-branch-ignore-commit-push)
+- [Steps](#steps-31)
+- [Why](#why-31)
+- [Verify](#verify-31)
+- [Docs](#docs-31)
+  - [Q33. Read a certificate and issue a self-signed one](#q33-read-a-certificate-and-issue-a-self-signed-one)
+- [Steps](#steps-32)
+- [Why](#why-32)
+- [Verify](#verify-32)
+- [Docs](#docs-32)
+  - [Q34. Locate files by owner and size, list SUID binaries, set SGID and sticky](#q34-locate-files-by-owner-and-size-list-suid-binaries-set-sgid-and-sticky)
+- [Steps](#steps-33)
+- [Why](#why-33)
+- [Verify](#verify-33)
+- [Docs](#docs-33)
+  - [Q35. Reports from a log with grep, sort, uniq, sed and awk](#q35-reports-from-a-log-with-grep-sort-uniq-sed-and-awk)
+- [Steps](#steps-34)
+- [Why](#why-34)
+- [Verify](#verify-34)
+- [Docs](#docs-34)
+  - [Q36. Archive with exclusions, extract, symbolic and hard links](#q36-archive-with-exclusions-extract-symbolic-and-hard-links)
+- [Steps](#steps-35)
+- [Why](#why-35)
+- [Verify](#verify-35)
+- [Docs](#docs-35)
+  - [Q37. A script with separate stdout and stderr files](#q37-a-script-with-separate-stdout-and-stderr-files)
+- [Steps](#steps-36)
+- [Why](#why-36)
+- [Verify](#verify-36)
+- [Docs](#docs-36)
+  - [Q38. A service cannot start because another one owns its port](#q38-a-service-cannot-start-because-another-one-owns-its-port)
+- [Steps](#steps-37)
+- [Why](#why-37)
+- [Verify](#verify-37)
+- [Docs](#docs-37)
+  - [Q39. Report CPU hog, load, cores, memory and process count](#q39-report-cpu-hog-load-cores-memory-and-process-count)
+- [Steps](#steps-38)
+- [Why](#why-38)
+- [Verify](#verify-38)
+- [Docs](#docs-38)
+  - [Q40. A service fails its file-descriptor limit: raise it with a drop-in](#q40-a-service-fails-its-file-descriptor-limit-raise-it-with-a-drop-in)
+- [Steps](#steps-39)
+- [Why](#why-39)
+- [Verify](#verify-39)
+- [Docs](#docs-39)
+  - [Q41. Create users with exact attributes, a system account, and lock one](#q41-create-users-with-exact-attributes-a-system-account-and-lock-one)
+- [Steps](#steps-40)
+- [Why](#why-40)
+- [Verify](#verify-40)
+- [Docs](#docs-40)
+  - [Q42. Sudo rules and password ageing](#q42-sudo-rules-and-password-ageing)
+- [Steps](#steps-41)
+- [Why](#why-41)
+- [Verify](#verify-41)
+- [Docs](#docs-41)
+  - [Q43. Group collaboration directory with ACLs](#q43-group-collaboration-directory-with-acls)
+- [Steps](#steps-42)
+- [Why](#why-42)
+- [Verify](#verify-42)
+- [Docs](#docs-42)
+  - [Q44. System-wide environment, skeleton, and per-user limits](#q44-system-wide-environment-skeleton-and-per-user-limits)
+- [Steps](#steps-43)
+- [Why](#why-43)
+- [Verify](#verify-43)
+- [Docs](#docs-43)
+  - [Q45. Resolve users from an LDAP directory](#q45-resolve-users-from-an-ldap-directory)
+- [Steps](#steps-44)
+- [Why](#why-44)
+- [Verify](#verify-44)
+- [Docs](#docs-44)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Confirm the directory answers before configuring anything against it.**
+
+```bash
+ldapsearch -x -H ldap://localhost -b dc=lab,dc=local '(uid=ldapuser)' uid uidNumber
+```
+
+**2. Install the client packages if they are missing.**
+
+```bash
+apt install -y sssd sssd-ldap ldap-utils        # Ubuntu
+dnf install -y sssd sssd-ldap openldap-clients  # Rocky
+```
+
+**3. Write the configuration.**
+
+```bash
+cat > /etc/sssd/sssd.conf <<'SSSD'
+[sssd]
+domains = lab
+services = nss, pam
+config_file_version = 2
+
+[domain/lab]
+id_provider = ldap
+auth_provider = ldap
+ldap_uri = ldap://localhost
+ldap_search_base = dc=lab,dc=local
+ldap_id_use_start_tls = false
+ldap_auth_disable_tls_never_use_in_production = true
+cache_credentials = true
+enumerate = false
+SSSD
+
+chown root:root /etc/sssd/sssd.conf
+chmod 600 /etc/sssd/sssd.conf
+```
+
+**4. Point the name service switch at sssd.**
+
+```bash
+sed -i -E 's/^(passwd:.*)$/\1 sss/; s/^(group:.*)$/\1 sss/; s/^(shadow:.*)$/\1 sss/' /etc/nsswitch.conf
+grep -E '^(passwd|group|shadow):' /etc/nsswitch.conf
+```
+
+```
+passwd:         files systemd sss
+group:          files systemd sss
+shadow:         files sss
+```
+
+**5. Start it, enable it, and prove the lookup.**
+
+```bash
+systemctl enable --now sssd
+systemctl is-active sssd
+getent passwd ldapuser
+id ldapuser
+```
+
+**6. If the lookup fails, clear the cache before changing anything else.**
+
+```bash
+systemctl stop sssd
+rm -f /var/lib/sss/db/*
+systemctl start sssd
+journalctl -u sssd -b --no-pager | tail -20
+```
+
+**7. Home directories on first login.**
+
+```bash
+pam-auth-update --enable mkhomedir              # Ubuntu
+authselect select sssd with-mkhomedir --force   # Rocky
+systemctl enable --now oddjobd                  # Rocky only
+```
+
+## Why
+
+Four separate things have to be right, and each one fails in its own way.
+
+The configuration file mode is first because it is the most surprising. sssd refuses to start when `/etc/sssd/sssd.conf` is anything other than `0600` owned by root, and the journal says so plainly. A file created with the default umask is `0644` and the daemon never comes up.
+
+`/etc/nsswitch.conf` is second. Without `sss` on the `passwd` line, sssd runs perfectly, connects to the directory, caches nothing that anybody asks for, and `getent passwd ldapuser` returns nothing. Nothing anywhere reports an error, because no component is broken; the lookup simply never reaches sssd.
+
+`enumerate = false` is the default and means `getent passwd` with no argument lists nothing from the directory. That is not a fault: enumeration is expensive and is off deliberately, so always query a specific name.
+
+sssd caches aggressively, which is what makes it useful on a laptop and confusing on a lab host. After a configuration change, stop the daemon, delete `/var/lib/sss/db/*` and start it again, otherwise a stale negative answer keeps coming back.
+
+Plain LDAP is a lab-only choice. `ldap_id_use_start_tls = false` and `ldap_auth_disable_tls_never_use_in_production = true` are the settings that say so out loud. On a real host, `ldap_tls_reqcert = demand` with the CA certificate in the trust store is the answer, and lowering `reqcert` to get past a certificate error is a change no task asks for.
+
+Home directories on first login are a separate PAM module. Without `pam_mkhomedir` the account authenticates, lands in `/`, and the login looks broken while every lookup works.
+
+The persistence here is the configuration file plus `systemctl enable sssd`. `enable` is the half that gets forgotten, and `systemctl is-enabled` is what a grader reads.
+
+## Verify
+
+```bash
+getent passwd ldapuser
+id ldapuser
+grep -c '^ldapuser:' /etc/passwd          # expect 0, it is not a local account
+
+systemctl is-active sssd
+systemctl is-enabled sssd
+stat -c '%a %U:%G %n' /etc/sssd/sssd.conf # expect 600 root:root
+grep -E '^(passwd|group|shadow):' /etc/nsswitch.conf
+sssctl domain-status lab
+journalctl -u sssd -b --no-pager | tail -20
+```
+
+## Docs
+
+- `man 5 sssd.conf` for the `[sssd]` and `[domain/NAME]` sections and every option above
+- `man 5 sssd-ldap` for `ldap_uri`, `ldap_search_base`, `ldap_id_use_start_tls` and the TLS options
+- `man 8 sssd` and `man 8 sssctl` for running and inspecting the daemon
+- `man 5 nsswitch.conf` for the lookup order
+- `man 8 pam_mkhomedir`, plus `man 8 pam-auth-update` on Ubuntu and `man 8 authselect` on Rocky
+- `man 1 ldapsearch` for querying the directory directly, and `/usr/share/doc/sssd*/` for example configurations
