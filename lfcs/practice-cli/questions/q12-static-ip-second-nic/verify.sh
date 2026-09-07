@@ -11,6 +11,16 @@ TARGET_IP=10.50.0.10
 [[ "$(distro)" == rocky ]] && TARGET_IP=10.50.0.20
 TARGET="$TARGET_IP/24"
 
+# NetworkManager applies the addresses in ipv4.addresses when the method is
+# manual and also when it is auto, where they are added alongside the DHCP
+# lease. Every other method drops them.
+ipv4_method_applies() {
+  case "$1" in
+    manual|auto) return 0 ;;
+    *)           return 1 ;;
+  esac
+}
+
 if [[ -z "$NIC" ]]; then
   echo "  FAIL: setup has not run, so the lab interface is unknown. Run setup first."
   FAIL=$((FAIL + 1))
@@ -47,8 +57,14 @@ else
   if [[ -n "$CON" ]]; then
     check_contains "nmcli reports the address on connection $CON" "$TARGET" \
       "$(nmcli -g ipv4.addresses con show "$CON" 2>/dev/null)"
-    check_eq "connection $CON uses ipv4.method manual" "manual" \
-      "$(nmcli -g ipv4.method con show "$CON" 2>/dev/null)"
+    # Not "method is manual". The task adds an address and keeps the ones the
+    # interface already had, and on a connection holding a DHCP lease
+    # ipv4.method manual throws that lease away. Both manual and auto apply the
+    # static addresses in ipv4.addresses at boot; disabled, link-local and
+    # shared do not, so the persisted address would never come back.
+    METHOD=$(nmcli -g ipv4.method con show "$CON" 2>/dev/null)
+    check "connection $CON still applies its IPv4 addresses at boot (ipv4.method is '$METHOD', wanted manual or auto)" \
+      ipv4_method_applies "$METHOD"
   fi
 fi
 

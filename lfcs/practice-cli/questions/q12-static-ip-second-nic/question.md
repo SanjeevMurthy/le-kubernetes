@@ -17,4 +17,6 @@ Three conditions decide the grade:
 
 Condition 3 is the one that catches people. On Ubuntu a second netplan file that declares `addresses:` for the same interface replaces the list rather than adding to it. On Rocky a bare `nmcli con mod <con> ipv4.addresses ...` replaces the list as well.
 
+Leave the interface's addressing method as you found it. The task is an extra address, not a change of method. On Rocky, if the connection is holding a DHCP lease, `nmcli con mod <con> ipv4.method manual` ends the lease and takes the address it gave you with it, which is condition 3 failed. NetworkManager applies the addresses in `ipv4.addresses` under `auto` as well as under `manual`, so the static address lands on top of the lease. The grader checks only that IPv4 is still enabled on the connection, meaning the method is `manual` or `auto` and not `disabled`, because a disabled connection applies nothing at boot.
+
 Do not touch the interface that carries the default route.

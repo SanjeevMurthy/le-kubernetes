@@ -56,6 +56,8 @@ systemctl restart systemd-journald
 journalctl --header | grep -i 'journal file'
 ```
 
+`Storage=auto` is the other correct answer, and the grader takes it: `auto` means "use the disk when `/var/log/journal` exists", so the directory plus `Storage=auto` is persistent too. What fails is leaving `Storage=volatile` in the file, whatever the directory looks like.
+
 ## Why
 
 Exit code 203 is systemd's own code, not the application's. It means systemd could not execute the thing named in `ExecStart` at all: the file does not exist, has no executable bit, has a shebang pointing at a missing interpreter, or is on a filesystem mounted `noexec`. Learning the small set of systemd exit codes turns a vague "it will not start" into a two-command diagnosis: 203 is exec, 200 to 242 are systemd's range, and anything else came from the program itself.

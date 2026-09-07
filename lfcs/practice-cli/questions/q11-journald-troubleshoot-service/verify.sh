@@ -21,8 +21,17 @@ echo "Checking the journal is now persistent..."
 check "the journal directory /var/log/journal exists" test -d /var/log/journal
 check "a journal file is being written under /var/log/journal" \
   bash -c 'ls /var/log/journal/*/*.journal >/dev/null 2>&1'
-check_persisted "Storage=persistent is set in the journald configuration" \
-  '^[[:space:]]*Storage=persistent' \
+# Two answers are correct. Storage=persistent always writes to disk. Storage=auto
+# writes to disk whenever /var/log/journal exists, so with the directory in place
+# it is just as persistent, and the exam accepts it. Storage=volatile, which setup
+# leaves behind, matches neither, and neither does a commented-out line.
+STORAGE_PAT='^[[:space:]]*Storage=persistent[[:space:]]*$'
+STORAGE_LABEL="Storage=persistent is set in the journald configuration"
+if [[ -d /var/log/journal ]]; then
+  STORAGE_PAT='^[[:space:]]*Storage=(persistent|auto)[[:space:]]*$'
+  STORAGE_LABEL="journald storage is persistent: Storage=persistent, or Storage=auto with /var/log/journal present"
+fi
+check_persisted "$STORAGE_LABEL" "$STORAGE_PAT" \
   /etc/systemd/journald.conf /etc/systemd/journald.conf.d/*.conf
 
 summary
