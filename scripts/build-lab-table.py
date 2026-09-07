@@ -124,10 +124,14 @@ def lfcs_table(qs):
         rows.append((q, ub, ro))
     ubuntu_only = sum(1 for _, ub, ro in rows if ub == "yes" and ro == "no")
     rocky_only = sum(1 for _, ub, ro in rows if ro == "yes" and ub == "no")
+    def phrase(n, side):
+        # "1 is Ubuntu-only" reads badly enough to be worth two lines here.
+        return f"{n} is {side}-only" if n == 1 else f"{n} are {side}-only"
+
     head = (f"`sudo ./lfcs --env` prints the authoritative answer for the host you are on, by "
             f"matching each question's `needs` tags against the environment. In summary, "
             f"**{both} of the {len(qs)} questions run on either virtual machine**, "
-            f"{ubuntu_only} are Ubuntu-only and {rocky_only} are Rocky-only.")
+            f"{phrase(ubuntu_only, 'Ubuntu')} and {phrase(rocky_only, 'Rocky')}.")
     body = ["| # | Question | Domain | Ubuntu | Rocky | Also needs |",
             "|---|---|---|---|---|---|"]
     for q, ub, ro in rows:

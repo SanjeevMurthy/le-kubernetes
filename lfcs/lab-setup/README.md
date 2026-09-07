@@ -151,7 +151,7 @@ sudo ./lfcs --env      # what this host can run
 sudo ./lfcs
 ```
 
-Repeat the clone on `lfcs-rocky` for the questions tagged `rocky`.
+Repeat the clone on `lfcs-rocky`. Only one question is tagged `rocky`, but most of the bank is worth a second pass there: the questions branch on the distribution, so the same task teaches you `firewall-cmd`, `nmcli` and `dnf` on Rocky where it taught you `ufw`, netplan and `apt` on Ubuntu. That is the point of keeping both.
 
 ## Which questions run where
 
@@ -159,11 +159,66 @@ Repeat the clone on `lfcs-rocky` for the questions tagged `rocky`.
 
 | Host | Covers |
 |---|---|
-| `lfcs-ubuntu` | Everything except the SELinux and firewalld questions. Most storage questions use its spare disks; the rest fall back to loop devices. |
-| `lfcs-rocky` | The `rocky`-tagged questions: SELinux contexts, ports and booleans, firewalld, nmcli, dnf. |
+| `lfcs-ubuntu` | Everything except the SELinux question. Most storage questions use its spare disks; the rest fall back to loop devices. |
+| `lfcs-rocky` | The SELinux question, and a second run of anything you want to practise the RHEL-family way. Only the LDAP question cannot run here, because Rocky 9 ships no OpenLDAP server. |
 | Either, with a peer | NFS, NBD, routing and firewall questions use a network namespace peer created by the CLI, so a second VM is optional. The few questions tagged `host2` want the other VM reachable over SSH. |
 
 <!-- lab-table -->
+
+`sudo ./lfcs --env` prints the authoritative answer for the host you are on, by matching each question's `needs` tags against the environment. In summary, **43 of the 45 questions run on either virtual machine**, 1 is Ubuntu-only and 1 is Rocky-only.
+
+| # | Question | Domain | Ubuntu | Rocky | Also needs |
+|---|---|---|---|---|---|
+| Q1 | Kernel parameters now and after reboot | D1 | yes | yes | — |
+| Q2 | Find the disk-reading process, record its PID, lower its priority | D1 | yes | yes | `pidstat` |
+| Q3 | Scheduled jobs for a user, root, and a one-off | D1 | yes | yes | — |
+| Q4 | A timer that runs a script every 15 minutes | D1 | yes | yes | — |
+| Q5 | Install, hold, verify, and report packages | D1 | yes | yes | — |
+| Q6 | Default target and GRUB timeout, persistent | D1 | yes | yes | — |
+| Q7 | Define a VM from a disk image and set autostart | D1 | yes | yes | libvirt, `qemu-img` |
+| Q8 | Run a web container with limits and a restart policy that survives reboot | D1 | yes | yes | `podman` |
+| Q9 | Serve a custom document root on a custom port under SELinux enforcing | D1 | no | yes | `semanage` |
+| Q10 | Write a service unit for an application | D1 | yes | yes | — |
+| Q11 | A service fails to start: find why, fix it, make the journal persistent | D1 | yes | yes | — |
+| Q12 | Static IPv4 on the second NIC, persistent | D2 | yes | yes | second NIC |
+| Q13 | Persistent static route | D2 | yes | yes | second NIC |
+| Q14 | Hostname, hosts file, DNS servers and search domain | D2 | yes | yes | — |
+| Q15 | Time source, NTP serving, timezone | D2 | yes | yes | `chronyc` |
+| Q16 | Harden sshd, key-only login with one password exception | D2 | yes | yes | — |
+| Q17 | Allow only ssh, http, https and icmp, persistent, without blocking the exam ports | D2 | yes | yes | netns peer |
+| Q18 | Redirect a port and masquerade a subnet, persistent | D2 | yes | yes | netns peer |
+| Q19 | Put the second NIC into a bridge, persistent | D2 | yes | yes | second NIC |
+| Q20 | Reverse proxy in front of an application | D2 | yes | yes | — |
+| Q21 | Export a directory and mount it persistently | D2 | yes | yes | `exportfs`, netns peer |
+| Q22 | The web app is unreachable from the peer, find and fix two causes | D2 | yes | yes | netns peer |
+| Q23 | Partition a disk, format it, and mount it by UUID | D3 | yes | yes | spare disk or loop file |
+| Q24 | Volume group with a custom extent size and a mounted logical volume | D3 | yes | yes | spare disk or loop file |
+| Q25 | Grow a mounted logical volume after adding a disk | D3 | yes | yes | spare disk or loop file |
+| Q26 | Add a swap file with a priority, persistent | D3 | yes | yes | — |
+| Q27 | User quota on a filesystem | D3 | yes | yes | spare disk or loop file |
+| Q28 | Mirror two disks with mdadm and mount the array | D3 | yes | yes | spare disk or loop file, `mdadm` |
+| Q29 | Encrypted volume unlocked with a key file at boot | D3 | yes | yes | spare disk or loop file, `cryptsetup` |
+| Q30 | Attach a network block device and mount it | D3 | yes | yes | netns peer, `nbd-client` |
+| Q31 | Filesystem nearly full: recover space and find the hidden consumer | D3 | yes | yes | spare disk or loop file |
+| Q32 | Clone, branch, ignore, commit, push | D4 | yes | yes | `git` |
+| Q33 | Read a certificate and issue a self-signed one | D4 | yes | yes | `openssl` |
+| Q34 | Locate files by owner and size, list SUID binaries, set SGID and sticky | D4 | yes | yes | — |
+| Q35 | Reports from a log with grep, sort, uniq, sed and awk | D4 | yes | yes | — |
+| Q36 | Archive with exclusions, extract, symbolic and hard links | D4 | yes | yes | — |
+| Q37 | A script with separate stdout and stderr files | D4 | yes | yes | — |
+| Q38 | A service cannot start because another one owns its port | D4 | yes | yes | — |
+| Q39 | Report CPU hog, load, cores, memory and process count | D4 | yes | yes | — |
+| Q40 | A service fails its file-descriptor limit: raise it with a drop-in | D4 | yes | yes | — |
+| Q41 | Create users with exact attributes, a system account, and lock one | D5 | yes | yes | — |
+| Q42 | Sudo rules and password ageing | D5 | yes | yes | — |
+| Q43 | Group collaboration directory with ACLs | D5 | yes | yes | — |
+| Q44 | System-wide environment, skeleton, and per-user limits | D5 | yes | yes | — |
+| Q45 | Resolve users from an LDAP directory | D5 | yes | no | `slapd` |
+
+The Rocky-only rows are the RHEL-family curriculum bullets: SELinux, firewalld, `nmcli` and `dnf`. The Ubuntu-only rows are its opposites: `ufw`, AppArmor and `apt`. Everything else is portable, which is the point of learning both.
+
+Rows needing a **spare disk or loop file** work on either VM without extra disks: the CLI prefers a genuinely unused disk and falls back to a loop-backed file. Rows needing a **netns peer** create their own second host inside the VM. Only the rows marked **peer VM over SSH** want both VMs running at once.
+
 <!-- lab-table stop -->
 
 ## Optional: a Kubernetes cluster in the same VM
