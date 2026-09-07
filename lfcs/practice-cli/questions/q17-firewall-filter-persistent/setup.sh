@@ -13,7 +13,11 @@ PORTS="80 9999 8080 4505 4506"
 PEERIP=$(make_netns_peer "$NS" 17)
 
 start_listener() {
-  local p="$1" dir="$STATE/www/$p" i=0
+  # Two statements: within a single local, $p is not yet set when dir is
+  # expanded, so every port would have shared one document root and served the
+  # wrong body.
+  local p="$1" i=0
+  local dir="$STATE/www/$p"
   mkdir -p "$dir"
   printf 'fw-%s\n' "$p" > "$dir/index.html"
   if curl -s --max-time 2 -o /dev/null "http://$HOSTIP:$p/" 2>/dev/null; then
