@@ -87,6 +87,6 @@ Each voucher includes one free retake, and both vouchers die on 3 March 2027, so
 ## The plans
 
 - CKS: [`cks/study-plan/00-calendar.md`](cks/study-plan/00-calendar.md) and [`cks/study-plan/README.md`](cks/study-plan/README.md)
-- LFCS: `lfcs/study-plan/00-calendar.md` (built in December, before study starts)
+- LFCS: [`lfcs/study-plan/00-calendar.md`](lfcs/study-plan/00-calendar.md) and [`lfcs/study-plan/README.md`](lfcs/study-plan/README.md)
 - Evidence behind both: [`docs/research/`](docs/research/)
 - Design and build plans: [`docs/superpowers/`](docs/superpowers/)
