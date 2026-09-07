@@ -38,7 +38,7 @@ if crontab -l >/dev/null 2>&1; then
   crontab -l 2>/dev/null | grep -v '/usr/local/bin/cleanup.sh' | crontab -
 fi
 
-atq 2>/dev/null | awk '{print $1}' | sort > "$STATE/atq.before"
+[[ -f "$STATE/atq.before" ]] || atq 2>/dev/null | awk '{print $1}' | sort > "$STATE/atq.before"
 
 echo "Setup complete."
 echo "  User:            backupop (no crontab yet)"

@@ -3,6 +3,14 @@
 source "$(dirname "$0")/../../lib/checks.sh"
 source "$(dirname "$0")/../../lib/env.sh"
 
+http_get() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -s --max-time 5 "$1" 2>/dev/null
+  else
+    python3 -c 'import sys,urllib.request; sys.stdout.write(urllib.request.urlopen(sys.argv[1], timeout=5).read().decode())' "$1" 2>/dev/null
+  fi
+}
+
 echo "Checking the unit exists and runs..."
 check "systemd knows inventory.service" systemctl cat inventory.service
 check_eq "inventory.service is active" "active" "$(systemctl is-active inventory.service 2>/dev/null)"
@@ -10,7 +18,7 @@ check_eq "inventory.service is active" "active" "$(systemctl is-active inventory
 echo "Checking the live effect..."
 check_contains "something is listening on 9090" ":9090" "$(ss -H -ltn 2>/dev/null)"
 check_contains "the application answers on 9090" "inventory-ok" \
-  "$(curl -s --max-time 5 http://localhost:9090/ 2>/dev/null)"
+  "$(http_get http://localhost:9090/)"
 MAINPID=$(systemctl show inventory.service -p MainPID --value 2>/dev/null)
 check_eq "the process runs as the inventory account" \
   "$(id -u inventory 2>/dev/null)" "$(ps -o uid= -p "$MAINPID" 2>/dev/null | tr -d ' ')"

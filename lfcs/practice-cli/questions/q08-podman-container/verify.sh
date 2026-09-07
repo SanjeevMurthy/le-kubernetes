@@ -5,12 +5,20 @@ source "$(dirname "$0")/../../lib/env.sh"
 
 pf() { podman inspect web --format "$1" 2>/dev/null; }
 
+http_get() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -s --max-time 5 "$1" 2>/dev/null
+  else
+    python3 -c 'import sys,urllib.request; sys.stdout.write(urllib.request.urlopen(sys.argv[1], timeout=5).read().decode())' "$1" 2>/dev/null
+  fi
+}
+
 echo "Checking the container is running..."
 check "a container named web exists" podman container exists web
 check_eq "web is running" "running" "$(pf '{{.State.Status}}')"
 
 echo "Checking it serves the page on 8080..."
-check_contains "curl localhost:8080 returns hello" "hello" "$(curl -s --max-time 5 http://localhost:8080/ 2>/dev/null)"
+check_contains "curl localhost:8080 returns hello" "hello" "$(http_get http://localhost:8080/)"
 check_contains "something is listening on 8080" ":8080" "$(ss -H -ltn 2>/dev/null)"
 
 echo "Checking the limits and the mount..."

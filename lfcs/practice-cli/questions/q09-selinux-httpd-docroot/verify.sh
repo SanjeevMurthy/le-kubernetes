@@ -3,6 +3,14 @@
 source "$(dirname "$0")/../../lib/checks.sh"
 source "$(dirname "$0")/../../lib/env.sh"
 
+http_get() {
+  if command -v curl >/dev/null 2>&1; then
+    curl -s --max-time 5 "$1" 2>/dev/null
+  else
+    python3 -c 'import sys,urllib.request; sys.stdout.write(urllib.request.urlopen(sys.argv[1], timeout=5).read().decode())' "$1" 2>/dev/null
+  fi
+}
+
 echo "Checking SELinux mode..."
 check_eq "getenforce reports Enforcing right now" "Enforcing" "$(getenforce 2>/dev/null)"
 check_persisted "the host is still enforcing after a reboot" \
@@ -12,7 +20,7 @@ echo "Checking the service..."
 check_eq "httpd is running" "active" "$(systemctl is-active httpd 2>/dev/null)"
 check_eq "httpd starts at boot" "enabled" "$(systemctl is-enabled httpd 2>/dev/null)"
 check_contains "curl localhost:8081 returns the page" "selinux-ok" \
-  "$(curl -s --max-time 5 http://localhost:8081/ 2>/dev/null)"
+  "$(http_get http://localhost:8081/)"
 
 echo "Checking the file context..."
 check_contains "the live label on /srv/site is httpd_sys_content_t" "httpd_sys_content_t" \

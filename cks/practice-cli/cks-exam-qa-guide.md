@@ -4029,7 +4029,7 @@ A file containing `packages: 42` fails. The task asked for the number.
 
 ## Why
 
-An SBOM is the inventory half of supply chain security. A scanner such as Trivy answers "which known vulnerabilities does this image have today", which is a judgement that changes every time the vulnerability database is updated. An SBOM answers "what is actually inside this image", which does not change. When a new vulnerability is published, the question asked across an estate is not "rescan everything" but "which of our images contains this package", and only a stored SBOM can answer that quickly.
+An SBOM is the inventory half of supply chain security. A scanner such as Trivy answers "which known vulnerabilities does this image have today", which is a judgement that changes every time the vulnerability database is updated. An SBOM answers "what is actually inside this image", which does not change. When a new vulnerability is published, the question asked across an estate is not "rescan everything" but "which images contain this package", and only a stored SBOM can answer that quickly.
 
 `bom` is the Kubernetes project's own SPDX tool, which is why it, and not Syft or Trivy, is the one on the exam and the one with a documentation link in the allowed set. It reads three kinds of input: `--image` for a registry reference, `--dirs` for a directory tree, and `--file` for individual files, and it can combine them into a single document.
 
