@@ -33,6 +33,15 @@ else
   echo "  Warning: sshd -t still reports an error. The running daemon was left alone."
 fi
 
+# Put back the .ssh directory setup moved aside, if the account predates this
+# question.
+SSHBK="$LFCS_STATE_DIR/backup/q16/home_deploy_ssh"
+if [[ -d "$SSHBK" ]]; then
+  rm -rf /home/deploy/.ssh
+  mv "$SSHBK" /home/deploy/.ssh
+  echo "  The deploy account's original .ssh directory was put back."
+fi
+
 # Only if setup created it. An account the host already had is not this
 # question's to delete.
 [[ "$(cat "$STATE/created-user" 2>/dev/null)" == yes ]] && userdel -r deploy >/dev/null 2>&1

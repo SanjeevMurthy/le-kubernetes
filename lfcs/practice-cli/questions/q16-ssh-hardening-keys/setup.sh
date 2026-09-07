@@ -36,7 +36,18 @@ if [[ ! -f "$STATE/created-user" ]]; then
   fi
 fi
 id deploy >/dev/null 2>&1 || useradd -m -s /bin/bash deploy
-rm -rf /home/deploy/.ssh
+
+# The question needs a known-empty .ssh, but deleting one that belongs to a real
+# account would destroy keys this lab did not issue. If the account was already
+# here, its .ssh is moved into the question's backup and cleanup puts it back.
+SSHBK="$LFCS_STATE_DIR/backup/q16/home_deploy_ssh"
+if [[ "$(cat "$STATE/created-user" 2>/dev/null)" == yes ]]; then
+  rm -rf /home/deploy/.ssh
+elif [[ -d /home/deploy/.ssh ]]; then
+  mkdir -p "$LFCS_STATE_DIR/backup/q16"
+  [[ -d "$SSHBK" ]] || mv /home/deploy/.ssh "$SSHBK"
+  rm -rf /home/deploy/.ssh
+fi
 
 if [[ ! -f "$KEY" ]]; then
   rm -f "$KEY" "$KEY.pub"

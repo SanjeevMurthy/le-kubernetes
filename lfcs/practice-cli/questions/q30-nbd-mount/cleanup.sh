@@ -31,12 +31,7 @@ modprobe -r nbd 2>/dev/null
 # Kills the nbd-server running inside the namespace and removes the veth pair.
 del_netns_peer nbd-peer
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/nbd"' /etc/fstab > /tmp/lfcs-q30-fstab &&
-    cat /tmp/lfcs-q30-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q30-fstab
-fi
-restore_file /etc/fstab q30
+fstab_drop_target /mnt/nbd
 # Only when setup ran: with no record of what this host looked like before, an
 # nbd line here is the host's own and must be left alone.
 if [[ -f "$STATE/modfiles" ]]; then
@@ -51,4 +46,4 @@ rm -rf "$COURSE_DIR/30"
 findmnt -no TARGET /mnt/nbd >/dev/null 2>&1 || rm -rf /mnt/nbd
 rm -rf "${LFCS_STATE_DIR:?}/q30"
 
-echo "Cleanup complete. /mnt/nbd unmounted, /dev/nbd0 disconnected, nbd module removed, the nbd-peer namespace and its nbd-server deleted, /etc/fstab restored, the export image removed, the nbd line taken out of /etc/modules-load.d and /etc/modules, and any file that declared it before setup restored."
+echo "Cleanup complete. /mnt/nbd unmounted, /dev/nbd0 disconnected, nbd module removed, the nbd-peer namespace and its nbd-server deleted, its /etc/fstab line removed, the export image removed, the nbd line taken out of /etc/modules-load.d and /etc/modules, and any file that declared it before setup restored."
