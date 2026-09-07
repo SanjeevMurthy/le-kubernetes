@@ -41,7 +41,19 @@ It must print `check-docs: ALL OK`. The individual tools are also usable directl
 | `scripts/check-links.py` | relative links, images, heading anchors and HTML `<a id>` anchors |
 | `scripts/generate_toc.py` | `--inject` to add a TOC, `--check` to verify one is current |
 | `scripts/check-mermaid.sh` | lints every mermaid block and renders it with mermaid-cli when `npx` exists |
-| `scripts/check-docs.sh` | runs all of the above plus shell syntax checks |
+| `scripts/check-question-refs.py` | every `Q<n>` named in notes, checklists and mock sets exists on disk |
+| `scripts/check-persistence.py` | every LFCS verifier checks a change survives a reboot, or is listed exempt with a reason |
+| `scripts/build-lab-table.py` | regenerates each kit's "which questions run where" table from the question metas |
+| `scripts/test-libs.sh` | unit tests for the shared library helpers |
+| `scripts/check-docs.sh` | runs all of the above plus shell syntax checks and shellcheck |
+
+Anything generated is rebuilt by one command:
+
+```bash
+bash scripts/regenerate.sh          # registries, guides, mock papers, lab tables, markers, TOCs
+```
+
+Run it after adding, renaming or retagging any question, then run the gate.
 
 `MERMAID_RENDER=0` skips rendering when the Chromium download is unwanted.
 
@@ -93,6 +105,9 @@ Each generator refuses to overwrite its output when the inputs look wrong.
 - Never grep compact JSON. `kubectl -o json` is pretty-printed, so `'"app":"backend"'` never matches. Use `-o jsonpath`.
 - There is no `jq` in either exam environment. Use `-o jsonpath`, `-o go-template` or `yq`.
 - Setups back up every file they modify (`backup_file`); cleanups restore them (`restore_file`).
+- Never restore a whole-file snapshot of `/etc/fstab`. Several storage questions can be set up at once, so a snapshot does not know about the other questions' lines. Cleanups call `fstab_drop_target` to remove only their own. A wrong `/etc/fstab` stops the next boot.
+- A cleanup deletes an account, group or directory only when its setup recorded creating it. A host with a real account of that name must keep it.
+- Every LFCS verifier checks persistence separately from live effect, because the exam scores an unpersisted change as zero. `scripts/check-persistence.py` enforces this.
 - Setup output is shown to the candidate, so print the scenario facts.
 - Menu and library code stays bash 3.2 compatible so it can be smoke-tested on macOS. Question scripts run on Linux and may use bash 4.
 
