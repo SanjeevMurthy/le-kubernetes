@@ -77,7 +77,7 @@ if [[ -z "$UUID" ]]; then
   FAIL=$((FAIL + 1))
 else
   check_persisted "/etc/fstab still mounts $MP by UUID=$UUID" \
-    "^[^#]*UUID=\"?'?$UUID'?\"?[[:space:]]+$MP[[:space:]]" /etc/fstab
+    "^[^#]*UUID=\"?'?${UUID}'?\"?[[:space:]]+${MP}[[:space:]]" /etc/fstab
 fi
 check "/etc/fstab parses cleanly (findmnt --verify)" fstab_verify_clean
 
