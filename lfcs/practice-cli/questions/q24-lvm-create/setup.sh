@@ -3,6 +3,9 @@
 # Loop-backed files are used here rather than spare_disk because the question
 # depends on both devices being the same known size.
 source "$(dirname "$0")/../../lib/env.sh"
+
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
 require_root "$@"
 
 STATE="$LFCS_STATE_DIR/q24"

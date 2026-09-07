@@ -1,0 +1,10 @@
+id=41
+title="Create users with exact attributes, a system account, and lock one"
+domain="Users and Groups"
+domain_short=D5
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=1
+host=any

@@ -1,0 +1,10 @@
+id=33
+title="Read a certificate and issue a self-signed one"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Medium
+needs="tool:openssl"
+weight=5
+minutes=6
+sources=4
+host=any

@@ -3,6 +3,9 @@
 source "$(dirname "$0")/../../lib/checks.sh"
 source "$(dirname "$0")/../../lib/env.sh"
 
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
+
 STATE="$LFCS_STATE_DIR/q25"
 MP=/var/lib/lfcs-logs
 DEV_B=$(sed -n '2p' "$STATE/devices" 2>/dev/null)

@@ -1,0 +1,10 @@
+id=30
+title="Attach a network block device and mount it"
+domain="Storage"
+domain_short=D3
+difficulty=Hard
+needs="netns tool:nbd-client"
+weight=6
+minutes=8
+sources=0
+host=any

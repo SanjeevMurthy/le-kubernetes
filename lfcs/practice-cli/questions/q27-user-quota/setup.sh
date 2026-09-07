@@ -2,6 +2,9 @@
 # Q27 quotas: a plain ext4 filesystem on /quota, mounted and in fstab with no
 # quota option anywhere, plus the user the limits will be set for.
 source "$(dirname "$0")/../../lib/env.sh"
+
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
 require_root "$@"
 
 STATE="$LFCS_STATE_DIR/q27"

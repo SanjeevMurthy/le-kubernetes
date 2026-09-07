@@ -2,6 +2,9 @@
 # Q23 partition and persistent mount: hand the candidate one genuinely spare
 # block device, and make sure nothing already mounts /data or claims the disk.
 source "$(dirname "$0")/../../lib/env.sh"
+
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
 require_root "$@"
 
 STATE="$LFCS_STATE_DIR/q23"

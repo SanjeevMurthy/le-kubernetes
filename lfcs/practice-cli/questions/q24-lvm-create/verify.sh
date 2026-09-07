@@ -3,6 +3,9 @@
 source "$(dirname "$0")/../../lib/checks.sh"
 source "$(dirname "$0")/../../lib/env.sh"
 
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
+
 STATE="$LFCS_STATE_DIR/q24"
 if [[ ! -f "$STATE/devices" ]]; then
   echo "  FAIL: no devices recorded. Run setup first."

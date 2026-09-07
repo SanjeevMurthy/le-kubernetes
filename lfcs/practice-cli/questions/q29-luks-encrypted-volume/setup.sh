@@ -2,6 +2,9 @@
 # Q29 LUKS: one bare block device, no mapping called secret, no key file, and
 # neither /etc/crypttab nor /etc/fstab mentioning any of it.
 source "$(dirname "$0")/../../lib/env.sh"
+
+# Machine-readable output only: never let a locale reformat a number.
+export LC_ALL=C
 require_root "$@"
 
 STATE="$LFCS_STATE_DIR/q29"

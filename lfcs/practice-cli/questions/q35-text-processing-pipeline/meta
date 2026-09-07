@@ -1,0 +1,10 @@
+id=35
+title="Reports from a log with grep, sort, uniq, sed and awk"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=3
+host=any

@@ -1,0 +1,10 @@
+id=32
+title="Clone, branch, ignore, commit, push"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Easy
+needs="tool:git"
+weight=5
+minutes=6
+sources=1
+host=any
