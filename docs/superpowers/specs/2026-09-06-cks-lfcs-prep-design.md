@@ -138,7 +138,7 @@ If the CKS exam slips into January, the LFCS phases shift by the same amount; th
 ### CKS tier 1: minikube on the Mac
 
 - Profile `cks`, two nodes, Docker driver, `--cni=calico` so NetworkPolicy is enforced, Kubernetes 1.35 or newer.
-- Covers roughly 55% of the question bank: RBAC, ServiceAccounts, NetworkPolicy, PSA, SecurityContext, immutability, Trivy and static analysis, Ingress TLS, Kyverno and Gatekeeper, CSR, secrets handling.
+- Covers 18 of the 44 questions as built: RBAC, ServiceAccounts, NetworkPolicy, PSA, SecurityContext, immutability, Trivy and static analysis, Ingress TLS, Kyverno, CSR, Dockerfile review. The design estimated roughly 55 percent; the built bank is 41 percent, because the node-level families turned out to carry more of the reported exam weight than expected.
 - `cks/lab-setup/README.md` documents profile creation, ingress-nginx enablement, Kyverno or Gatekeeper install, and teardown.
 
 ### CKS tier 2: Killercoda and KodeKloud

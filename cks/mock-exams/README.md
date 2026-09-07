@@ -15,7 +15,7 @@ Three full-length papers, 16 tasks each, 120 minutes, scored by weight with a pe
 
 ## How to run one
 
-The mocks need a kubeadm cluster with root, because roughly half the tasks in each paper are node-level. Use the Killercoda Killer Shell CKS playground and install the tools first.
+The mocks need a kubeadm cluster with root. Only 18 of the 44 questions run on minikube alone, and each paper draws heavily on the node-level ones. Use the Killercoda Killer Shell CKS playground and install the tools first.
 
 ```bash
 cd le-kubernetes/cks/practice-cli
