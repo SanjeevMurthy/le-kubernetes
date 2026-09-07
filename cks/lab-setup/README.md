@@ -164,7 +164,7 @@ Two rows deserve a note. The Cilium and Istio questions need a cluster running t
 Once the LFCS Ubuntu VM exists (December), it can double as an offline kubeadm cluster for node-level practice with no session timer:
 
 ```bash
-sudo bash ../../lfcs/lab-setup/kubeadm-single-node.sh
+sudo bash lfcs/lab-setup/kubeadm-single-node.sh    # from the repository root
 ```
 
 Give the VM 6 GB of RAM first. This is a convenience, not a requirement; Killercoda covers the same ground.
