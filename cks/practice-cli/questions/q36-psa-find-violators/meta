@@ -1,0 +1,10 @@
+id=36
+title="Pod Security: enforce baseline and report violators"
+domain="Minimize Microservice Vulnerabilities"
+domain_short=D4
+difficulty=Easy
+needs="kubectl"
+weight=5
+minutes=6
+sources=6
+host=any

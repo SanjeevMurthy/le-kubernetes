@@ -1,0 +1,10 @@
+id=34
+title="AppArmor: the profile name is not the file name"
+domain="System Hardening"
+domain_short=D3
+difficulty=Medium
+needs="node-root tool:apparmor_parser"
+weight=6
+minutes=8
+sources=12
+host=worker

@@ -1,0 +1,10 @@
+id=43
+title="Group collaboration directory with ACLs"
+domain="Users and Groups"
+domain_short=D5
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=1
+host=any

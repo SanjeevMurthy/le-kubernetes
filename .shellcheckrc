@@ -1,0 +1,10 @@
+# Repo-wide shellcheck settings for the practice CLIs and their generators.
+#
+# SC2034: lib/colors.sh defines colour and icon variables consumed by every
+#         script that sources it, so shellcheck cannot see the uses.
+# SC2155: `local x=$(cmd)` is deliberate throughout the CLIs; no call site
+#         inspects $? afterwards.
+# SC2154: the generators source each question's `meta` file with `.` and then
+#         use the variables it defines (id, title, domain, needs, ...).
+#         shellcheck cannot follow a sourced path built at runtime.
+disable=SC2034,SC2155,SC2154

@@ -1,0 +1,10 @@
+id=34
+title="Locate files by owner and size, list SUID binaries, set SGID and sticky"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=3
+host=any

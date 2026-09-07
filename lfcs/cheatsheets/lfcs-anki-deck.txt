@@ -1,0 +1,91 @@
+#separator:tab
+#html:true
+#tags column:3
+#deck:LFCS
+LFCS: tasks, duration, pass mark	17 to 20 performance-based tasks, 2 hours, 67 percent. About 12 of 18 solved cleanly.	lfcs::exam
+LFCS: what documentation is allowed	Man pages, /usr/share/doc, and packages installed on the system. <b>No browser and no internet.</b>	lfcs::exam
+LFCS: how do you reach the host for a task	ssh &lt;nodename&gt; from the base host, then sudo -i. No nested SSH; exit back to base first.	lfcs::exam
+LFCS: which host must never be rebooted	base. Rebooting it does not restart the exam environment.	lfcs::exam
+LFCS: which ports must never be blocked	8080/tcp, 4505/tcp and 4506/tcp. Blocking any of them ends the session.	lfcs::traps
+LFCS: the single most reported cause of failure	A change that works now but does not survive a reboot. Every change needs a file behind it.	lfcs::traps
+LFCS: task ordering strategy	Quick and confident tasks first, firewall and networking last, about 6 minutes each, flag at 8.	lfcs::exam
+LFCS: the two simulator sessions	Two killer.sh sessions with the SAME 20 questions, unlike the Kubernetes exams where the sets differ.	lfcs::exam
+LFCS: which distribution does the exam use	Not stated officially. Ubuntu is most likely, RHEL-family nodes are possible, and SELinux is an explicit curriculum bullet, so prepare for both.	lfcs::exam
+Find a man page when you do not know the command	man -k &lt;keyword&gt; or apropos &lt;keyword&gt;. man -f &lt;name&gt; shows which sections hold it.	lfcs::commands
+Man section numbers that matter for LFCS	1 user commands, <b>5 file formats</b>, 8 administration. man 1 passwd is the command, man 5 passwd is the file.	lfcs::exam
+Where are worked config examples on the machine	/usr/share/doc/&lt;package&gt;/examples/ , often a commented working file you can copy.	lfcs::commands
+Persistence: ip addr add	A netplan YAML, or nmcli con mod with ipv4.method manual. The ip command alone dies at reboot.	lfcs::traps
+Persistence: sysctl -w	A file in /etc/sysctl.d/, then sysctl --system.	lfcs::traps
+Persistence: mount	An /etc/fstab line, checked with findmnt --verify and mount -a.	lfcs::traps
+Persistence: swapon	An /etc/fstab line, with pri= if a priority was asked for.	lfcs::traps
+Persistence: nft add rule	/etc/nftables.conf on Ubuntu or /etc/sysconfig/nftables.conf on Rocky, plus systemctl enable nftables.	lfcs::traps
+Persistence: firewall-cmd	The same command with --permanent, then --reload.	lfcs::traps
+Persistence: systemctl start	systemctl enable, or enable --now for both. enable needs [Install] WantedBy= in the unit.	lfcs::traps
+Persistence: cryptsetup luksOpen	An /etc/crypttab entry.	lfcs::traps
+Persistence: mdadm --create	An ARRAY line in mdadm.conf, then rebuild the initramfs, or it returns as /dev/md127.	lfcs::traps
+Persistence: setenforce	SELINUX= in /etc/selinux/config.	lfcs::traps
+Persistence: modprobe	A file in /etc/modules-load.d/.	lfcs::traps
+Persistence: chcon	chcon does not survive a relabel. Use semanage fcontext -a then restorecon -Rv.	lfcs::traps
+Create a user with every attribute in one command	useradd -u 2001 -g devs -G wheel -s /bin/bash -m -d /home/ana -c 'Ana' -e 2027-06-30 ana	lfcs::commands
+usermod -aG versus usermod -G	-aG appends. -G <b>replaces</b> the whole supplementary list, so forgetting -a removes every other group.	lfcs::traps
+Why does a new user have no home directory	useradd needs -m on Ubuntu; it does not create one by default.	lfcs::traps
+Expire an account versus expire a password	Account: useradd -e or chage -E. Password: chage -M. Dates are YYYY-MM-DD.	lfcs::flags
+chage: max, min and warn in one command	chage -M 60 -m 7 -W 14 ana	lfcs::commands
+Where do sudo rights go, and how are they checked	A file under /etc/sudoers.d/, mode 0440 root owned, created with visudo -f. Check with visudo -c and prove with sudo -l -U user. Never edit /etc/sudoers.	lfcs::commands
+Why is my sudoers.d file being ignored	A dot in the filename makes sudo skip it.	lfcs::traps
+Which group grants administrator rights	sudo on Ubuntu, wheel on Rocky.	lfcs::flags
+Set an access ACL and an inherited default ACL	setfacl -m u:ana:rwx /dir sets access; setfacl -m d:u:ana:rwx /dir sets the default inherited by new files. Use -R for existing ones.	lfcs::commands
+What caps an ACL entry, and how do you see it	The mask. getfacl marks capped entries #effective:. A later chmod on the group bits quietly rewrites the mask.	lfcs::traps
+The only visible sign a file has an ACL	A trailing + in ls -l.	lfcs::traps
+Where does a system-wide environment variable go	A new file under /etc/profile.d/. /etc/environment takes plain KEY=value with no shell syntax.	lfcs::commands
+Why did my /etc/skel change not affect a user	/etc/skel applies only to accounts created afterwards.	lfcs::traps
+How do you test a profile change	su - user -c '...' , because your current shell already read its startup files.	lfcs::commands
+Where do per-user process and file limits go	A file under /etc/security/limits.d/ as 'domain type item value', applied by pam_limits at next login. ulimit alone never persists.	lfcs::commands
+Per-service limits, as opposed to per-user	A systemd drop-in at /etc/systemd/system/&lt;unit&gt;.d/ with LimitNOFILE, TasksMax, MemoryMax, CPUQuota. limits.conf does not reach services.	lfcs::traps
+What does sssd need to resolve LDAP users	/etc/sssd/sssd.conf at mode 0600, sss in the nsswitch.conf lines, pam_mkhomedir enabled, and systemctl enable --now sssd.	lfcs::commands
+Mount persistently by UUID	blkid -s UUID -o value /dev/sdb1, then an /etc/fstab line 'UUID=... /data ext4 defaults 0 2', then findmnt --verify and mount -a.	lfcs::commands
+fstab field order	device, mount point, type, options, dump, fsck pass. Use UUID=. _netdev for network mounts, nofail for non-essential ones.	lfcs::flags
+Grow a mounted logical volume and its filesystem	lvextend -r -L +400M /dev/vg/lv . Without -r the volume grows and the filesystem does not, so lvs looks right and df does not.	lfcs::commands
+resize2fs versus xfs_growfs	resize2fs takes the DEVICE. xfs_growfs takes the MOUNT POINT. XFS can never shrink.	lfcs::traps
+lvcreate: -L versus -l, and + versus no +	-L is an absolute size, -l is extents or a percentage. +400M adds, 400M sets the total.	lfcs::flags
+Create a volume group with a specific extent size	vgcreate -s 16M vg_data /dev/sdb /dev/sdc . The default is 4M.	lfcs::commands
+Add a swap file at a priority, persistently	fallocate -l 512M /swapfile2; chmod 600; mkswap; swapon -p 10; then an fstab line with 'sw,pri=10'. chmod 600 must come before mkswap.	lfcs::commands
+NFS: what does the client fstab line need	_netdev, or the boot may hang trying to mount before the network is up.	lfcs::traps
+NFS: after editing /etc/exports	exportfs -ra , then verify with exportfs -v and showmount -e.	lfcs::commands
+NBD: reattaching fails because of a stale device	nbd-client -d /dev/nbd0 clears it. modprobe nbd first, and add nbd to /etc/modules-load.d to persist.	lfcs::traps
+Enable user quotas on a filesystem	Add usrquota to the fstab options, remount, then quotacheck -cum, quotaon, setquota -u user 51200 102400 0 0 /path.	lfcs::commands
+df says full but du says empty	The space is in a deleted file still held open. Find it with lsof +L1 and release it by restarting the writing process.	lfcs::traps
+df shows free space but writes still fail	Inode exhaustion. Check df -i.	lfcs::traps
+Find what is using a filesystem, quickly	du -xh --max-depth=1 /path | sort -h . The -x keeps it on one filesystem.	lfcs::commands
+Create a systemd timer that runs every 15 minutes	A .timer with OnCalendar=*:0/15 and Persistent=true, plus a matching .service. Enable the <b>.timer</b>, never the .service.	lfcs::commands
+Cron field order	minute, hour, day of month, month, day of week. crontab -u user -e edits another user's jobs; /etc/cron.d files carry an extra user column.	lfcs::flags
+After editing any systemd unit	systemctl daemon-reload, then restart the service. [Install] WantedBy=multi-user.target is what makes enable work at all.	lfcs::traps
+Why does my ExecStart with a pipe fail	ExecStart is not a shell. Anything with a pipe, a variable or a redirect needs /bin/bash -c '...'.	lfcs::traps
+A service fails with exit code 203	The binary is missing or not executable. Check with systemctl status and journalctl -u &lt;unit&gt; -b.	lfcs::traps
+Make the journal survive a reboot	Storage=persistent in /etc/systemd/journald.conf and a /var/log/journal directory, otherwise journalctl -b -1 finds nothing.	lfcs::traps
+Run a container with a memory limit and restart policy	podman run -d --name web -p 8080:80 -m 256m --restart=always -v /srv/web:/usr/share/nginx/html:ro,Z nginx:1.27	lfcs::commands
+What does podman inspect report for -m 256m	268435456 bytes. --memory-swap must match -m when the total is capped.	lfcs::flags
+Make a container start at boot	podman generate systemd --new --name web, install the unit, then systemctl enable --now.	lfcs::commands
+Import an existing qcow2 as a libvirt VM	virt-install --name labvm --memory 512 --vcpus 1 --disk &lt;path&gt; --import --os-variant generic --virt-type qemu --noautoconsole, then virsh autostart labvm.	lfcs::commands
+virsh dominfo reports memory in what unit	KiB. 512 MB shows as 524288 KiB. Autostart is a symlink under /etc/libvirt/qemu/autostart/.	lfcs::traps
+SELinux: label a new document root	semanage fcontext -a -t httpd_sys_content_t '/srv/site(/.*)?' then restorecon -Rv /srv/site.	lfcs::commands
+SELinux: allow a service on a non-standard port	semanage port -a -t http_port_t -p tcp 8081 . Use -m to move an existing port instead of -a.	lfcs::commands
+SELinux: make a boolean persistent, and read denials	setsebool -P &lt;boolean&gt; on. Read denials with ausearch -m avc -ts recent.	lfcs::commands
+Change the GRUB timeout or default correctly	Edit /etc/default/grub, then update-grub on Ubuntu or grub2-mkconfig -o /boot/grub2/grub.cfg on Rocky. Never edit grub.cfg directly.	lfcs::traps
+Repair a filesystem	fsck or xfs_repair, and only on an UNMOUNTED filesystem.	lfcs::traps
+Stop a kernel module loading, for good	In /etc/modprobe.d/: both 'blacklist &lt;mod&gt;' and 'install &lt;mod&gt; /bin/true', then modprobe -r to unload it now.	lfcs::commands
+Verify installed package files are intact	dpkg -V &lt;pkg&gt; or rpm -V &lt;pkg&gt;. Printing nothing means intact.	lfcs::commands
+Git: what must be set before the first commit	git config user.name and user.email, as the owning user, or the commit fails outright.	lfcs::traps
+Inspect a certificate's subject, issuer and expiry	openssl x509 -in cert.pem -noout -subject -enddate -issuer	lfcs::commands
+Create a self-signed certificate and key	openssl req -x509 -newkey rsa:2048 -nodes -days 365 -keyout k.pem -out c.pem -subj '/CN=host' . -nodes leaves the key usable unattended.	lfcs::commands
+Prove a private key matches a certificate	Compare openssl x509 -noout -modulus with openssl rsa -noout -modulus. Key files are chmod 600, root owned.	lfcs::commands
+find: SUID, world-writable, and batching	-perm -4000 finds SUID, -perm /0002 world writable. -exec {} + batches, -exec {} \; does not.	lfcs::flags
+chmod 3775 means what	SGID plus sticky plus 775. A numeric mode wipes the special bits unless a fourth digit is given.	lfcs::flags
+Redirect both stdout and stderr to one file	&gt; out 2&gt;&amp;1 . The reversed order does not work, because 2&gt;&amp;1 copies the destination stdout has at that moment.	lfcs::traps
+tar: match the flag to the extension	z for .gz, J for .xz, j for .bz2. Pass -C when extracting to another directory.	lfcs::flags
+Prove a hard link versus a symbolic link	Identical inode numbers from stat -c %i prove a hard link. readlink -f resolves a symlink's target.	lfcs::commands
+Top five values in a log field	awk '{print $1}' f | sort | uniq -c | sort -rn | head -5 . The leading sort is required for uniq to work.	lfcs::commands
+Edit a file in place, safely	sed -i.bak , and run it once without -i first to read the output.	lfcs::traps
+Validate before restarting: which command per file	fstab: findmnt --verify. sshd_config: sshd -t. sudoers: visudo -c. nginx: nginx -t. nftables: nft -c -f.	lfcs::commands
+Change the network on the interface you are connected over	netplan try applies it and rolls back automatically after 120 seconds unless you confirm.	lfcs::commands
+Read the effective sshd settings, not the file	sshd -T , and sshd -T -C user=x,host=y,addr=z to see what a Match block resolves to.	lfcs::commands

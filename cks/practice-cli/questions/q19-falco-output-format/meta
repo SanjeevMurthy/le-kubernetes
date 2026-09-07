@@ -1,0 +1,10 @@
+id=19
+title="Falco: change the output format and save the alerts"
+domain="Monitoring, Logging and Runtime Security"
+domain_short=D6
+difficulty=Hard
+needs="node-root tool:falco"
+weight=8
+minutes=10
+sources=15
+host=worker

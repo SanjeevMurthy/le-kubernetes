@@ -1,107 +1,118 @@
 # CKS Resources
 
-Curated and de-duplicated from research across the official curriculum, 12 first-hand "I passed" debriefs, and hands-on lab catalogs. Prioritized for **your** stack: KodeKloud + killer.sh + free.
+What to use, what each thing is uniquely good for, and where the gaps are. Ratings come from 28 first-hand candidate write-ups summarised in [`../../docs/research/2026-09-06-cks-exam-research.md`](../../docs/research/2026-09-06-cks-exam-research.md).
 
-## Tier 1 — Use these (your core path)
+<!-- toc -->
+## Table of Contents
 
-| Resource | Cost | Role in your plan | URL |
-|----------|------|-------------------|-----|
-| **KodeKloud — CKS (Mumshad)** | Paid (you have it) | **Anchor** for daily theory + in-browser labs + mock exams | https://kodekloud.com/courses/certified-kubernetes-security-specialist-cks/ |
-| **killer.sh CKS simulator** | Free w/ exam voucher | **Final calibration** — 2 sessions, harder than real exam; use Day 38 & Day 44 | https://killer.sh/cks |
-| **killercoda — killer-shell-cks** | Free | **Daily timed reps** (AppArmor, Falco, audit, OPA, seccomp, NetworkPolicy) | https://killercoda.com/killer-shell-cks |
-| **Kubernetes docs (security)** | Free | Only reference allowed in-exam — learn to navigate fast | https://kubernetes.io/docs/concepts/security/ |
-| **KodeKloud CKS course notes (GitHub)** | Free | Command reference alongside the videos | https://github.com/kodekloudhub/certified-kubernetes-security-specialist-cks-course |
+- [Tier 1: the ones that decide the outcome](#tier-1-the-ones-that-decide-the-outcome)
+- [KodeKloud course to note mapping](#kodekloud-course-to-note-mapping)
+- [Killercoda scenarios by domain](#killercoda-scenarios-by-domain)
+- [Allowed documentation](#allowed-documentation)
+  - [Page titles to search for](#page-titles-to-search-for)
+- [Labs](#labs)
+- [Free extras worth a look](#free-extras-worth-a-look)
+- [What to skip](#what-to-skip)
+- [Verify before you book](#verify-before-you-book)
 
-## Tier 2 — Closed-book exercise sets (Phase 2 mocks)
+<!-- toc stop -->
 
-| Resource | Why | URL |
-|----------|-----|-----|
-| **bmuschko/cks-crash-course** | Numbered exercises + solutions, performance-based; great for Mock #1 (Day 21) | https://github.com/bmuschko/cks-crash-course |
-| **moabukar/CKS-Exercises** | Per-domain labs incl. AppArmor/seccomp/Falco/Trivy/OPA/gVisor; Mock #2 (Day 28) | https://github.com/moabukar/CKS-Exercises-Certified-Kubernetes-Security-Specialist |
-| **Kim Wüstkamp — free 11–13h CKS YouTube** | Same author as killer.sh; free fallback for any weak topic | https://www.youtube.com/watch?v=d9xfB5qaOfg |
-| **killer-sh/cks-course-environment** | Scripts to stand up the 2-node practice cluster | https://github.com/killer-sh/cks-course-environment |
+## Tier 1: the ones that decide the outcome
 
-## Tier 3 — Reference & depth (dip in as needed)
+| Resource | Cost | What it uniquely gives you | Named by |
+|---|---|---|---|
+| **killer.sh simulator** | Included with the voucher | Two sessions of 17 questions each, **and the two sets are different**. Harder than the real exam by design. The remote desktop closely matches the real one. 36 hours of access per activation, with about 120 pages of solutions. | 20 of 28 write-ups |
+| **KodeKloud CKS course and mocks** | Subscription you already hold | Guided first pass with in-browser root clusters, plus three auto-graded 16-task mocks | 15 of 28 |
+| **Killercoda Killer Shell CKS** | Free | 42 scenarios on real kubeadm nodes with root. The best free stand-in for the exam environment. | 11 of 28 |
+| **This repo** | Free | Timed questions with automated setup and verification, three mocks, and the recipes behind them | — |
 
-| Resource | URL |
-|----------|-----|
-| techiescamp/cks-certification-guide (shortcuts, revision cmds) | https://github.com/techiescamp/cks-certification-guide |
-| stackrox CKS study guide (cluster build + Q&A) | https://github.com/stackrox/Kubernetes_Security_Specialist_Study_Guide |
-| Trivy official CKS tutorial | https://aquasecurity.github.io/trivy/v0.33/tutorials/additional-resources/cks/ |
-| aquasecurity/kube-bench | https://github.com/aquasecurity/kube-bench |
-| OPA Gatekeeper docs | https://open-policy-agent.github.io/gatekeeper/ |
-| Liz Rice — *Container Security* (book, for depth) | O'Reilly |
-| Zeal Vora — CKS (Udemy, alt course w/ from-scratch cluster) | https://www.udemy.com/course/certified-kubernetes-security-specialist-certification/ |
+**How to sequence killer.sh.** Session 1 on 28 November, two weeks out, treated as a diagnostic. Session 2 on 9 December, three days out, treated as a rehearsal. Do not activate early: the 36-hour clock starts on activation, and the questions stay readable afterwards.
 
----
+## KodeKloud course to note mapping
 
-## Practice cluster
+Work one course section per foundation weekend, in the calendar's order rather than the course's order. The calendar front-loads Runtime Security because it is the least familiar and the heaviest reported.
 
-**Recommendation: a 2-node `kubeadm` cluster** (Ubuntu 22.04/24.04, kernel 5.15+). Control plane 2 vCPU/4 GB, worker 2 vCPU/2–4 GB. Local via **Multipass/Vagrant+VirtualBox**, or cloud (GCP e2-medium ~$15/mo, DigitalOcean ~$12/mo). Scripts: [killer-sh/cks-course-environment](https://github.com/killer-sh/cks-course-environment).
+| Weekend | KodeKloud section | Note |
+|---|---|---|
+| 26 to 27 Sep | Cluster Setup | [`../study-notes/01-cluster-setup.md`](../study-notes/01-cluster-setup.md) |
+| 3 to 4 Oct | Monitoring, Logging and Runtime Security | [`../study-notes/06-monitoring-logging-runtime.md`](../study-notes/06-monitoring-logging-runtime.md) |
+| 10 to 11 Oct | Cluster Hardening | [`../study-notes/02-cluster-hardening.md`](../study-notes/02-cluster-hardening.md) |
+| 17 to 18 Oct | System Hardening | [`../study-notes/03-system-hardening.md`](../study-notes/03-system-hardening.md) |
+| 24 to 25 Oct | Minimize Microservice Vulnerabilities | [`../study-notes/04-microservice-vulnerabilities.md`](../study-notes/04-microservice-vulnerabilities.md) |
+| 31 Oct to 1 Nov | Supply Chain Security | [`../study-notes/05-supply-chain-security.md`](../study-notes/05-supply-chain-security.md) |
 
-**Why not just kind/minikube?** These node-level tasks need real systemd nodes you can SSH into and edit — they **cannot** be practiced reliably on kind:
+**Known KodeKloud gaps**, reported by candidates who used it as their only source: the TLS-protocol question between the API server and etcd, and the depth of Falco and Cilium work. One candidate who used only KodeKloud wrote that it alone is not enough for a high score. The repo questions and Killercoda cover those gaps.
 
-| Needs real kubeadm node | Reason |
+## Killercoda scenarios by domain
+
+All 42 free Killer Shell CKS scenarios at <https://killercoda.com/killer-shell-cks>, grouped by the domain they serve. Names are as they appear on the site.
+
+**Setup and orientation:** Playground · Exam Desktop · Vim Setup · Playground Cilium Network Policy
+
+**Cluster Setup:** NetworkPolicy Create Default Deny · NetworkPolicy Namespace Selector · NetworkPolicy Metadata Protection · CIS Benchmarks fix Controlplane · Ingress Create · Ingress Secure · Verify Platform Binaries
+
+**Cluster Hardening:** RBAC User Permissions · RBAC ServiceAccount Permissions · ServiceAccount Token Mounting · Apiserver Crash · Apiserver Misconfigured · Apiserver NodeRestriction · CertificateSigningRequests sign manually · CertificateSigningRequests sign via API
+
+**System Hardening:** AppArmor · System Hardening Close Open Ports · System Hardening Manage Packages · Privileged Containers · Privilege Escalation Containers · Container Hardening · Syscall Activity Strace
+
+**Microservice Vulnerabilities:** Secret ETCD Encryption · Secret Read and Decode · Secret Access in Pods · Secret ServiceAccount Pod · Sandbox gVisor · Container Namespaces Docker · Container Namespaces Podman
+
+**Supply Chain:** Image Vulnerability Scanning Trivy · Image Use Digest · Container Image Footprint User · Static Manual Analysis Docker · Static Manual Analysis K8s · ImagePolicyWebhook Setup
+
+**Runtime Security:** Falco Change Rule · Auditing Enable Audit Logging · Immutability Readonly Filesystem
+
+**What Killercoda does not cover**, so the repo questions carry it alone: Pod Security Admission, SBOM with `bom`, kubesec and kube-linter, Istio mTLS, ValidatingAdmissionPolicy, and the kubeadm cluster upgrade.
+
+Free sessions are one hour. The PLUS tier adds four-hour sessions and an exam-style remote desktop, which one candidate bought specifically to rehearse the interface.
+
+## Allowed documentation
+
+The exam allows exactly eight sources and nothing else. Full detail and the reasoning in [`../study-notes/00-exam-environment.md`](../study-notes/00-exam-environment.md).
+
+| Allowed | Not allowed |
 |---|---|
-| AppArmor profiles | profile loaded on host OS, kubelet reads from node FS |
-| seccomp profiles on node | live at `/var/lib/kubelet/seccomp/` on the actual node |
-| gVisor / `runsc` RuntimeClass | `runsc` binary + containerd config edit on node |
-| kube-bench CIS scan | reads host files + running processes |
-| API-server audit log + flag edits | edit static-pod manifest on control-plane node |
-| kubelet hardening | edit kubelet config + `systemctl restart` |
-| Falco | installs kernel module / eBPF probe on node |
-| etcd encryption at rest | edit apiserver manifest on control-plane node |
-| SSH/UFW/kernel-module hardening | host-OS tasks |
+| kubernetes.io/docs and /blog | Trivy documentation |
+| falco.org/docs | kube-bench documentation |
+| kubernetes-sigs.github.io/bom/cli-reference | AppArmor documentation |
+| etcd.io/docs | kubesec and kube-linter documentation |
+| kubernetes.github.io/ingress-nginx user guide | GitHub |
+| docs.cilium.io | External search results |
+| istio.io/latest/docs | Personal bookmarks |
 
-**Fine on kind** (fast iteration, ~40% of coverage): NetworkPolicy (with Calico/Cilium CNI), RBAC, PSA, OPA/Gatekeeper, Kyverno, Trivy (CLI), secrets, admission webhooks, ServiceAccounts.
+Practise inside that boundary from the first weekend. Studying with a tool's own documentation open builds a habit you cannot use on the day.
 
-**Hybrid (recommended):** daily drills on killercoda/KodeKloud (no setup); reserve the kubeadm cluster for the node-only tasks above — batch them on weekends (Phase 2 marks these 🖥️).
+### Page titles to search for
 
----
+You navigate by searching kubernetes.io for a remembered title, because bookmarks are gone.
 
-## Exam-allowed documentation — bookmark these
+Auditing · Encrypting Confidential Data at Rest · Restrict a Container's Access to Resources with AppArmor · Restrict a Container's Syscalls with seccomp · Enforce Pod Security Standards with Namespace Labels · Network Policies · Using RBAC Authorization · Admission Controllers Reference · Runtime Class · Certificate Signing Requests · Upgrading kubeadm clusters
 
-During the exam, **only** these domains may be open (source: Linux Foundation "Resources Allowed"). Build the bookmark bar now and practice finding snippets in <60 s.
+On falco.org: Supported Fields, and the rules reference. On docs.cilium.io: Network Policy, and Transparent Encryption.
 
-**Allowed domains:**
-- `https://kubernetes.io/docs/` and `https://kubernetes.io/blog/`
-- `https://falco.org/docs/`
-- `https://etcd.io/docs/`
-- `https://kubernetes-sigs.github.io/bom/cli-reference/`
-- `https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/`
-- `https://docs.cilium.io/en/stable`
-- `https://istio.io/latest/docs/`
+Faster than any of them for field names: `kubectl explain pod.spec.securityContext --recursive`.
 
-> ⚠️ **Trivy docs** (`aquasecurity.github.io/trivy`) appear in some third-party lists but were **not** on the official allowed page at research time — don't rely on them in-exam; memorize the Trivy commands instead. Re-check the official page before your exam date.
+## Labs
 
-**Exact kubernetes.io pages to pin** (these recur in real tasks):
+Both tiers, with the commands to build them: [`../lab-setup/README.md`](../lab-setup/README.md).
 
-| Topic | Path |
-|------|------|
-| Pod Security Standards | `/docs/concepts/security/pod-security-standards/` |
-| Pod Security Admission | `/docs/concepts/security/pod-security-admission/` |
-| Network Policies | `/docs/concepts/services-networking/network-policies/` |
-| RBAC | `/docs/reference/access-authn-authz/rbac/` |
-| RBAC Good Practices | `/docs/concepts/security/rbac-good-practices/` |
-| Audit Logging | `/docs/tasks/debug/debug-cluster/audit/` |
-| Admission Controllers | `/docs/reference/access-authn-authz/admission-controllers/` |
-| RuntimeClass | `/docs/concepts/containers/runtime-class/` |
-| Seccomp tutorial | `/docs/tutorials/security/seccomp/` |
-| Linux kernel security constraints (AppArmor) | `/docs/concepts/security/linux-kernel-security-constraints/` |
-| Encrypt Data at Rest | `/docs/tasks/administer-cluster/encrypt-data/` |
-| Secrets Good Practices | `/docs/concepts/security/secrets-good-practices/` |
-| Controlling Access to the API | `/docs/concepts/security/controlling-access/` |
-| Security Checklist | `/docs/concepts/security/security-checklist/` |
+In short, minikube with Calico on this Mac for everything that only needs `kubectl`, and the Killercoda playground for everything that needs root on a node. `./cks --env` tells you which questions the host you are on can actually run.
 
-**CIS / kube-bench:** kube-bench repo (run as a Job) + CIS Kubernetes Benchmark PDF (free w/ registration at cisecurity.org).
+## Free extras worth a look
 
----
+- **kyle-heller/CKS-PREP-2025** on GitHub: 55 scripted questions with setup and verify scripts, the closest public analogue to this repo's practice CLI.
+- **ViktorUJ/cks**: 22 labs and four mock exams, and the only free source with Istio and TLS-cipher labs.
+- **Kim Wüstkamp's CKS course**: the paid Udemy version has a free 11-hour YouTube edition from the author of killer.sh.
+- **kodekloudhub/community-faq**: the crashed-API-server diagnosis notes are the best short write-up of that recovery.
 
-## Exam facts (verify on the official page before sitting)
+## What to skip
 
-- **Format:** performance-based, CLI only · **2 hours** · ~15–17 weighted tasks · **67% to pass** · results in 24 h.
-- **K8s version:** v1.34 (tracks current release; updates 4–8 weeks after each).
-- **Prerequisite:** passed CKA (need not still be active).
-- **Cost:** ~$445, includes **one free retake**; cert valid **2 years**; 12 months to sit after purchase.
-- **Curriculum that applies = the one current on your exam date** (not purchase date).
-- Official curriculum repo: https://github.com/cncf/curriculum (`CKS_Curriculum_v1.34.pdf`).
+- **LFS260**, the official Linux Foundation course. Not recommended by a single 2024 to 2026 write-up for someone who already holds the CKA.
+- **Any site selling exam dumps.** They are inaccurate for a performance-based exam and using them breaches the certification agreement.
+- **Guides listing Cluster Setup at 10 percent** or the Dashboard bullet. Those describe the pre-October-2024 curriculum and are stale.
+
+## Verify before you book
+
+Two official pages change without notice. Re-read both the week before booking and again the week before the exam:
+
+- `https://docs.linuxfoundation.org/tc-docs/certification/important-instructions-cks`
+- `https://docs.linuxfoundation.org/tc-docs/certification/certification-resources-allowed`

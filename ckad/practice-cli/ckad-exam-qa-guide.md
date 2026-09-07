@@ -363,7 +363,7 @@ kubectl exec data-pod -- sh -c "echo 'test' > /data/test.txt && cat /data/test.t
 #### Official Documentation
 
 - [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Configure a Pod to Use a PersistentVolume for Storage](https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
+- [Configure a Pod to Use a PersistentVolume for Storage](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
 ---
 

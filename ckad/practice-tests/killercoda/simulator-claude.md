@@ -1036,7 +1036,7 @@ k -n earth describe pod project-earthflower-... | grep -A2 Mounts:
 ### References
 
 - [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
+- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
 ---
 

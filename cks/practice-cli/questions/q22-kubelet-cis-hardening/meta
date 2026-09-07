@@ -1,0 +1,10 @@
+id=22
+title="kube-bench: fix the kubelet findings"
+domain="Cluster Setup"
+domain_short=D1
+difficulty=Medium
+needs="node-root tool:kube-bench"
+weight=7
+minutes=8
+sources=12
+host=worker

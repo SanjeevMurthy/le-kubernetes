@@ -1,0 +1,18 @@
+# Mock 1 - balanced across all six domains, the first honest measurement.
+# Format: one "question-id" then "weight", separated by a pipe.
+01|6
+03|5
+24|5
+04|5
+23|7
+29|5
+07|7
+30|6
+09|4
+10|9
+28|6
+13|5
+15|5
+27|5
+16|7
+19|8

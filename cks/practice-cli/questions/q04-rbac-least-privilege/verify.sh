@@ -1,20 +1,26 @@
 #!/bin/bash
-# Q4 — Verify (graded on effective permissions)
-PASS=0; FAIL=0
-SA=system:serviceaccount:build:ci
+# Q4 RBAC least privilege: verify. Graded on effective permissions rather than on
+# the shape of the Role, because several correct answers exist.
+source "$(dirname "$0")/../../lib/checks.sh"
+source "$(dirname "$0")/../../lib/env.sh"
 
-chk() { # desc expected verb res
-  local d="$1" exp="$2" verb="$3" res="$4"
-  local got; got=$(kubectl auth can-i "$verb" "$res" --as="$SA" -n build 2>/dev/null)
-  if [[ "$got" == "$exp" ]]; then echo "  PASS: $d ($got)"; ((PASS++)); else echo "  FAIL: $d expected $exp got '$got'"; ((FAIL++)); fi
+SA=system:serviceaccount:build:ci
+NS=build
+
+can() {   # can "label" expected verb resource
+  check_eq "$1" "$2" "$(kubectl auth can-i "$3" "$4" --as="$SA" -n "$NS" 2>/dev/null)"
 }
 
-echo "Checking effective RBAC for build:ci..."
-chk "can list pods"        yes list   pods
-chk "can get pods/log"     yes get    pods/log
-chk "cannot delete pods"   no  delete pods
-chk "cannot get secrets"   no  get    secrets
-chk "is NOT cluster-admin" no  '*'    '*'
+echo "Checking the ServiceAccount still exists (control)..."
+check "ServiceAccount ci exists in $NS" kubectl get serviceaccount ci -n "$NS"
 
-echo ""; echo "Results: $PASS passed, $FAIL failed"
-[[ $FAIL -eq 0 ]]
+echo "Checking what build:ci can do..."
+can "can list pods"      yes list   pods
+can "can get pods/log"   yes get    pods/log
+
+echo "Checking what it must not be able to do..."
+can "cannot delete pods"      no delete pods
+can "cannot get secrets"      no get    secrets
+can "is no longer cluster-admin" no '*' '*'
+
+summary

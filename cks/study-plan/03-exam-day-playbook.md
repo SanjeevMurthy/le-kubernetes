@@ -1,182 +1,143 @@
-# CKS Exam-Day Playbook
+# CKS Exam Day Playbook
 
-Skim this the morning of the exam. Distilled from 12 first-hand passing debriefs. The exam is **2 h, ~16 tasks, 67% to pass** — and the thing that fails people is **time**, not knowledge. Speed + verification win.
+Read this the evening before and skim it the morning of. Nothing here is new material. It is the set of habits that turn what you know into marks, drawn from 28 first-hand candidate write-ups.
 
----
+Exam: **Saturday 12 December 2026**.
 
-## First 2 minutes — set up your shell (do this once on the base node)
+<!-- toc -->
+## Table of Contents
 
-```bash
-# alias + completion
-alias k=kubectl
-source <(kubectl completion bash)
-complete -F __start_kubectl k
+- [The night before](#the-night-before)
+- [Thirty minutes before](#thirty-minutes-before)
+- [The first three minutes of the exam](#the-first-three-minutes-of-the-exam)
+- [The first two minutes of each task](#the-first-two-minutes-of-each-task)
+- [While you work](#while-you-work)
+- [Verify every task before you leave it](#verify-every-task-before-you-leave-it)
+- [When the API server does not come back](#when-the-api-server-does-not-come-back)
+- [The mistakes that cost other people the exam](#the-mistakes-that-cost-other-people-the-exam)
+- [The last fifteen minutes](#the-last-fifteen-minutes)
+- [Afterwards](#afterwards)
 
-# context / namespace
-alias kcu="kubectl config use-context"
-kn() { kubectl config set-context --current --namespace "$1"; }
+<!-- toc stop -->
 
-# dry-run + force
-export do="--dry-run=client -o yaml"
-export now="--force --grace-period=0"
+## The night before
 
-# quick gets
-alias kgp="kubectl get pods"; alias kgn="kubectl get nodes"
-alias kd="kubectl describe"; alias kl="kubectl logs"
-```
+- [ ] Run the PSI system check on the exact machine you will use. Not a similar one.
+- [ ] Confirm the room will be quiet, private, well lit, and that the desk is clear.
+- [ ] One monitor. Dual monitors are not supported and will stop the exam.
+- [ ] Charge and plug in. Use a wired network connection if you have one.
+- [ ] No new material. Re-read [`../cheatsheets/cks-exam-cheatsheet.md`](../cheatsheets/cks-exam-cheatsheet.md) and stop.
+- [ ] Sleep. Every debrief that mentions fatigue mentions it as a cause of lost time.
 
-`~/.vimrc`:
-```vim
-set number et ai
-set sw=2 ts=2 sts=2
-set pastetoggle=<F3>
-```
+## Thirty minutes before
 
-> ⚠️ Aliases live only in the shell you set them in. Each `ssh <node>` is a fresh shell — most node tasks involve **editing existing files**, not generating YAML, so you rarely need `$do` there. Set aliases on the base node; don't waste time re-exporting on every hop.
+- [ ] Join early. Check-in, ID and the room scan take real time, and the clock does not start until you are admitted, so there is no cost to being early and a real cost to being late.
+- [ ] Close every other application and browser window.
+- [ ] Water within reach. Breaks do not stop the timer.
 
----
+## The first three minutes of the exam
 
-## The golden rule — every single question
+1. Read the ReadMe tab.
+2. **Skim every task.** Note two things per task: how confident you are, and which host it runs on. This is the single highest-return three minutes of the exam, because it turns an unknown queue into a plan.
+3. Decide your order: confident and short first, known time sinks last. There are no visible per-task weights, so a five-minute task earns as much as a twenty-minute one of the same size.
 
-```bash
-kubectl config use-context <CONTEXT_FROM_INFOBOX> && kubectl get nodes
-```
+The known time sinks, from candidate reports: the kubeadm cluster upgrade, ImagePolicyWebhook, and the audit policy. All three are worth doing, but not first.
 
-**Run the provided context-switch command first, then verify with `get nodes`.** Wrong context silently invalidates your whole answer — this is the #1 way people lose points. A known platform bug can make the switch *appear* to work but not — the `get nodes` check catches it. Also set the namespace if the task names one.
-
----
-
-## Time strategy — three passes
-
-1. **Pass 1 (first ~50 min): quick wins.** Scan all ~16 tasks; in a scratch file mark each `fast / medium / skip`. Do all fast ones. Aim **>50% done before the 60-min mark.**
-2. **Pass 2: medium.** Known-pattern tasks (manifest edits, tool runs, SSH).
-3. **Pass 3: hard/unfamiliar.** Flagged tasks with whatever's left. *Expect not to finish one or two — that's fine at 67%.* A full easy answer beats 15 minutes sunk into one hard task.
-
-**Multitask the waits:** after editing the apiserver manifest, start it restarting and **switch to another task** while it comes back (30–90 s). Don't sit and watch.
-
-Scratch-file triage (Anson Lee, 88/100):
-```
-1  done  cluster upgrade
-2  n     networkpolicy 3 policies / 2 ns
-3  WAIT  apiserver audit (restarting)
-```
-
----
-
-## Safe apiserver edits (high-risk — practice until automatic)
+## The first two minutes of each task
 
 ```bash
-# back up FIRST
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/kube-apiserver.yaml.bak
-# edit (moving it out + back in is a clean way to force a clean restart)
-sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml
-# watch it come back
-sudo crictl ps | grep kube-apiserver
-# if it DOESN'T come back:
-sudo crictl logs $(sudo crictl ps -a | grep kube-apiserver | awk '{print $1}')
-journalctl -u kubelet -f
+ssh <nodename>                 # exactly the host named in the task infobox
+sudo -i                        # root, needed for anything under /etc/kubernetes
+hostname                       # confirm you are where you think you are
+k config current-context       # run the context line the task gives you
 ```
 
-**When adding audit / ImagePolicyWebhook / any file-backed flag, you must add the matching `volumes` + `volumeMounts`.** Forgetting the mount is the most common way to take down the API server in the exam.
-
----
-
-## Per-domain gotchas (memorize)
-
-- **NetworkPolicy deny-all:** add port-53 **UDP and TCP** egress or DNS breaks cluster-wide (and cascades into other tasks).
-- **Audit policy:** **first match wins** → put specific rules *before* catch-all. Policy mount `readOnly: true`; log dir writable. 4 levels: None / Metadata / Request / RequestResponse.
-- **Secrets encryption:** the provider only encrypts *new* writes → re-encrypt: `kubectl get secrets -A -o json | kubectl replace -f -`. Verify in etcd (`k8s:enc:aescbc:`).
-- **Falco:** custom rules in `/etc/falco/falco_rules.local.yaml`; reload without full restart: `kill -1 $(cat /var/run/falco.pid)`; logs: `journalctl -fu falco`.
-- **AppArmor:** load on the node (`apparmor_parser -q`) *before* referencing it in the pod; check `aa-status`. 1.30+ uses `securityContext.appArmorProfile`; older uses the annotation.
-- **seccomp:** profiles at `/var/lib/kubelet/seccomp/profiles/`; `Localhost` type points at a path relative to that dir.
-- **Capabilities:** `drop: ["ALL"]` then `add` — not the reverse.
-- **Docker daemon.json:** creating the file does nothing unless dockerd is configured to read it — check `ps aux | grep dockerd`.
-- **securityContext placement:** pod-level = `runAsUser/runAsGroup/fsGroup/seccompProfile`; container-level = `allowPrivilegeEscalation/readOnlyRootFilesystem/capabilities`.
-
----
-
-## Verify every task (60 seconds — non-negotiable)
-
-People fail on tasks they *thought* were done. Quick checks:
-```bash
-kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa>
-aa-status                                   # AppArmor loaded?
-sudo crictl inspect <id> | grep -i seccomp  # profile applied?
-kubectl get pod <p> -o wide                 # Running? right node?
-kubectl run test --image=busybox ... # NetworkPolicy allow/deny behaves?
-```
-
----
-
-## PSI environment do's & don'ts
-
-- **Never reboot the base node** — it breaks the exam session.
-- **`Ctrl+W` closes the browser tab** → use **`Ctrl+Alt+W`**. Terminal paste: `Ctrl+Shift+V`. `INSERT` key blocked → use `i` in vim.
-- All work is over `ssh <nodename>` from the base node; **no nested SSH**; `sudo -i` for root; `exit` back to base before the next task.
-- Pre-installed: `kubectl` (+`k` alias, completion), `yq`, `curl`, `wget`, `man`.
-- Single monitor, webcam, clear desk, bare walls, ID ready. Do the PSI system check the day before (Day 43).
-
----
-
-## Top 15 lessons (ranked by impact)
-
-1. **Context-switch + `get nodes` verify on every question.** #1 silent point-loss.
-2. **Set aliases + `.vimrc` in the first 2 minutes.**
-3. **Don't skip Falco** — near-guaranteed; know rules file, output edit, reload.
-4. **After apiserver edits, move on while it restarts;** know how to diagnose a failed restart.
-5. **Flag + volumeMounts together** when adding file-backed apiserver flags.
-6. **killer.sh ≥60% within time ≈ ready.** It's harder than the real exam by design.
-7. **Trivy + audit policy are near-guaranteed** — drill each to <3 min.
-8. **Deny-all NetworkPolicy ⇒ always add port-53 egress.**
-9. **Three-pass triage:** easy first, flag the hard, partial-credit the rest.
-10. **Audit rule order is first-match** — specific before catch-all.
-11. **Memorize the file paths** (apiserver manifest, kubelet config, seccomp dir, AppArmor dir, Falco local rules, audit dir, etcd pki).
-12. **Verify every task (60 s).**
-13. **Navigate docs in <60 s** — bookmark the allowed domains; `Ctrl+F` to the snippet.
-14. **Linux fundamentals are tested too** — `systemctl`, `journalctl`, `usermod`, `gpasswd`, `modprobe`, `ss`, `ufw`.
-15. **Don't stop studying mid-prep** — procedural memory (paths/flags) fades fast; keep momentum to exam day.
-
----
-
-## High-value command cheats
+If the task edits a static pod manifest, back it up before anything else:
 
 ```bash
-# RBAC check
-kubectl auth can-i create pods --as=system:serviceaccount:dev:app -n dev
-
-# AppArmor
-cat /sys/module/apparmor/parameters/enabled   # expect Y
-apparmor_parser -q /etc/apparmor.d/<profile>; aa-status
-
-# Falco
-journalctl -fu falco; kill -1 $(cat /var/run/falco.pid)
-
-# Trivy
-trivy image --severity HIGH,CRITICAL <image>
-trivy image --severity CRITICAL --format json <image> > scan.json
-trivy config <manifest.yaml>
-
-# kubesec / kube-bench
-kubesec scan pod.yaml
-kube-bench run --targets master,node | grep -C5 FAIL
-
-# etcd: is a secret encrypted?
-ETCDCTL_API=3 etcdctl get /registry/secrets/default/mysecret \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key | hexdump -C | head
-
-# audit list of all images in cluster
-kubectl get pods -A -o=custom-columns='NS:.metadata.namespace,NAME:.metadata.name,IMG:.spec.containers[*].image'
-
-# pods missing seccomp
-kubectl get pods -A -o json | jq '.items[] | select(.spec.securityContext.seccompProfile==null) | .metadata.name'
-
-# node hardening
-systemctl disable --now <svc>; apt-get remove -y <pkg>; ss -tlnp
-usermod -s /bin/nologin <user>; gpasswd -d <user> <group>
-echo "blacklist <mod>" > /etc/modprobe.d/<mod>.conf; lsmod | grep <mod>
-
-# debug a broken apiserver
-sudo crictl ps -a | grep api; sudo crictl logs <id>; journalctl -u kubelet -f
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak
 ```
+
+Do not build an alias set. Each task is a different host, `k` with completion is already configured, and two candidates who passed in 2025 advise skipping custom aliases entirely. One line is worth it for YAML-heavy tasks:
+
+```bash
+printf 'set nu sw=2 et ts=2 ai\n' >> ~/.vimrc
+```
+
+## While you work
+
+- **Read the whole task before typing.** Several debriefs describe losing marks by solving a slightly different problem, or by deleting a pod when the task asked for the image name in a file.
+- **Note the deliverable.** If it says write something to `/opt/course/<n>/<file>`, that file is the mark.
+- **Flag at 10 minutes.** The review screen exists for this. A flagged task you return to is worth more than a finished task you rushed into breaking something.
+- **Use two terminals.** One holds the editor, the other runs `watch crictl ps` or `kubectl get pod -n kube-system` while a control-plane component restarts.
+- **`exit` back to base** before the next task. Nested SSH is not supported.
+- **Never reboot the base host.** It does not restart the environment.
+- **Never block ports 8080, 4505 or 4506.** Firewall tasks that close them will end your session.
+
+## Verify every task before you leave it
+
+Sixty seconds per task. This is where the difference between 65 and 75 percent lives.
+
+| Task family | The command that proves it |
+|---|---|
+| RBAC | `k auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa> -n <ns>` including a case that must say no |
+| NetworkPolicy | `k run probe --rm -it --image=busybox:1.36 -- wget -T3 -qO- <target>` and an `nslookup` to prove DNS still works |
+| Pod Security Admission | `k run bad --image=nginx --privileged -n <ns>` must be rejected |
+| AppArmor | `aa-status \| grep <profile>` then `k exec <pod> -- touch /tmp/x` must fail |
+| seccomp | the pod is Running, and the blocked syscall actually fails inside it |
+| gVisor | `k exec <pod> -- dmesg \| head` shows gVisor |
+| Encryption at rest | `etcdctl get /registry/secrets/<ns>/<name>` shows `k8s:enc:aescbc:v1:` |
+| Audit | `tail /var/log/kubernetes/audit/audit.log` grows after a `kubectl get secrets -A` |
+| Falco | the alert appears in `journalctl -u falco-modern-bpf -u falco` in the required format |
+| Ingress TLS | `curl -kv --resolve <host>:443:<ip> https://<host>` |
+| Immutability | `k exec <pod> -- touch /x` fails while the pod stays Running |
+| API server edit | `curl -k https://127.0.0.1:6443/readyz` returns ok |
+
+## When the API server does not come back
+
+This is the most expensive failure in the exam, and it is recoverable if you stay calm. The kubelet rescans `/etc/kubernetes/manifests` about every 20 seconds, so **wait before you re-edit**. Re-editing repeatedly is what turns a two-minute recovery into a lost question.
+
+```bash
+# 1. Is it even trying?
+crictl ps -a | grep apiserver
+
+# 2. Why did it stop?
+crictl logs <container-id> 2>&1 | tail -30
+
+# 3. If the container never started, the manifest itself is bad
+journalctl -u kubelet --since '-3 min' | grep -iE 'apiserver|manifest|yaml'
+
+# 4. If the container started and died, its logs are on disk
+ls -t /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/ | head -1
+
+# 5. Last resort: restore and re-apply the change more carefully
+cp /root/kube-apiserver.yaml.bak /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
+The four causes candidates actually hit: a misspelled flag, a `volumeMounts` entry with no matching `volumes` entry, YAML indentation, and a webhook kubeconfig missing its `server:` line.
+
+## The mistakes that cost other people the exam
+
+1. **Spending the first hour on three questions.** Flag and move.
+2. **Working on the wrong host.** The infobox names it. Check `hostname` after every `ssh`.
+3. **Not restarting the kubelet** after changing `/var/lib/kubelet/config.yaml` or loading an AppArmor profile.
+4. **Deleting the wrong resource.** There is no undo. `k get <res> -o yaml > /root/backup.yaml` before any delete.
+5. **Skipping Falco in preparation.** It is the most reported task family on the exam.
+6. **Assuming `jq` exists.** It does not. Use `yq` or `-o jsonpath`.
+7. **Trying to open documentation that is not allowed.** Trivy, kube-bench, AppArmor and kubesec docs are blocked; know those flags cold.
+8. **Not verifying.** A task that looks right and is not scores zero, and sixty seconds would have caught it.
+
+## The last fifteen minutes
+
+Stop starting new work. Instead:
+
+1. Return to every flagged task and get partial credit where you can. Partial credit counts.
+2. Re-run the verification command for every task you completed early, because a later task may have changed cluster state.
+3. Confirm every deliverable file exists and has content.
+4. Confirm no task was left on the wrong host.
+
+## Afterwards
+
+Results arrive by email within 24 hours, with no per-question breakdown. If it did not pass, reschedule the free retake immediately while the environment is fresh in your memory. Of the 28 write-ups behind this kit, eight failed on the first attempt and every one of them passed the retake, usually with a large jump: 55 to 90, 44 to 79, 49 to 74.
+
+Passing also extends your CKA under the CARE policy, which protects the Kubestronaut track while LFCS is in progress.

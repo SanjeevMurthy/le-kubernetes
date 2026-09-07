@@ -1,0 +1,10 @@
+id=14
+title="Restrict Images via ImagePolicyWebhook/Registry"
+domain="Supply Chain Security"
+domain_short=D5
+difficulty=Hard
+needs="node-root"
+weight=9
+minutes=12
+sources=12
+host=control-plane

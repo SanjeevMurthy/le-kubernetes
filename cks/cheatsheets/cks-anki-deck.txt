@@ -1,0 +1,108 @@
+#separator:tab
+#html:true
+#tags column:3
+#deck:CKS
+CKS: Kubernetes version of the exam environment	v1.35. The published curriculum document is v1.34; they are different things.	cks::exam
+CKS: task count, duration, pass mark	15 to 20 tasks (16 typical), 2 hours, 67 percent. About 11 of 16 right.	cks::exam
+CKS: the eight allowed documentation sources	kubernetes.io docs and blog<br>falco.org/docs<br>kubernetes-sigs.github.io/bom<br>etcd.io/docs<br>ingress-nginx user guide<br>docs.cilium.io<br>istio.io/latest/docs	cks::exam
+CKS: which tool docs are NOT allowed	Trivy, kube-bench, AppArmor, kubesec and kube-linter. Also GitHub and external search results. Their flags must be memorised.	cks::exam
+CKS: which CLI tools exist on a task host	kubectl with the k alias and completion, yq, curl, wget, man. There is NO jq.	cks::exam
+CKS: how do you reach the host for a task	ssh &lt;nodename&gt; from base, then sudo -i. No nested SSH. Return to base with exit.	cks::exam
+CKS: which host must never be rebooted	base. Rebooting it does not restart the exam environment.	cks::exam
+CKS: terminal copy and paste keys	Ctrl+Shift+C and Ctrl+Shift+V in the terminal; Ctrl+C and Ctrl+V elsewhere; Ctrl+Alt+W not Ctrl+W.	cks::exam
+CKS: how do you enter vim insert mode in the exam	Press i. The INSERT key is disabled in the remote desktop.	cks::exam
+CKS: time rule per task	Flag at 10 minutes and move on. Keep the last 15 minutes for verification.	cks::exam
+CKS: does passing extend any other certification	Yes. Passing or recertifying CKS on or after 18 June 2026 extends the CKA under the CARE policy.	cks::exam
+CKS: simulator sessions included with the voucher	Two killer.sh sessions, 17 questions each, and the two sets are different. 36 hours of access per activation.	cks::exam
+Path: API server static pod manifest	/etc/kubernetes/manifests/kube-apiserver.yaml	cks::paths
+Path: kubelet configuration	/var/lib/kubelet/config.yaml, then systemctl restart kubelet	cks::paths
+Path: seccomp profiles on the node	/var/lib/kubelet/seccomp/profiles/ ; the pod writes localhostProfile: profiles/&lt;file&gt;.json	cks::paths
+Path: AppArmor profiles	/etc/apparmor.d/	cks::paths
+Path: Falco shipped rules vs your overrides	Shipped: /etc/falco/falco_rules.yaml (never edit).<br>Overrides: /etc/falco/falco_rules.local.yaml (loads last).<br>Config: /etc/falco/falco.yaml	cks::paths
+Path: audit policy file	/etc/kubernetes/audit/policy.yaml	cks::paths
+Path: etcd certificates for etcdctl	/etc/kubernetes/pki/etcd/ca.crt, server.crt, server.key	cks::paths
+Path: logs of a static pod that died	/var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/	cks::paths
+Path: where exam deliverables are written	/opt/course/&lt;n&gt;/&lt;file&gt;	cks::paths
+Path: ImagePolicyWebhook config directory	/etc/kubernetes/admission-controllers/ holds the admission config and the webhook kubeconfig	cks::paths
+NetworkPolicy: default deny both directions	spec:<br>&nbsp;&nbsp;podSelector: {}<br>&nbsp;&nbsp;policyTypes: [Ingress, Egress]	cks::commands
+NetworkPolicy: allow DNS out under a default deny egress	egress:<br>- ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]<br>Both protocols, or resolution breaks.	cks::traps
+NetworkPolicy: block only the cloud metadata endpoint	egress:<br>- to: [{ipBlock: {cidr: 0.0.0.0/0, except: [169.254.169.254/32]}}]<br>NetworkPolicy has no deny rule, so you allow everything except.	cks::traps
+NetworkPolicy: when are two selectors AND vs OR	Two dashes under from = OR. One dash with namespaceSelector and podSelector indented under it = AND.	cks::traps
+NetworkPolicy: what does an empty podSelector select	Every pod in the namespace. A policyTypes entry with no matching rule block denies that whole direction.	cks::traps
+RBAC: ServiceAccount subject spelling, both forms	Creating a binding: --serviceaccount=ns:sa<br>Testing it: --as=system:serviceaccount:ns:sa	cks::traps
+RBAC: how do you verify a permission	kubectl auth can-i &lt;verb&gt; &lt;resource&gt; --as=system:serviceaccount:&lt;ns&gt;:&lt;sa&gt; -n &lt;ns&gt; ; always test a case that must return no.	cks::commands
+RBAC: how do you reduce access	Narrow or delete the existing rule. RBAC is additive only, so adding a tighter rule beside a loose one changes nothing.	cks::traps
+ServiceAccount: stop a pod mounting a token	automountServiceAccountToken: false on the ServiceAccount or on the pod. The pod-level setting wins, and neither affects a running pod.	cks::commands
+ServiceAccount: mint a short-lived token	kubectl create token &lt;sa&gt; -n &lt;ns&gt; --duration=10m	cks::commands
+API server: the first command of any manifest task	cp /etc/kubernetes/manifests/kube-apiserver.yaml /root/kube-apiserver.yaml.bak	cks::traps
+API server: how often does the kubelet rescan the manifest directory	About every 20 seconds. After a save, wait a full minute. Do not re-edit repeatedly.	cks::traps
+API server: recovery order when it does not come back	1. crictl ps -a | grep apiserver<br>2. crictl logs &lt;id&gt;<br>3. journalctl -u kubelet, filtered for apiserver or manifest<br>4. newest dir under /var/log/pods/...kube-apiserver...<br>5. restore the backup	cks::traps
+API server: what does any file-backed flag also need	A volumeMounts entry AND a matching volumes entry with a hostPath. Missing the volume is a top cause of a dead API server.	cks::traps
+API server: health check after an edit	curl -k https://127.0.0.1:6443/readyz	cks::commands
+API server: the four real causes of a crash after editing	A misspelled flag, a volumeMounts entry with no matching volume, YAML indentation, and a webhook kubeconfig missing its server: line.	cks::traps
+NodeRestriction: what makes it actually take effect	Node must be in --authorization-mode as well as NodeRestriction in --enable-admission-plugins. Test with /etc/kubernetes/kubelet.conf, not the admin kubeconfig.	cks::traps
+kube-bench: run it against control plane and node	kube-bench run --targets master,node<br>kube-bench run --targets node --check 4.2.1,4.2.4	cks::commands
+CIS id to file map	1.2.x API server manifest<br>1.3.x controller manager<br>2.x etcd<br>4.2.x /var/lib/kubelet/config.yaml then restart the kubelet	cks::flags
+kubelet: the four CIS fixes	readOnlyPort: 0<br>authentication.anonymous.enabled: false<br>authorization.mode: Webhook<br>protectKernelDefaults: true	cks::flags
+TLS hardening flags	API server: --tls-min-version=VersionTLS13 and --tls-cipher-suites=...<br>etcd: --cipher-suites=...	cks::flags
+Generate a self-signed cert and key in one command	openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.crt -subj "/CN=web.example" -days 365	cks::commands
+Create a TLS secret for an Ingress	kubectl create secret tls &lt;name&gt; --cert=tls.crt --key=tls.key -n &lt;ns&gt; ; type is kubernetes.io/tls and it must share the Ingress namespace.	cks::commands
+Ingress: force the HTTPS redirect	annotation nginx.ingress.kubernetes.io/ssl-redirect: "true" , with the quotes	cks::flags
+Verify a binary against a published checksum	echo "&lt;hash&gt;  &lt;file&gt;" | sha512sum --check ; exactly two spaces between hash and filename.	cks::commands
+CSR: the fields that matter	signerName: kubernetes.io/kube-apiserver-client<br>usages: [client auth]<br>request: single-line base64 -w0<br>CN is the user, O is the group	cks::flags
+kubeadm upgrade order	drain, upgrade kubeadm, kubeadm upgrade apply (or upgrade node), upgrade kubelet and kubectl, daemon-reload and restart kubelet, uncordon	cks::commands
+AppArmor: the single biggest trap	The profile NAME declared inside the file is what localhostProfile references, and it is usually not the file name. apparmor_parser -N &lt;file&gt; prints it.	cks::traps
+AppArmor: load a profile and confirm	apparmor_parser -q /etc/apparmor.d/&lt;file&gt;<br>aa-status | grep &lt;profile-name&gt;	cks::commands
+AppArmor: pod field since Kubernetes 1.30	securityContext:<br>&nbsp;&nbsp;appArmorProfile: {type: Localhost, localhostProfile: &lt;profile-name&gt;}<br>Legacy annotation container.apparmor.security.beta.kubernetes.io/&lt;container&gt;: localhost/&lt;name&gt; still works.	cks::commands
+AppArmor: why might a correctly written pod still not be confined	Profiles are per node. Pin the pod with nodeName to the node where the profile is loaded.	cks::traps
+seccomp: the three actions	SCMP_ACT_LOG audits, SCMP_ACT_ERRNO denies, SCMP_ACT_ALLOW permits. RuntimeDefault when no custom profile is named.	cks::flags
+seccomp: pod reference to a local profile	securityContext:<br>&nbsp;&nbsp;seccompProfile: {type: Localhost, localhostProfile: profiles/audit.json}<br>relative to /var/lib/kubelet/seccomp/	cks::commands
+securityContext: which fields are container level only	capabilities, privileged, allowPrivilegeEscalation, readOnlyRootFilesystem, appArmorProfile. fsGroup is pod level only.	cks::traps
+How do you change securityContext on a running pod	You cannot; the field is immutable. Use kubectl replace --force -f pod.yaml	cks::traps
+Get a container PID for strace without jq	crictl inspect --output go-template --template '{{.info.pid}}' "$CID"	cks::commands
+Blacklist a kernel module properly	In /etc/modprobe.d/&lt;name&gt;.conf write both:<br>blacklist &lt;mod&gt;<br>install &lt;mod&gt; /bin/true<br>then modprobe -r &lt;mod&gt; to unload it now.	cks::commands
+Host hardening: disable a service so it stays gone	systemctl disable --now &lt;unit&gt; , and mask it if it keeps coming back. Find it first with ss -tlpn.	cks::commands
+Pod Security Admission: what does it consist of	Three namespace labels: pod-security.kubernetes.io/enforce, /warn and /audit, each with an optional -version. Nothing else.	cks::commands
+Pod Security Admission: the restricted checklist	runAsNonRoot: true<br>allowPrivilegeEscalation: false<br>capabilities.drop: ["ALL"]<br>seccompProfile.type: RuntimeDefault<br>no host namespaces and no privileged containers	cks::flags
+Pod Security Admission: how do you list pods that already violate a level	kubectl label --dry-run=server --overwrite ns &lt;ns&gt; pod-security.kubernetes.io/enforce=&lt;level&gt; and read the warnings.	cks::commands
+Pod Security Admission: why did a violating Deployment get admitted	The Deployment is admitted; its ReplicaSet fails to create pods. Look at events, not at the Deployment.	cks::traps
+Gatekeeper: the two objects and the Rego contract	A ConstraintTemplate carrying Rego plus a Constraint carrying parameters and scope. The Rego rule must be named violation and return {"msg": msg}.	cks::commands
+Admission policy: how do you make a policy report without blocking	Gatekeeper: enforcementAction: dryrun. Kyverno: validationFailureAction: Audit instead of Enforce.	cks::flags
+ValidatingAdmissionPolicy: what makes it actually deny	A ValidatingAdmissionPolicyBinding whose validationActions is ["Deny"]. The policy alone does nothing.	cks::traps
+Admission engines during the exam: what should you never do	Never install Gatekeeper or Kyverno. Check which CRDs exist, then edit the policy that is already there.	cks::traps
+Encryption at rest: the four steps	1. head -c 32 /dev/urandom | base64<br>2. EncryptionConfiguration with aescbc first and identity last<br>3. --encryption-provider-config plus volumeMount and hostPath volume<br>4. kubectl get secrets -A -o json | kubectl replace -f -	cks::commands
+Encryption at rest: how do you prove it worked	Read the secret straight from etcd and look for the k8s:enc:aescbc:v1: prefix.	cks::commands
+etcdctl: read a secret from etcd	ETCDCTL_API=3 etcdctl --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key get /registry/secrets/&lt;ns&gt;/&lt;name&gt;	cks::commands
+Secrets: what does base64 in a Secret actually give you	Encoding, not encryption. Mount secrets as read-only volumes rather than env vars, and set immutable: true when the value is final.	cks::traps
+gVisor: the three pieces	RuntimeClass (cluster scoped) with handler: runsc<br>pod with runtimeClassName: gvisor<br>node targeting so the pod lands where containerd knows the handler	cks::commands
+gVisor: how do you prove a pod is sandboxed	kubectl exec &lt;pod&gt; -- dmesg | head ; gVisor identifies itself in the kernel log.	cks::commands
+Cilium: how do L7 and L3/L4 rejections differ	L7 rejections return HTTP 403. L3 and L4 rejections time out.	cks::traps
+Cilium: check status and encryption	kubectl -n kube-system exec ds/cilium -- cilium status<br>kubectl -n kube-system exec ds/cilium -- cilium encrypt status	cks::commands
+Istio: enforce mesh-wide strict mTLS	PeerAuthentication named default in istio-system with mtls.mode: STRICT. Workload selector beats namespace, namespace beats mesh.	cks::commands
+ImagePolicyWebhook: the chain of three files	API server flag names the AdmissionConfiguration; its imagePolicy.kubeConfigFile names the webhook kubeconfig; the kubeconfig's clusters[0].cluster.server names the backend.	cks::commands
+ImagePolicyWebhook: the single most reported way to kill the API server	Leaving out the server: line under clusters[0].cluster in the webhook kubeconfig. It needs both certificate-authority and server.	cks::traps
+ImagePolicyWebhook: AdmissionConfiguration fields in order	kubeConfigFile, allowTTL: 50, denyTTL: 50, retryBackoff: 500, defaultAllow: false	cks::flags
+ImagePolicyWebhook: how many API server edits does it need	Four: --admission-control-config-file, ImagePolicyWebhook appended to --enable-admission-plugins, a hostPath volume, and a volumeMount.	cks::traps
+Trivy: the flags that matter	trivy image --severity HIGH,CRITICAL --ignore-unfixed &lt;img&gt;<br>-f json -o &lt;path&gt; for a report file. Trivy docs are NOT allowed, so trivy --help is the only fallback.	cks::flags
+Trivy task: what should you read before acting	The deliverable. Delete the pod, scale the deployment, replace the image, or write the image name to a file are four different answers.	cks::traps
+kubesec: run it and read the score	kubesec scan pod.yaml returns a JSON array; the score is at .[0].score, read it with yq -p json because there is no jq.	cks::commands
+SBOM: generate one with bom	bom generate --image &lt;img&gt; --format json -o &lt;path&gt; produces SPDX. The bom CLI reference IS allowed documentation.	cks::commands
+Static analysis tasks: the rule to follow	Change exactly the number of things the task names and nothing else. Diff against a copy before moving on.	cks::traps
+Dockerfile red flags	:latest, USER root or no USER, ADD of a remote URL, credentials in ENV, a package manager left in the final stage	cks::traps
+Manifest red flags	privileged, hostNetwork, hostPID, allowPrivilegeEscalation, missing runAsNonRoot, secrets in env[].value	cks::traps
+Pin an image by digest	nginx@sha256:... in .spec.containers[].image . What actually runs is .status.containerStatuses[].imageID	cks::commands
+Which container tools should you assume on an exam host	podman for builds, crictl for inspection. Do not assume a Docker CLI exists.	cks::traps
+Falco: which rules file do you edit	/etc/falco/falco_rules.local.yaml, which loads last. Never edit /etc/falco/falco_rules.yaml.	cks::traps
+Falco: how do you override a shipped rule	Re-declare the same rule: name in the local rules file.	cks::commands
+Falco: the fields of a rule	rule, desc, condition, output, priority, and optional tags	cks::flags
+Falco: find output field names	falco --list ; falco -L lists loaded rules; falco --validate &lt;file&gt; parses without starting.	cks::commands
+Falco: the output format the exam asks for	%evt.time,%container.id,%container.name,%user.name with a % on every field and no spaces around the commas	cks::flags
+Falco: why is there no log file	File output is off by default. Set file_output.enabled: true and filename in /etc/falco/falco.yaml.	cks::traps
+Falco: reload rules without a full restart	kill -1 "$(cat /var/run/falco.pid)" or restart the unit. The unit is falco-modern-bpf on current packages and falco on older ones, so try both.	cks::commands
+Falco: map an alert back to a pod	crictl ps --id &lt;id&gt;, then crictl inspect for io.kubernetes.pod.name and .namespace labels, then kubectl get pods -A, then scale the deployment to zero.	cks::commands
+Audit policy: how are rules evaluated	In order, first match wins. Specific rules first, level: None for get/list/watch next, the bare level: Metadata catch-all last.	cks::traps
+Audit: the five API server flags	--audit-policy-file, --audit-log-path, --audit-log-maxage=30, --audit-log-maxbackup=10, --audit-log-maxsize=100	cks::flags
+Audit: the two hostPath volumes and their types	The policy file with type: File mounted read only, and the log directory with type: DirectoryOrCreate mounted writable.	cks::flags
+Audit log analysis with no jq	grep -o '"field":"[^"]*"' | cut -d'"' -f4 , and yq -p json -o yaml to pretty-print whole lines.	cks::commands
+Immutability: the full set of fields	readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, no privileged, capabilities.drop: ["ALL"], plus an emptyDir for every path the app writes.	cks::commands
+strace a container process	strace -p "$PID" -f -e trace=kill -o &lt;file&gt; , with the PID from crictl inspect --output go-template --template '{{.info.pid}}'	cks::commands

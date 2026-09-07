@@ -1,0 +1,10 @@
+id=10
+title="Write a service unit for an application"
+domain="Operations Deployment"
+domain_short=D1
+difficulty=Medium
+needs=""
+weight=6
+minutes=8
+sources=2
+host=any

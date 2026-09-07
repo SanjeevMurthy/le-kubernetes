@@ -1,0 +1,10 @@
+id=16
+title="Detect Threats with Falco Rules"
+domain="Monitoring, Logging and Runtime Security"
+domain_short=D6
+difficulty=Medium
+needs="node-root tool:falco"
+weight=7
+minutes=8
+sources=15
+host=worker

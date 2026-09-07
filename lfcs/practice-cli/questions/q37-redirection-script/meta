@@ -1,0 +1,10 @@
+id=37
+title="A script with separate stdout and stderr files"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Easy
+needs=""
+weight=4
+minutes=5
+sources=2
+host=any

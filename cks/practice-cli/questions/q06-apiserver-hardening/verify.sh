@@ -1,17 +1,25 @@
 #!/bin/bash
-# Q6 — Verify (control-plane node)
-PASS=0; FAIL=0
-KAS=/etc/kubernetes/manifests/kube-apiserver.yaml
-if [ ! -f "$KAS" ]; then echo "  FAIL: $KAS not found — run on the control-plane node"; echo "Results: 0 passed, 1 failed"; exit 1; fi
+# Q6 apiserver hardening: the three flags must be corrected AND the API server
+# must be serving with anonymous access actually refused.
+source "$(dirname "$0")/../../lib/checks.sh"; source "$(dirname "$0")/../../lib/env.sh"
 
-echo "Checking --anonymous-auth=false..."
-if grep -q -- '--anonymous-auth=false' "$KAS"; then echo "  PASS"; ((PASS++)); else echo "  FAIL: anonymous-auth not disabled"; ((FAIL++)); fi
+echo "Checking the kube-apiserver flags..."
+check_file_has "--anonymous-auth=false" '--anonymous-auth=false' "$KAS_MANIFEST"
+check_file_has "--authorization-mode is Node,RBAC" '--authorization-mode=(Node,RBAC|RBAC,Node)' "$KAS_MANIFEST"
+check_file_has "--profiling=false" '--profiling=false' "$KAS_MANIFEST"
+check_not "no AlwaysAllow authorizer left" \
+  bash -c '! test -f "$1" || grep -q -- "--authorization-mode=.*AlwaysAllow" "$1"' _ "$KAS_MANIFEST"
 
-echo "Checking authorization-mode includes Node and RBAC..."
-if grep -- '--authorization-mode=' "$KAS" | grep -q 'Node' && grep -- '--authorization-mode=' "$KAS" | grep -q 'RBAC'; then echo "  PASS"; ((PASS++)); else echo "  FAIL: authorization-mode must be Node,RBAC"; ((FAIL++)); fi
+echo "Checking the API server came back..."
+check "kube-apiserver reports readyz ok" bash -c 'curl -sk --max-time 5 https://127.0.0.1:6443/readyz | grep -q ok'
+check "authenticated kubectl calls still work" kubectl get --raw=/version
 
-echo "Checking enable-admission-plugins includes NodeRestriction..."
-if grep -- '--enable-admission-plugins=' "$KAS" | grep -q 'NodeRestriction'; then echo "  PASS"; ((PASS++)); else echo "  FAIL: NodeRestriction not enabled"; ((FAIL++)); fi
+echo "Checking anonymous requests are refused (effect test)..."
+code=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 5 https://127.0.0.1:6443/api 2>/dev/null)
+if [[ "$code" == "401" || "$code" == "403" ]]; then
+  echo "  PASS: anonymous GET /api refused with HTTP $code"; PASS=$((PASS + 1))
+else
+  echo "  FAIL: anonymous GET /api returned HTTP '$code' (expected 401 or 403)"; FAIL=$((FAIL + 1))
+fi
 
-echo ""; echo "Results: $PASS passed, $FAIL failed"
-[[ $FAIL -eq 0 ]]
+summary

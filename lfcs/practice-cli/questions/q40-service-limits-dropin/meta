@@ -1,0 +1,10 @@
+id=40
+title="A service fails its file-descriptor limit: raise it with a drop-in"
+domain="Essential Commands"
+domain_short=D4
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=1
+host=any

@@ -1,0 +1,10 @@
+id=03
+title="Ingress TLS Termination"
+domain="Cluster Setup"
+domain_short=D1
+difficulty=Medium
+needs="kubectl ingress"
+weight=5
+minutes=6
+sources=7
+host=any

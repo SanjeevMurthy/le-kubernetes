@@ -535,7 +535,7 @@ curl http://cluster2-controlplane:30080
 
 ### 📖 Official Documentation
 
-- [Gateway API — HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
+- [Gateway API — HTTPRoute](https://gateway-api.sigs.k8s.io/guides/http-routing/)
 - [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/)
 
 ---

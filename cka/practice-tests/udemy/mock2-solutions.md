@@ -136,6 +136,8 @@ kubectl get pods -n default | grep backend-api
 
 ---
 
+<a id="q10"></a>
+
 ## Q10 — Secrets & 2-Tier Web App Configuration
 
 **Section:** Workloads & Scheduling  
@@ -511,7 +513,7 @@ kubectl describe gateway web-gateway -n cka5673
 
 - [Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/)
 - [Gateway API — TLS Configuration](https://gateway-api.sigs.k8s.io/guides/tls/)
-- [Gateway Listeners](https://gateway-api.sigs.k8s.io/api-types/gateway/#listeners)
+- [Gateway Listeners](https://gateway-api.sigs.k8s.io/guides/tls/)
 
 ---
 
@@ -590,7 +592,7 @@ kubectl describe httproute web-route -n cka7395
 
 ### 📖 Official Documentation
 
-- [Gateway API — HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
+- [Gateway API — HTTPRoute](https://gateway-api.sigs.k8s.io/guides/http-routing/)
 - [HTTPRoute Matching](https://gateway-api.sigs.k8s.io/guides/http-routing/)
 - [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/)
 
@@ -669,7 +671,7 @@ kubectl describe pvc apple-pvc-cka04-str
 
 - [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 - [PersistentVolumeClaims](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims)
-- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
+- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
 ---
 

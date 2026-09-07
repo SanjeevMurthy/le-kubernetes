@@ -1,0 +1,10 @@
+id=35
+title="CiliumNetworkPolicy: allow only GET /health"
+domain="Minimize Microservice Vulnerabilities"
+domain_short=D4
+difficulty=Medium
+needs="kubectl cni-cilium"
+weight=7
+minutes=8
+sources=8
+host=any

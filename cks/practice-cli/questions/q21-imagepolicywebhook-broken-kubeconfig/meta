@@ -1,0 +1,10 @@
+id=21
+title="ImagePolicyWebhook: complete the config and deny unverified images"
+domain="Supply Chain Security"
+domain_short=D5
+difficulty=Hard
+needs="node-root"
+weight=9
+minutes=10
+sources=12
+host=control-plane

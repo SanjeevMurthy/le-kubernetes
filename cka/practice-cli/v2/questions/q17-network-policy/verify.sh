@@ -32,33 +32,32 @@ else
 fi
 
 echo "Checking ingress allows from podSelector role=backend..."
-INGRESS_JSON=$(kubectl get networkpolicy allow-frontend -n production -o json 2>/dev/null)
-BACKEND_MATCH=$(echo "$INGRESS_JSON" | grep -o '"role":"backend"' || true)
-if [[ -n "$BACKEND_MATCH" ]]; then
+BACKEND_MATCH=$(kubectl get networkpolicy allow-frontend -n production -o jsonpath='{.spec.ingress[*].from[*].podSelector.matchLabels.role}' 2>/dev/null)
+if [[ " $BACKEND_MATCH " == *" backend "* ]]; then
   echo "  PASS: Ingress allows from podSelector role=backend"
   ((PASS++))
 else
-  echo "  FAIL: Ingress does not allow from podSelector role=backend"
+  echo "  FAIL: Ingress does not allow from podSelector role=backend (found: '$BACKEND_MATCH')"
   ((FAIL++))
 fi
 
 echo "Checking ingress allows from namespaceSelector monitoring..."
-NS_MATCH=$(echo "$INGRESS_JSON" | grep -o '"kubernetes.io/metadata.name":"monitoring"' || true)
-if [[ -n "$NS_MATCH" ]]; then
+NS_MATCH=$(kubectl get networkpolicy allow-frontend -n production -o jsonpath='{.spec.ingress[*].from[*].namespaceSelector.matchLabels.kubernetes\.io/metadata\.name}' 2>/dev/null)
+if [[ " $NS_MATCH " == *" monitoring "* ]]; then
   echo "  PASS: Ingress allows from namespaceSelector monitoring"
   ((PASS++))
 else
-  echo "  FAIL: Ingress does not allow from namespaceSelector for monitoring namespace"
+  echo "  FAIL: Ingress does not allow from namespaceSelector for monitoring namespace (found: '$NS_MATCH')"
   ((FAIL++))
 fi
 
 echo "Checking port 80 is specified..."
-PORT_MATCH=$(echo "$INGRESS_JSON" | grep -o '"port":80' || true)
-if [[ -n "$PORT_MATCH" ]]; then
+PORT_MATCH=$(kubectl get networkpolicy allow-frontend -n production -o jsonpath='{.spec.ingress[*].ports[*].port}' 2>/dev/null)
+if [[ " $PORT_MATCH " == *" 80 "* ]]; then
   echo "  PASS: Port 80 is specified in ingress rules"
   ((PASS++))
 else
-  echo "  FAIL: Port 80 not found in ingress rules"
+  echo "  FAIL: Port 80 not found in ingress rules (found: '$PORT_MATCH')"
   ((FAIL++))
 fi
 

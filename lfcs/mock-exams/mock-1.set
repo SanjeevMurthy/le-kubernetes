@@ -1,0 +1,20 @@
+# Mock 1 - broad coverage across all five domains, the first honest measurement.
+# One "question-id" then "weight", separated by a pipe.
+01|4
+03|5
+04|6
+08|7
+10|6
+12|6
+14|5
+16|6
+17|8
+21|7
+23|6
+24|7
+26|4
+32|5
+33|5
+35|5
+41|5
+43|5

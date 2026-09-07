@@ -649,7 +649,7 @@ kubectl -n project-t230 describe pod -l app=safari | grep -A2 Mounts
 ### References
 
 - [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
+- [Configure a Pod to Use a PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 
 ---
 
@@ -1371,7 +1371,7 @@ curl r500.gateway:30080/auto
 ### References
 
 - [Gateway API Documentation](https://gateway-api.sigs.k8s.io/)
-- [HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
+- [HTTPRoute](https://gateway-api.sigs.k8s.io/guides/http-routing/)
 
 ---
 

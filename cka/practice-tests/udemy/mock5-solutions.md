@@ -618,7 +618,7 @@ kubectl get deploy -n crystal-apd-ns
 
 - [Helm Upgrade](https://helm.sh/docs/helm/helm_upgrade/)
 - [Helm Repo Update](https://helm.sh/docs/helm/helm_repo_update/)
-- [Managing Kubernetes Objects with Helm](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/managing-kubernetes-objects-using-helm/)
+- [Managing Kubernetes Objects with Helm](https://helm.sh/docs/intro/using_helm/)
 
 ---
 

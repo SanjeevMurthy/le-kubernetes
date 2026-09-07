@@ -1,0 +1,10 @@
+id=17
+title="API Server Audit Logging Policy"
+domain="Monitoring, Logging and Runtime Security"
+domain_short=D6
+difficulty=Hard
+needs="node-root"
+weight=8
+minutes=10
+sources=13
+host=control-plane

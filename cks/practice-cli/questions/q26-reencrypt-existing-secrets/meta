@@ -1,0 +1,10 @@
+id=26
+title="Encryption at rest: add a new key and re-encrypt"
+domain="Minimize Microservice Vulnerabilities"
+domain_short=D4
+difficulty=Hard
+needs="node-root tool:etcdctl"
+weight=8
+minutes=10
+sources=8
+host=control-plane
