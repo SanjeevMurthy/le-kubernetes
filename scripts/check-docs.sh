@@ -49,6 +49,16 @@ else
   echo "scripts/check-question-refs.py not found - skipped"
 fi
 
+step "persistence rule"
+# LFCS scores a change that does not survive a reboot as zero. A verifier that
+# only looks at the running system is therefore too generous, so each question
+# must check persistence or be listed as exempt with a reason.
+if [[ -f scripts/check-persistence.py && -d lfcs ]]; then
+  python3 scripts/check-persistence.py || status=1
+else
+  echo "not applicable - skipped"
+fi
+
 step "lab tables"
 # The "which questions run where" tables are derived from the question metas.
 # A new or retagged question silently invalidates them, so the gate rebuilds
