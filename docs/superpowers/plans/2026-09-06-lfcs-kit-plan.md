@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status: built.** This plan was executed and the result is in the repository.
+> The checkboxes below are the original task list, left as written rather than
+> ticked, because they record what was planned. What was actually built, and
+> where it differed, is section 15 of
+> [`../specs/2026-09-06-cks-lfcs-prep-design.md`](../specs/2026-09-06-cks-lfcs-prep-design.md).
+
 **Goal:** Build the complete LFCS preparation kit under `lfcs/` (lab guide and provisioning scripts, exam-environment note, five domain recipe notes plus a basics refresher, cheatsheets, Anki deck, real-exam compilation, dated plan, a 45-question practice CLI that runs as root inside the VMs, three scored mocks) and finish the repo with the combined roadmap, root README, and CLAUDE.md, all before study starts on 13 Dec 2026.
 
 **Architecture:** `lfcs/` mirrors `cks/`. The practice CLI reuses the CKS harness (entrypoint, menu, progress, checks, generators) with an LFCS `lib/env.sh` that provides root and lab-marker guards, distro detection, loop-device disks, a network-namespace peer host, and file backup and restore. Questions are self-contained folders with `meta`, `question.md`, `solution.md`, `setup.sh`, `verify.sh`, `cleanup.sh`, verified by effect and by persistence. Two VirtualBox VMs (Ubuntu 24.04 primary, Rocky 9 secondary) are built from a guide and two provisioning scripts.

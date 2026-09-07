@@ -125,7 +125,7 @@ The CKS CLI refuses any kubectl context matching `aks`, `eks`, `gke` or `prod`, 
 
 ## Working on this repo
 
-- Branch per certification (`cks`, `lfcs`), with a pull request at the end of each build phase.
+- Branch per certification (`cks`, `lfcs`), with a pull request at the end of each build phase. Work that changes `scripts/`, `roadmap.md`, the top-level README or the gate touches both kits, so it belongs on one branch with one pull request instead; the CKS and LFCS kits were built that way, recorded in section 15 of the design spec.
 - Run `bash scripts/check-docs.sh` before every commit.
 - Question scripts that touch nodes cannot be tested on macOS. They are syntax-checked locally and smoke-tested by the owner on Killercoda or in the LFCS VM before a phase is called done.
 - When a study plan's dates change, update `roadmap.md` too.

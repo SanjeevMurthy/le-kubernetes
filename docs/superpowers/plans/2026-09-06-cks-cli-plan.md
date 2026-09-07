@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status: built.** This plan was executed and the result is in the repository.
+> The checkboxes below are the original task list, left as written rather than
+> ticked, because they record what was planned. What was actually built, and
+> where it differed, is section 15 of
+> [`../specs/2026-09-06-cks-lfcs-prep-design.md`](../specs/2026-09-06-cks-lfcs-prep-design.md).
+
 **Goal:** Upgrade `cks/practice-cli` to a 44-question, per-question-file practice harness with environment detection, progress, random mode, a tools installer, and a scored 120-minute mock mode driven by three mock papers.
 
 **Architecture:** Keep the CKAD harness shape (colors, menu, progress, timer) but make every question self-contained (`meta`, `question.md`, `solution.md`, `setup.sh`, `verify.sh`, `cleanup.sh`). Two generators derive the registry and the reading guide from the question folders, a third derives mock papers from `.set` files. New `lib/env.sh` and `lib/checks.sh` give setups and verifiers a shared, tested vocabulary. Menu code stays bash 3.2 compatible so it can be smoke-tested on the Mac; question scripts run on Linux.

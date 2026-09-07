@@ -69,7 +69,7 @@ All facts below were fetched from Linux Foundation pages on 2026-09-06 (see rese
 | Labs | Killercoda, KodeKloud sandboxes, minikube on the Mac for CKS; VirtualBox VMs on the Mac for LFCS |
 | Mac | Apple Silicon, 24 GB RAM, 12 cores, about 26 GB free disk; Docker Desktop installed but stopped; bash 3.2; no `timeout`; active kubectl context is a work AKS cluster |
 | Style | Exam-task recipes; TOC on every note; mermaid only where a flow needs it; Anki decks in the le-linux tab format |
-| Git | Branch `cks` for phases 0 to 2, branch `lfcs` for phases 3 to 5, PR at the end of each phase |
+| Git | Planned: branch `cks` for phases 0 to 2, branch `lfcs` for phases 3 to 5, PR at the end of each phase. Built: one branch and one PR, see section 15 |
 
 ---
 
@@ -337,11 +337,21 @@ Seven files as listed in §4. `06-linux-basics-refresher.md` covers the implicit
 
 `scripts/check-docs.sh` runs on every phase end and before every PR:
 
-1. `check-links.py`: every relative link and image resolves; every `#anchor` matches a heading slug; external links listed, not fetched.
-2. `generate_toc.py --check`: TOC blocks match headings; `--write` regenerates.
-3. `check-mermaid.sh`: extracts fenced mermaid blocks and renders each with `npx -y @mermaid-js/mermaid-cli`; falls back to a syntax lint (known diagram type, balanced brackets, no tabs) when the renderer is unavailable.
+1. `check-links.py`: every relative link and image resolves; every `#anchor` matches a heading slug or an HTML `<a id>`; external links listed, not fetched.
+2. `generate_toc.py --check`: TOC blocks match headings; `--inject` regenerates. Skips per-question `question.md` and `solution.md`, which the guide builder inlines.
+3. `check-mermaid.sh`: scans fenced mermaid blocks and renders each with `npx -y @mermaid-js/mermaid-cli`; falls back to a syntax lint when the renderer is unavailable.
 4. `bash -n` on every `.sh` file and CLI entrypoint; `shellcheck` when installed.
 5. Exit non-zero on any finding; prints a summary table.
+
+Four more were added during the build, each after a defect that a review had missed:
+
+6. `test-libs.sh`: 32 unit tests over the shared helpers, including the `/etc/fstab` editor, whose failure mode is a virtual machine that will not boot.
+7. `check-question-refs.py`: every `Q<n>` named in a note, checklist or mock set exists on disk.
+8. `check-persistence.py`: every LFCS verifier proves a change survives a reboot, or is listed exempt with a written reason.
+9. `check-cleanup-safety.py`: no cleanup deletes an account it did not create, flushes the host firewall, or restores a whole-file `/etc/fstab` snapshot.
+10. `build-lab-table.py`: the "which questions run where" tables are derived from the question metas rather than maintained by hand.
+
+`scripts/regenerate.sh` rebuilds every generated artefact in one command.
 
 Acceptance per phase also includes a coverage check: every curriculum bullet maps to at least one note recipe and one CLI question, recorded in `01-domain-checklists.md`.
 
@@ -398,6 +408,40 @@ Agent strategy, from the limits observed in this environment:
 
 ## 14. Open items
 
-1. Exact voucher expiry dates for CKS and LFCS (owner to confirm from the training portal).
+1. ~~Exact voucher expiry dates~~ Confirmed by the owner: both vouchers expire **3 March 2027**. That makes Saturday 13 February 2027 the last date an LFCS first attempt still leaves two retake Saturdays, which `roadmap.md` records.
 2. KodeKloud CKS lab cluster version at the time of study (labs lagged the exam in 2025).
 3. Whether the CKS voucher was bought under a scheme that excludes killer.sh; the portal's "Exam Simulator" button confirms.
+
+---
+
+## 15. As built
+
+Where the build differed from this design, and why.
+
+**One branch, one pull request.** The plan was a branch per certification with a
+pull request at the end of each phase. The shared scripts, `roadmap.md`, the
+top-level README and the verification gate all span both kits, so a phase PR
+would have carried changes that only made sense alongside the other kit's, and
+neither branch would have passed the gate alone. The whole build is on branch
+`cks` as a single pull request. A future kit that adds no shared tooling can
+follow the original convention.
+
+**Question banks.** CKS 44 as designed. LFCS 45 as designed. Domain weights of
+the LFCS bank come out at 24 percent Operations, 27 Networking, 21 Storage, 17
+Essential Commands and 11 Users and Groups, against the exam's published
+25/25/20/20/10. Essential Commands is the one domain that is light.
+
+**Tier 1 coverage.** The design estimated roughly 55 percent of CKS questions
+would run on minikube alone. Measured against the bank as built it is 18 of 44,
+which is 41 percent. The rest need a root shell on a kubeadm node.
+
+**Review.** No node-level verifier has been executed. Two independent audits of
+the LFCS bank raised 29 findings and the new gate checks and re-reading found
+nine more; all are fixed. The recurring classes were a check that could not
+fail, a check that failed a correct answer, and a cleanup that reached beyond
+its own question. The gate now catches the third class mechanically, and it
+found two defects both audits had missed.
+
+**Still unverified.** The owner's smoke tests on Killercoda and in the lab VMs
+remain the real acceptance gate, as section 10 says. Nothing in this repository
+can substitute for them.

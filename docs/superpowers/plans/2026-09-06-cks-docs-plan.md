@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status: built.** This plan was executed and the result is in the repository.
+> The checkboxes below are the original task list, left as written rather than
+> ticked, because they record what was planned. What was actually built, and
+> where it differed, is section 15 of
+> [`../specs/2026-09-06-cks-lfcs-prep-design.md`](../specs/2026-09-06-cks-lfcs-prep-design.md).
+
 **Goal:** Ship the repo-wide verification tooling, fix the six broken verifiers, and deliver the complete CKS document set (exam-environment note, six upgraded domain notes, cheatsheet, Anki deck, real-exam compilation, dated study plan, lab-setup guide) so study can start on 26 Sep 2026.
 
 **Architecture:** Phase 0 adds `scripts/` (Python and bash checkers, no third-party dependencies except optional mermaid-cli via npx) and patches four CKS and two CKA v2 verify scripts. Phase 1 rewrites and extends the markdown under `cks/` in recipe style, one file per task, each verified by `scripts/check-docs.sh` before commit. The CLI itself is Part 2 (`2026-09-06-cks-cli-plan.md`).
