@@ -164,6 +164,31 @@ backup_file() {
   return 0
 }
 
+# Remove this question's own lines from /etc/fstab, matching on either the
+# source or the mount point.
+#
+# Cleanups must never restore a whole-file snapshot of /etc/fstab. Several
+# storage questions can be set up at once, most obviously during a mock exam,
+# and a snapshot taken when this question was set up does not know about the
+# lines the others added since. Restoring it deletes their mounts, and a later
+# cleanup restoring its own newer snapshot puts this question's line back,
+# pointing at a device that no longer exists. A wrong /etc/fstab stops the next
+# boot, which is the one failure this lab must not cause on purpose.
+#
+# So: take the line out, leave every other line alone. The backup_file copy
+# stays on disk as a reference if a candidate ever needs to see the original.
+# FSTAB is an override for the unit tests only; questions never set it.
+fstab_drop_target() {   # fstab_drop_target /mount/point   (or the source field)
+  local t="$1" f="${FSTAB:-/etc/fstab}" tmp
+  [[ -n "$t" && -f "$f" ]] || return 0
+  mkdir -p "$LFCS_STATE_DIR"
+  tmp="$LFCS_STATE_DIR/fstab.$$"
+  if awk -v t="$t" '$1 ~ /^[[:space:]]*#/ || ($1 != t && $2 != t)' "$f" > "$tmp"; then
+    cat "$tmp" > "$f"
+  fi
+  rm -f "$tmp"
+  return 0
+}
 restore_file() {
   local f="$1" q="$2" b
   b="$LFCS_STATE_DIR/backup/$q/$(echo "$f" | tr / _)"

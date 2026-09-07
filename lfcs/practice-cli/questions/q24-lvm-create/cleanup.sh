@@ -7,12 +7,7 @@ STATE="$LFCS_STATE_DIR/q24"
 
 umount /app 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/app"' /etc/fstab > /tmp/lfcs-q24-fstab &&
-    cat /tmp/lfcs-q24-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q24-fstab
-fi
-restore_file /etc/fstab q24
+fstab_drop_target /app
 
 # Tear LVM down in the only order that works: volumes, group, labels.
 if vgs vg_data >/dev/null 2>&1; then

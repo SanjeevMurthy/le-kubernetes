@@ -11,12 +11,7 @@ pkill -f lfcs-logwriter >/dev/null 2>&1
 sleep 1
 umount "$MP" 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk -v t="$MP" '$1 ~ /^#/ || $2 != t' /etc/fstab > /tmp/lfcs-q31-fstab &&
-    cat /tmp/lfcs-q31-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q31-fstab
-fi
-restore_file /etc/fstab q31
+fstab_drop_target "$MP"
 
 free_loop_disk d31
 rm -rf "$COURSE_DIR/31"

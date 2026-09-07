@@ -8,12 +8,7 @@ MP=/var/lib/lfcs-logs
 
 umount "$MP" 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk -v t="$MP" '$1 ~ /^#/ || $2 != t' /etc/fstab > /tmp/lfcs-q25-fstab &&
-    cat /tmp/lfcs-q25-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q25-fstab
-fi
-restore_file /etc/fstab q25
+fstab_drop_target "$MP"
 
 if vgs vg_ext >/dev/null 2>&1; then
   for lv in $(lvs --noheadings -o lv_name vg_ext 2>/dev/null | tr -d ' '); do

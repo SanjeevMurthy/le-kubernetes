@@ -11,12 +11,7 @@ MDUUID=$(mdadm --detail --export /dev/md0 2>/dev/null | sed -n 's/^MD_UUID=//p')
 umount /mnt/raid 2>/dev/null
 mdadm --stop /dev/md0 >/dev/null 2>&1
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/raid"' /etc/fstab > /tmp/lfcs-q28-fstab &&
-    cat /tmp/lfcs-q28-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q28-fstab
-fi
-restore_file /etc/fstab q28
+fstab_drop_target /mnt/raid
 
 restore_file "$MDCONF" q28
 if [[ "$(cat "$STATE/mdconf-existed" 2>/dev/null)" == no && -f "$MDCONF" ]]; then

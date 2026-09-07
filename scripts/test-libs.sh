@@ -106,6 +106,33 @@ LFCS_ALLOW_HOST=1 LFCS_STATE_DIR="$TMP/state" COURSE_DIR="$TMP/course" bash -c '
 expect "LFCS_ALLOW_HOST=1 overrides it" 0 "$?"
 
 # ─── cks lib/env.sh context guard ──────────────────────────────────
+# ─── lfcs fstab_drop_target ────────────────────────────────────────
+# This one guards the boot. A cleanup that removes the wrong lines, or that
+# restores a stale whole-file snapshot, leaves an /etc/fstab naming a device
+# that no longer exists, and the VM stops at the emergency prompt.
+printf '\n== lfcs/practice-cli/lib/env.sh fstab_drop_target ==\n'
+cat > "$TMP/fstab" <<'FSTABEOF'
+UUID=aaaa-1111 /               ext4  defaults        0 1
+UUID=bbbb-2222 /data           ext4  noatime         0 2
+# UUID=cccc-3333 /data         ext4  an old comment  0 2
+/swapfile2     none            swap  sw,pri=10       0 0
+UUID=dddd-4444 /mnt/raid       ext4  defaults        0 2
+FSTABEOF
+out=$(bash -c '
+  LFCS_STATE_DIR='"$TMP"'/state
+  FSTAB='"$TMP"'/fstab
+  source '"$ROOT"'/lfcs/practice-cli/lib/env.sh 2>/dev/null
+  fstab_drop_target /data
+  fstab_drop_target /swapfile2
+  fstab_drop_target /nonexistent
+' 2>&1)
+expect "the /data mount is gone"          0 "$(grep -c '^UUID=bbbb-2222' "$TMP/fstab")"
+expect "the swap line is gone by source"  0 "$(grep -c '^/swapfile2' "$TMP/fstab")"
+expect "the root filesystem survives"     1 "$(grep -c '^UUID=aaaa-1111 ' "$TMP/fstab")"
+expect "another question's mount survives" 1 "$(grep -c '^UUID=dddd-4444' "$TMP/fstab")"
+expect "a commented line is left alone"   1 "$(grep -c '^# UUID=cccc-3333' "$TMP/fstab")"
+expect "dropping an absent target removed nothing more" 3 "$(wc -l < "$TMP/fstab" | tr -d ' ')"
+
 printf '\n== cks/practice-cli/lib/env.sh context guard ==\n'
 # The guard reads the context through kubectl, so drive it with a stub on PATH.
 mkdir -p "$TMP/bin"

@@ -8,12 +8,7 @@ DEV=$(head -1 "$STATE/devices" 2>/dev/null)
 
 umount /data 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/data"' /etc/fstab > /tmp/lfcs-q23-fstab &&
-    cat /tmp/lfcs-q23-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q23-fstab
-fi
-restore_file /etc/fstab q23
+fstab_drop_target /data
 
 if [[ -n "$DEV" && -b "$DEV" ]]; then
   for p in $(lsblk -lnpo NAME,TYPE "$DEV" 2>/dev/null | awk '$2=="part" {print $1}'); do

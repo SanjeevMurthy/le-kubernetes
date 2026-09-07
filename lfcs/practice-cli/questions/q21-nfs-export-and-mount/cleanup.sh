@@ -10,7 +10,7 @@ UNIT=$(cat "$STATE/unit" 2>/dev/null)
 umount -f /mnt/share >/dev/null 2>&1
 umount -l /mnt/share >/dev/null 2>&1
 
-restore_file /etc/fstab q21
+fstab_drop_target /mnt/share
 restore_file /etc/exports q21
 for f in /etc/exports.d/*.exports; do [[ -e "$f" ]] && restore_file "$f" q21; done
 exportfs -ra >/dev/null 2>&1

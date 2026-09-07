@@ -9,12 +9,7 @@ DEV=$(head -1 "$STATE/devices" 2>/dev/null)
 quotaoff -u /quota 2>/dev/null
 umount /quota 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/quota"' /etc/fstab > /tmp/lfcs-q27-fstab &&
-    cat /tmp/lfcs-q27-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q27-fstab
-fi
-restore_file /etc/fstab q27
+fstab_drop_target /quota
 
 if [[ -n "$DEV" && -b "$DEV" ]]; then
   wipefs -aq "$DEV" 2>/dev/null

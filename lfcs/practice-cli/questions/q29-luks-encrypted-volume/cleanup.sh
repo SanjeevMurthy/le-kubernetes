@@ -9,12 +9,7 @@ DEV=$(head -1 "$STATE/devices" 2>/dev/null)
 umount /mnt/secret 2>/dev/null
 cryptsetup close secret 2>/dev/null
 
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/secret"' /etc/fstab > /tmp/lfcs-q29-fstab &&
-    cat /tmp/lfcs-q29-fstab > /etc/fstab
-  rm -f /tmp/lfcs-q29-fstab
-fi
-restore_file /etc/fstab q29
+fstab_drop_target /mnt/secret
 
 if [[ -f /etc/crypttab ]]; then
   awk '$1 ~ /^#/ || $1 != "secret"' /etc/crypttab > /tmp/lfcs-q29-crypttab &&

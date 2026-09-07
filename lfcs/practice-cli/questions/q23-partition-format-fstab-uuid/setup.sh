@@ -18,14 +18,6 @@ if [[ -n "$other" ]]; then
   exit 1
 fi
 
-fstab_drop_target() {   # delete every fstab line whose mount point is $1
-  local t="$1"
-  [[ -f /etc/fstab ]] || return 0
-  awk -v t="$t" '$1 ~ /^#/ || $2 != t' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-}
-
 # Claimed by a *different* question. This question's own record is excluded,
 # so re-running setup keeps the same device instead of quietly dropping to a
 # loop file the second time.
