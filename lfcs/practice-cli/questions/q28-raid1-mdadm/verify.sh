@@ -12,6 +12,8 @@ if [[ ! -f "$STATE/devices" ]]; then
   echo ""; echo "Results: 0 passed, 1 failed"; exit 1
 fi
 MDCONF=$(cat "$STATE/mdconf" 2>/dev/null)
+# Only the file this distribution's mdadm and initramfs actually read counts.
+[[ -n "$MDCONF" ]] || { MDCONF=/etc/mdadm.conf; [[ "$(distro)" == ubuntu ]] && MDCONF=/etc/mdadm/mdadm.conf; }
 DEV_A=$(sed -n '1p' "$STATE/devices")
 DEV_B=$(sed -n '2p' "$STATE/devices")
 
@@ -45,7 +47,7 @@ else
   PAT='^ARRAY[[:space:]].*/dev/md/?0([[:space:]]|$)'
 fi
 check_persisted "the array has an ARRAY line in the mdadm configuration" "$PAT" \
-  "$MDCONF" /etc/mdadm/mdadm.conf /etc/mdadm.conf
+  "$MDCONF"
 
 echo "Checking the mount survives a reboot..."
 UUID=$(blkid -s UUID -o value /dev/md0 2>/dev/null)

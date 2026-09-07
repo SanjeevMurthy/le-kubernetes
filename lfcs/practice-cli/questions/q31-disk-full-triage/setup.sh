@@ -22,7 +22,10 @@ command -v lsof >/dev/null 2>&1 || pkg_install lsof
 command -v lsof >/dev/null 2>&1 || echo "Note: lsof is not installed. 'lsof +L1' is the intended tool here."
 
 backup_file /etc/fstab q31
+# Give the holder time to die: while it lives the filesystem cannot be
+# unmounted, and everything below would then run against a stale mount.
 pkill -f lfcs-logwriter >/dev/null 2>&1
+sleep 1
 umount "$MP" 2>/dev/null
 if [[ -f /etc/fstab ]]; then
   awk -v t="$MP" '$1 ~ /^#/ || $2 != t' /etc/fstab > "$STATE/fstab.tmp" &&

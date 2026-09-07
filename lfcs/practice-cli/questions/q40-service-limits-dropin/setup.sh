@@ -15,7 +15,10 @@ cat > /usr/local/bin/fdhog.sh <<'SHEOF'
 # Lab application: it needs 100 open file descriptors, then idles.
 opened=0
 for i in $(seq 1 100); do
-  if ! exec {fd}< /dev/null 2>/dev/null; then
+  # The braces keep 2>/dev/null scoped to this attempt. A bare
+  # "exec ... 2>/dev/null" would redirect the whole script's stderr for good,
+  # and the diagnostic below would never reach the journal.
+  if ! { exec {fd}< /dev/null; } 2>/dev/null; then
     echo "cannot open descriptor number $i" >&2
     exit 1
   fi
