@@ -40,10 +40,15 @@ else
   echo "scripts/test-libs.sh not found - skipped"
 fi
 
+# Which practice kits are in scope for the kit-specific steps below.
+kits=()
+for k in "${existing[@]}"; do [[ "$k" == cks || "$k" == lfcs ]] && kits+=("$k"); done
+
 step "question references"
-if [[ -f scripts/check-question-refs.py ]]; then
-  python3 scripts/check-question-refs.py cks || status=1
-  [[ -d lfcs ]] && { python3 scripts/check-question-refs.py lfcs || status=1; }
+if [[ -f scripts/check-question-refs.py && ${#kits[@]} -gt 0 ]]; then
+  for k in "${kits[@]}"; do python3 scripts/check-question-refs.py "$k" || status=1; done
+elif [[ ${#kits[@]} -eq 0 ]]; then
+  echo "no kit in scope - skipped"
 else
   echo "scripts/check-question-refs.py not found - skipped"
 fi
@@ -58,13 +63,22 @@ else
   echo "not applicable - skipped"
 fi
 
+step "cleanup safety"
+# Cleanups must undo their own question and nothing else. Every rule this
+# checks is a defect that actually reached the repository.
+if [[ -f scripts/check-cleanup-safety.py && ${#kits[@]} -gt 0 ]]; then
+  python3 scripts/check-cleanup-safety.py "${kits[@]}" || status=1
+elif [[ ${#kits[@]} -eq 0 ]]; then
+  echo "no kit in scope - skipped"
+else
+  echo "scripts/check-cleanup-safety.py not found - skipped"
+fi
+
 step "lab tables"
 # The "which questions run where" tables are derived from the question metas.
 # A new or retagged question silently invalidates them, so the gate rebuilds
 # them in memory and complains if the checked-in copy differs.
 if [[ -f scripts/build-lab-table.py ]]; then
-  kits=()
-  for t in "${existing[@]}"; do [[ "$t" == cks || "$t" == lfcs ]] && kits+=("$t"); done
   if [[ ${#kits[@]} -gt 0 ]]; then
     python3 scripts/build-lab-table.py --check "${kits[@]}" || status=1
   else
