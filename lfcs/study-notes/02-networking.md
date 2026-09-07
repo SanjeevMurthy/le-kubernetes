@@ -33,13 +33,13 @@ Two failure modes decide this domain. The first is a change that works now and d
 
 | Task type | Sources | Drill |
 |---|---|---|
-| Packet filtering, port redirection and NAT, made persistent | 7 | Q17, Q18 (planned) |
-| NFS export and persistent client mount | 3 | Q21 (planned) |
-| sshd hardening, keys and Match blocks | 2 | Q16 (planned) |
-| Web server, reverse proxy or load balancer | 2 | Q20 (planned) |
-| Static IP, static route, DNS and hosts, then troubleshooting the result | 1 | Q12, Q13, Q14, Q22 (planned) |
-| Bridge and bonding devices | 1 | Q19 (planned) |
-| Time synchronisation with chrony and timedatectl | 0 reports, named curriculum bullet | Q15 (planned) |
+| Packet filtering, port redirection and NAT, made persistent | 7 | Q17, Q18 |
+| NFS export and persistent client mount | 3 | Q21 |
+| sshd hardening, keys and Match blocks | 2 | Q16 |
+| Web server, reverse proxy or load balancer | 2 | Q20 |
+| Static IP, static route, DNS and hosts, then troubleshooting the result | 1 | Q12, Q13, Q14, Q22 |
+| Bridge and bonding devices | 1 | Q19 |
+| Time synchronisation with chrony and timedatectl | 0 reports, named curriculum bullet | Q15 |
 
 ```mermaid
 flowchart LR
@@ -62,7 +62,7 @@ Sources are distinct candidate exam reports counted in `docs/research/2026-09-06
 
 **Goal.** A static address on a second interface, with a gateway, on both distribution families, still present after a reboot.
 
-**Frequency.** 1 exam report, "network configuration and troubleshooting" (research section 3, static IP row). Drill: Q12 (planned).
+**Frequency.** 1 exam report, "network configuration and troubleshooting" (research section 3, static IP row). Drill: Q12.
 
 **Commands.**
 ```bash
@@ -118,7 +118,7 @@ nmcli -g ipv4.method,ipv4.addresses con show eth1   # Rocky persistence, expect 
 
 **Goal.** A persistent fully qualified hostname, a static host entry, and DNS servers with a search domain that survive a reboot.
 
-**Frequency.** 1 exam report, and a KodeKloud mock where a DNS change broke `ssh node01` later in the exam (research section 3, static IP row). Drill: Q14 (planned).
+**Frequency.** 1 exam report, and a KodeKloud mock where a DNS change broke `ssh node01` later in the exam (research section 3, static IP row). Drill: Q14.
 
 **Commands.**
 ```bash
@@ -153,7 +153,7 @@ ls -l /etc/resolv.conf                        # normally a symlink into /run/sys
 
 **Goal.** A host that takes time from a named server, serves time to a local subnet, and holds the required timezone across a reboot.
 
-**Frequency.** 0 exam reports, but a named curriculum bullet, "Set and synchronize system time using time servers" (research section 3, time sync row). Drill: Q15 (planned).
+**Frequency.** 0 exam reports, but a named curriculum bullet, "Set and synchronize system time using time servers" (research section 3, time sync row). Drill: Q15.
 
 **Commands.**
 ```bash
@@ -195,7 +195,7 @@ ls -l /etc/localtime                          # symlink into /usr/share/zoneinfo
 
 **Goal.** Find why a peer cannot reach a service on this host and fix every cause, typically a bind address and a firewall rule.
 
-**Frequency.** 1 exam report, network configuration and troubleshooting, and the technique behind every firewall task (research section 3, static IP row). Drill: Q22 (planned).
+**Frequency.** 1 exam report, network configuration and troubleshooting, and the technique behind every firewall task (research section 3, static IP row). Drill: Q22.
 
 **Commands.**
 ```bash
@@ -227,7 +227,7 @@ curl --max-time 3 -sS http://10.99.22.1:8082/ # live effect, run this from the p
 
 **Goal.** Key-only login with root login disabled, one named user still allowed a password, and the change proven without losing the current session.
 
-**Frequency.** 2 exam reports, including "the Match block is your best friend" (research section 3, sshd row). Drill: Q16 (planned).
+**Frequency.** 2 exam reports, including "the Match block is your best friend" (research section 3, sshd row). Drill: Q16.
 
 **Commands.**
 ```bash
@@ -270,7 +270,7 @@ systemctl is-enabled ssh 2>/dev/null || systemctl is-enabled sshd   # persistenc
 
 **Goal.** A host that accepts only the required services, drops everything else, and comes back after a reboot with exactly the same ruleset.
 
-**Frequency.** 7 exam reports, the most reported task family in the exam (research section 3, packet filtering row). Drill: Q17 (planned).
+**Frequency.** 7 exam reports, the most reported task family in the exam (research section 3, packet filtering row). Drill: Q17.
 
 **Warning.** Never block 8080/tcp, 4505/tcp or 4506/tcp. Accept them explicitly before setting any default drop policy, and check the saved file as well as the live ruleset.
 
@@ -343,7 +343,7 @@ for p in 8080 4505 4506; do nft list ruleset | grep -q "$p" && echo "$p referenc
 
 **Goal.** Traffic arriving on one port served by a process listening on another, plus a private subnet reaching the outside through this host, both persistent.
 
-**Frequency.** 7 exam reports, the same family as recipe 6, with `iptables -t nat -A PREROUTING ... -j REDIRECT --to-port` quoted verbatim by one candidate (research section 3, packet filtering row). Drill: Q18 (planned).
+**Frequency.** 7 exam reports, the same family as recipe 6, with `iptables -t nat -A PREROUTING ... -j REDIRECT --to-port` quoted verbatim by one candidate (research section 3, packet filtering row). Drill: Q18.
 
 **Warning.** A redirect from 8080 or a rule that drops 8080, 4505 or 4506 ends the exam session. Redirecting other ports to 8080 is fine; blocking or hijacking those three is not.
 
@@ -403,7 +403,7 @@ systemctl is-enabled nftables; firewall-cmd --permanent --list-forward-ports 2>/
 
 **Goal.** A route to a remote network through a specific gateway and interface, present now and after a reboot.
 
-**Frequency.** 1 exam report, and a KodeKloud mock that removes routes and expects `netplan try` (research section 3, static IP row). Drill: Q13 (planned).
+**Frequency.** 1 exam report, and a KodeKloud mock that removes routes and expects `netplan try` (research section 3, static IP row). Drill: Q13.
 
 **Commands.**
 ```bash
@@ -445,7 +445,7 @@ nmcli -g ipv4.routes con show eth1             # Rocky persistence
 
 **Goal.** A bridge that carries the address previously held by a physical NIC, and a bond of two NICs in active-backup mode, both persistent.
 
-**Frequency.** 1 exam report, plus a KodeKloud mock task that adds eth1 to a bridge (research section 3, bridge row). Drill: Q19 (planned).
+**Frequency.** 1 exam report, plus a KodeKloud mock task that adds eth1 to a bridge (research section 3, bridge row). Drill: Q19.
 
 **Commands.**
 ```bash
@@ -501,7 +501,7 @@ nmcli -g connection.type,connection.slave-type con show br0-eth1   # Rocky persi
 
 **Goal.** A public listener on port 80 that forwards to one or more application backends, enabled at boot, working with the host security policy.
 
-**Frequency.** 2 exam reports, web server and proxy tasks (research section 3, web server row). Drill: Q20 (planned).
+**Frequency.** 2 exam reports, web server and proxy tasks (research section 3, web server row). Drill: Q20.
 
 **Commands.**
 ```bash
@@ -551,7 +551,7 @@ getsebool httpd_can_network_connect 2>/dev/null   # Rocky, expect on
 
 **Goal.** A directory exported to a network with the exact permissions the task words, mounted on the client at boot without hanging the boot.
 
-**Frequency.** 3 exam reports, with one candidate stressing that the `ro` or `rw` word decides the grade (research section 3, NFS row). Drill: Q21 (planned).
+**Frequency.** 3 exam reports, with one candidate stressing that the `ro` or `rw` word decides the grade (research section 3, NFS row). Drill: Q21.
 
 **Commands.**
 ```bash

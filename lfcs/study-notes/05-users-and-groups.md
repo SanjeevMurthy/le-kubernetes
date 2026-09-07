@@ -28,12 +28,12 @@ Accounts, sudo rules, limits and ACLs are all file-backed, so persistence here m
 
 | Task type | Sources | Drill |
 |---|---|---|
-| Users and groups with a specific UID, GID, shell, home and expiry; password ageing; sudoers | 1 | Q41, Q42 (planned) |
-| ACLs with `setfacl` and `getfacl` | 1 | Q43 (planned) |
-| Resource limits with `ulimit` and `limits.conf` | 1 | Q44 (planned) |
+| Users and groups with a specific UID, GID, shell, home and expiry; password ageing; sudoers | 1 | Q41, Q42 |
+| ACLs with `setfacl` and `getfacl` | 1 | Q43 |
+| Resource limits with `ulimit` and `limits.conf` | 1 | Q44 |
 | SUID, SGID and sticky bits on shared directories | 1 | Q34 (planned, note 04) |
-| LDAP client with sssd or nslcd | 0 exam reports, 1 practice source | Q45 (planned) |
-| Personal and system-wide environment profiles | no standalone row, named curriculum bullet | Q44 (planned) |
+| LDAP client with sssd or nslcd | 0 exam reports, 1 practice source | Q45 |
+| Personal and system-wide environment profiles | no standalone row, named curriculum bullet | Q44 |
 
 Sources are distinct candidate write-ups counted in the exam research report, section 3. No single row here is heavily reported, which is the point: this domain is small, mechanical and fully recoverable in five minutes per task if the flags are memorised.
 
@@ -41,7 +41,7 @@ Sources are distinct candidate write-ups counted in the exam research report, se
 
 **Goal.** A user with the exact UID, primary group, supplementary group, shell, home directory, comment and expiry date the task names, with each attribute provable afterwards.
 
-**Frequency.** 1 candidate source (research section 3, users and groups row). Drill: Q41 (planned).
+**Frequency.** 1 candidate source (research section 3, users and groups row). Drill: Q41.
 
 **Commands.**
 ```bash
@@ -107,7 +107,7 @@ Each flag has one command that proves it.
 
 **Goal.** A user or a group with exactly the sudo rights the task names, in a validated drop-in file, with `/etc/sudoers` untouched.
 
-**Frequency.** 1 candidate source (research section 3, users and groups row, which names sudoers as a gotcha). Drill: Q42 (planned).
+**Frequency.** 1 candidate source (research section 3, users and groups row, which names sudoers as a gotcha). Drill: Q42.
 
 **Commands.**
 ```bash
@@ -158,7 +158,7 @@ id -nG ana | tr ' ' '\n' | grep -x -e sudo -e wheel
 
 **Goal.** A variable, PATH entry, alias or umask in place for every login, or for one user only, still there after a reboot.
 
-**Frequency.** No standalone row in research section 3. It is a named curriculum bullet under Users and Groups. Drill: Q44 (planned).
+**Frequency.** No standalone row in research section 3. It is a named curriculum bullet under Users and Groups. Drill: Q44.
 
 **Commands.**
 ```bash
@@ -211,7 +211,7 @@ sudo -u ana bash -ic 'alias' | head
 
 **Goal.** A user or group that cannot exceed a named number of processes or open files, enforced at login and surviving a reboot.
 
-**Frequency.** 1 candidate source (research section 3, resource limits row). Drill: Q44 (planned).
+**Frequency.** 1 candidate source (research section 3, resource limits row). Drill: Q44.
 
 **Commands.**
 ```bash
@@ -261,7 +261,7 @@ grep -E 'open files|processes' /proc/"$(pgrep -u ana -n .)"/limits
 
 **Goal.** Per-user or per-group access on a path beyond what the owner, group and other bits can express, including files created later.
 
-**Frequency.** 1 candidate source (research section 3, ACL row). Drill: Q43 (planned).
+**Frequency.** 1 candidate source (research section 3, ACL row). Drill: Q43.
 
 **Commands.**
 ```bash
@@ -308,7 +308,7 @@ getfacl /srv/project | grep -E '^mask|effective'
 
 **Goal.** The host resolves users and groups from an LDAP directory, they can log in, and a home directory appears on first login.
 
-**Frequency.** No exam report in research section 3, and 1 practice source (a KodeKloud mock task built around a missing `/etc/nslcd.conf`). It is a named curriculum bullet. Drill: Q45 (planned).
+**Frequency.** No exam report in research section 3, and 1 practice source (a KodeKloud mock task built around a missing `/etc/nslcd.conf`). It is a named curriculum bullet. Drill: Q45.
 
 **Commands.**
 ```bash

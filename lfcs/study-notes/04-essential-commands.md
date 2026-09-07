@@ -29,17 +29,17 @@ Each task runs on its own designated host, reached with `ssh <nodename>` from th
 
 | Task type | Sources | Drill |
 |---|---|---|
-| OpenSSL certificate inspection, generation and web server use | 4 | Q33 (planned) |
-| systemd: write a unit, enable it, diagnose a failing service | 2 | Q38 (planned) |
-| Process and IO monitoring, system performance | 1 | Q39 (planned) |
-| Application and service resource limits | 1 | Q40 (planned) |
-| Git basics: clone, branch, commit, `.gitignore` | 1 | Q32 (planned) |
-| `find` with permission, size and time filters plus `-exec` | 1 | Q34 (planned) |
-| Hard and soft links | 1 | Q36 (planned) |
-| Archives with tar, gzip, bzip2, xz and zip | 1 | Q36 (planned) |
-| Shell scripting and I/O redirection | 1 | Q37 (planned) |
-| Disk-space troubleshooting | 0 exam reports, 2 practice sources | Q31 (planned) |
-| Text processing with grep, sed and awk | no standalone row | Q35 (planned) |
+| OpenSSL certificate inspection, generation and web server use | 4 | Q33 |
+| systemd: write a unit, enable it, diagnose a failing service | 2 | Q38 |
+| Process and IO monitoring, system performance | 1 | Q39 |
+| Application and service resource limits | 1 | Q40 |
+| Git basics: clone, branch, commit, `.gitignore` | 1 | Q32 |
+| `find` with permission, size and time filters plus `-exec` | 1 | Q34 |
+| Hard and soft links | 1 | Q36 |
+| Archives with tar, gzip, bzip2, xz and zip | 1 | Q36 |
+| Shell scripting and I/O redirection | 1 | Q37 |
+| Disk-space troubleshooting | 0 exam reports, 2 practice sources | Q31 |
+| Text processing with grep, sed and awk | no standalone row | Q35 |
 
 Sources are distinct candidate write-ups counted in the exam research report, section 3. OpenSSL is the third most reported task type on the whole exam, tied with containers, so treat Recipe 6 as the highest value page in this note. Text processing has no row of its own because it is never the task; it is the tool used inside the other tasks.
 
@@ -47,7 +47,7 @@ Sources are distinct candidate write-ups counted in the exam research report, se
 
 **Goal.** A cloned repository with a new branch, a `.gitignore`, and a commit that `git log` shows with the right author.
 
-**Frequency.** 1 candidate source (research section 3, git basics row). Drill: Q32 (planned).
+**Frequency.** 1 candidate source (research section 3, git basics row). Drill: Q32.
 
 **Commands.**
 ```bash
@@ -92,7 +92,7 @@ git -C /home/ana/app check-ignore -v build/x.o        # proves .gitignore matche
 
 **Goal.** A unit that starts at boot, runs the right binary as the right user, and is still running after a reboot. Or a broken unit repaired and proven active.
 
-**Frequency.** 2 candidate sources (research section 3, systemd unit row). Drill: Q38 (planned).
+**Frequency.** 2 candidate sources (research section 3, systemd unit row). Drill: Q38.
 
 **Commands.**
 ```bash
@@ -147,7 +147,7 @@ ss -tlpn | grep ':9090'
 
 **Goal.** Identify the CPU, memory or disk pressure the task names, and write the answer to the exact path it asks for.
 
-**Frequency.** 1 candidate source for process and IO monitoring (research section 3, process management row), corroborated by a KodeKloud mock task that asks for the PID of the heaviest disk reader. Drill: Q39 (planned).
+**Frequency.** 1 candidate source for process and IO monitoring (research section 3, process management row), corroborated by a KodeKloud mock task that asks for the PID of the heaviest disk reader. Drill: Q39.
 
 **Commands.**
 ```bash
@@ -187,7 +187,7 @@ uptime; nproc; free -m
 
 **Goal.** A service that cannot exceed a named limit on open files, tasks, memory or CPU, with the limit still in force after a reboot.
 
-**Frequency.** 1 candidate source (research section 3, resource limits row). Drill: Q40 (planned).
+**Frequency.** 1 candidate source (research section 3, resource limits row). Drill: Q40.
 
 **Commands.**
 ```bash
@@ -237,7 +237,7 @@ systemctl cat inventory.service          # the header lists every drop-in that a
 
 **Goal.** Find what filled the filesystem the task names, release the space, and prove the result with `df`.
 
-**Frequency.** No exam report in research section 3, and 2 practice sources (a KodeKloud mock task on a 98 percent full `/data`, plus admincool's notes). Drill: Q31 (planned).
+**Frequency.** No exam report in research section 3, and 2 practice sources (a KodeKloud mock task on a 98 percent full `/data`, plus admincool's notes). Drill: Q31.
 
 **Commands.**
 ```bash
@@ -275,7 +275,7 @@ lsof +L1 | wc -l          # expect 0 remaining deleted-but-open files
 
 **Goal.** Read the fields of a certificate, create a self-signed certificate or a CSR, validate a chain, and prove a private key belongs to a certificate.
 
-**Frequency.** 4 candidate sources (research section 3, SSL and TLS certificate row), which ties this with containers as the third most reported task type on the exam. Drill: Q33 (planned).
+**Frequency.** 4 candidate sources (research section 3, SSL and TLS certificate row), which ties this with containers as the third most reported task type on the exam. Drill: Q33.
 
 **Commands.**
 ```bash
@@ -329,7 +329,7 @@ stat -c '%a %U:%G %n' /etc/ssl/private/site.key     # expect 600 root:root
 
 **Goal.** Extract, count or rewrite the lines a task names, and write the result to the exact path requested.
 
-**Frequency.** No standalone row in research section 3. Text processing is the tool used inside other tasks, most visibly the shell scripting and I/O redirection row (1 source) and the disk-space row. Drill: Q35 (planned).
+**Frequency.** No standalone row in research section 3. Text processing is the tool used inside other tasks, most visibly the shell scripting and I/O redirection row (1 source) and the disk-space row. Drill: Q35.
 
 **Commands.**
 ```bash
@@ -379,7 +379,7 @@ grep -c 'http://' /etc/app/config.ini     # expect 0
 
 **Goal.** Locate files by owner, size, age or permission bits, act on them, and set the ownership and mode a task names.
 
-**Frequency.** 1 candidate source for `find` and 1 for SUID, SGID and sticky bits (research section 3, find row and permissions row). Drill: Q34 (planned).
+**Frequency.** 1 candidate source for `find` and 1 for SUID, SGID and sticky bits (research section 3, find row and permissions row). Drill: Q34.
 
 **Commands.**
 ```bash
@@ -423,7 +423,7 @@ getfacl -p /srv/shared                    # confirms no ACL is overriding the mo
 
 **Goal.** Build or unpack the archive a task names, create the link it asks for, and send output and errors to the files it names.
 
-**Frequency.** 1 candidate source for archives, 1 for hard and soft links, and 1 for shell scripting and I/O redirection (research section 3). Drills: Q36 and Q37 (planned).
+**Frequency.** 1 candidate source for archives, 1 for hard and soft links, and 1 for shell scripting and I/O redirection (research section 3). Drills: Q36 and Q37.
 
 **Commands.**
 ```bash

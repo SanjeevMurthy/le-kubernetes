@@ -25,15 +25,15 @@ Storage is where the exam is most mechanical and least forgiving. Almost every t
 
 | Task type | Sources | Drill |
 |---|---|---|
-| LVM: create a volume group and a logical volume, or extend one that is mounted | 4 | Q24, Q25 (planned) |
-| Partition a disk, make a filesystem, mount it persistently by UUID | 2 | Q23 (planned) |
-| NFS export and a persistent client mount | 3 | Q21 (planned) |
-| Swap file or swap partition, persistent | 1 | Q26 (planned) |
-| RAID 1 with mdadm | 1 | Q28 (planned) |
-| Network block device | mock reports only | Q30 (planned) |
-| Quotas | curriculum bullet | Q27 (planned) |
-| Encrypted volume with LUKS | curriculum bullet | Q29 (planned) |
-| A filesystem is full: find and reclaim | 2 | Q31 (planned) |
+| LVM: create a volume group and a logical volume, or extend one that is mounted | 4 | Q24, Q25 |
+| Partition a disk, make a filesystem, mount it persistently by UUID | 2 | Q23 |
+| NFS export and a persistent client mount | 3 | Q21 |
+| Swap file or swap partition, persistent | 1 | Q26 |
+| RAID 1 with mdadm | 1 | Q28 |
+| Network block device | mock reports only | Q30 |
+| Quotas | curriculum bullet | Q27 |
+| Encrypted volume with LUKS | curriculum bullet | Q29 |
+| A filesystem is full: find and reclaim | 2 | Q31 |
 
 The curriculum bullets this covers: configure and manage LVM storage; manage and configure the virtual file system; create, manage and troubleshoot filesystems; use remote filesystems and network block devices; configure and manage swap space; configure filesystem automounters; monitor storage performance.
 
@@ -55,7 +55,7 @@ flowchart TD
 
 **Goal.** A new disk carries one partition with a labelled filesystem, ready to mount.
 
-**Frequency.** 2 candidate sources report partition and format tasks, usually combined with a persistent mount. Drill: Q23 (planned).
+**Frequency.** 2 candidate sources report partition and format tasks, usually combined with a persistent mount. Drill: Q23.
 
 **Commands.**
 
@@ -93,7 +93,7 @@ blkid -s LABEL -o value /dev/sdb1         # data
 
 **Goal.** The filesystem is mounted at the requested path with the requested options, and it comes back after a reboot.
 
-**Frequency.** Appears in every storage task that creates a filesystem. One KodeKloud mock originally graded only the device name and was corrected in 2026 to accept a UUID, which is the form the exam actually teaches. Drill: Q23 (planned).
+**Frequency.** Appears in every storage task that creates a filesystem. One KodeKloud mock originally graded only the device name and was corrected in 2026 to accept a UUID, which is the form the exam actually teaches. Drill: Q23.
 
 **Commands.**
 
@@ -133,7 +133,7 @@ grep /data /etc/fstab
 
 **Goal.** A volume group across one or more disks, carrying a logical volume of a stated size, formatted and mounted persistently.
 
-**Frequency.** 4 candidate sources, the joint most reported storage family. Drill: Q24 (planned).
+**Frequency.** 4 candidate sources, the joint most reported storage family. Drill: Q24.
 
 **Commands.**
 
@@ -172,7 +172,7 @@ findmnt -no SOURCE,TARGET /app
 
 **Goal.** A logical volume that is in use grows, and its filesystem grows with it, without unmounting.
 
-**Frequency.** 4 candidate sources, and the single most likely LVM task. One candidate specifically calls out online resizing. Drill: Q25 (planned).
+**Frequency.** 4 candidate sources, and the single most likely LVM task. One candidate specifically calls out online resizing. Drill: Q25.
 
 **Commands.**
 
@@ -216,7 +216,7 @@ findmnt -no TARGET /app                   # still mounted throughout
 
 **Goal.** Additional swap of a stated size, at a stated priority, active now and after a reboot.
 
-**Frequency.** 1 candidate source names swap directly, and it is an explicit curriculum bullet. Drill: Q26 (planned).
+**Frequency.** 1 candidate source names swap directly, and it is an explicit curriculum bullet. Drill: Q26.
 
 **Commands.**
 
@@ -261,7 +261,7 @@ grep swap /etc/fstab
 
 **Goal.** A directory is exported to a network, and a client mounts it at boot.
 
-**Frequency.** 3 candidate sources. One reports the `ro` versus `rw` distinction specifically. Drill: Q21 (planned).
+**Frequency.** 3 candidate sources. One reports the `ro` versus `rw` distinction specifically. Drill: Q21.
 
 **Commands.**
 
@@ -310,7 +310,7 @@ findmnt --verify
 
 **Goal.** A remote block device is attached locally and mounted.
 
-**Frequency.** No first-hand exam report found, but "use remote filesystems and **network block devices**" is an explicit curriculum bullet, and a KodeKloud mock includes it. Drill: Q30 (planned).
+**Frequency.** No first-hand exam report found, but "use remote filesystems and **network block devices**" is an explicit curriculum bullet, and a KodeKloud mock includes it. Drill: Q30.
 
 **Commands.**
 
@@ -352,7 +352,7 @@ lsblk -no NAME,SIZE /dev/nbd0
 
 **Goal.** A RAID 1 array across two devices, assembled automatically at boot. Separately, per-user quotas on a filesystem.
 
-**Frequency.** RAID: 1 candidate source. Quotas: a curriculum bullet with no first-hand report. Drill: Q28 and Q27 (planned).
+**Frequency.** RAID: 1 candidate source. Quotas: a curriculum bullet with no first-hand report. Drill: Q28 and Q27.
 
 **Commands.**
 
@@ -404,7 +404,7 @@ repquota -u /quota
 
 **Goal.** An encrypted volume that unlocks at boot from a key file. Separately, a filesystem at 98 percent, brought back under control.
 
-**Frequency.** LUKS: a curriculum bullet, no first-hand report. Disk-full triage: 2 sources, and it is an Essential Commands bullet too. Drill: Q29 and Q31 (planned).
+**Frequency.** LUKS: a curriculum bullet, no first-hand report. Disk-full triage: 2 sources, and it is an Essential Commands bullet too. Drill: Q29 and Q31.
 
 **Commands.**
 

@@ -33,16 +33,16 @@ The most expensive mistake in this domain is a change that works in the current 
 
 | Task type | Sources | Drill |
 |---|---|---|
-| Containers with a memory limit and a restart policy | 4 | Q8 (planned) |
+| Containers with a memory limit and a restart policy | 4 | Q8 |
 | libvirt virtual machine imported from a qcow2 image | 3 | Q7 |
 | cron, at and systemd timers, including jobs for another user | 2 | Q3, Q4 |
-| systemd unit creation and diagnosis of a failing service | 2 | Q10, Q11 (planned) |
-| SELinux mode, file contexts, booleans and ports | 1 | Q9 (planned) |
+| systemd unit creation and diagnosis of a failing service | 2 | Q10, Q11 |
+| SELinux mode, file contexts, booleans and ports | 1 | Q9 |
 | Process and disk I/O monitoring, nice and signals | 1 | Q2 |
 | Software packages and repositories | 0 reports, named curriculum bullet | Q5 |
 | Kernel parameters with sysctl | 0 reports, named curriculum bullet | Q1 |
 | Boot targets, GRUB and filesystem recovery | 0 reports, named curriculum bullet | Q6 |
-| Journal and log configuration | 0 reports, part of service troubleshooting | Q11 (planned) |
+| Journal and log configuration | 0 reports, part of service troubleshooting | Q11 |
 | Kernel modules | 0 reports, supporting skill | none yet |
 
 ```mermaid
@@ -253,7 +253,7 @@ dpkg -V bash 2>/dev/null || rpm -V bash       # empty output is a pass
 
 **Goal.** Change the default boot target and the GRUB timeout persistently, repair a filesystem, and get past a broken `/etc/fstab` line.
 
-**Frequency.** 0 direct exam reports, but a named curriculum bullet, "Recover from hardware, operating system, or filesystem failures" (research section 3, boot targets row). Drill: Q6, Q11 (planned).
+**Frequency.** 0 direct exam reports, but a named curriculum bullet, "Recover from hardware, operating system, or filesystem failures" (research section 3, boot targets row). Drill: Q6, Q11.
 
 **Commands.**
 ```bash
@@ -351,7 +351,7 @@ virsh dumpxml labvm | grep -E 'memory unit|vcpu|source file'   # 512 MB is 52428
 
 **Goal.** A named container publishing a port, with a memory ceiling, a bind-mounted document root, and a restart behaviour that still holds after the host reboots.
 
-**Frequency.** 4 exam reports, including a task specifying `--memory="256m"` and `--restart unless-stopped` (research section 3, containers row). Drill: Q8 (planned).
+**Frequency.** 4 exam reports, including a task specifying `--memory="256m"` and `--restart unless-stopped` (research section 3, containers row). Drill: Q8.
 
 **Commands.**
 ```bash
@@ -405,7 +405,7 @@ systemctl is-enabled podman-restart.service 2>/dev/null
 
 **Goal.** A web server reading a non-default document root and listening on a non-default port while SELinux stays in enforcing mode, with the mode itself persistent.
 
-**Frequency.** 1 exam report, plus the official instruction that "installation of services and applications ... may require modification of system security policies" (research section 3, SELinux row). Drill: Q9 (planned).
+**Frequency.** 1 exam report, plus the official instruction that "installation of services and applications ... may require modification of system security policies" (research section 3, SELinux row). Drill: Q9.
 
 **Commands.**
 ```bash
@@ -448,7 +448,7 @@ getsebool httpd_can_network_connect                  # expect on
 
 **Goal.** An application that starts at boot as a dedicated user, restarts on failure, and is bounded by a resource limit.
 
-**Frequency.** 2 exam reports, "create a service that runs /opt/app on boot" (research section 3, systemd row). Drill: Q10, Q11 (planned).
+**Frequency.** 2 exam reports, "create a service that runs /opt/app on boot" (research section 3, systemd row). Drill: Q10, Q11.
 
 **Commands.**
 ```bash
@@ -502,7 +502,7 @@ journalctl -u inventory.service -b --no-pager | tail -5
 
 **Goal.** Find the reason a service failed, keep the journal across reboots, and rotate an application log file.
 
-**Frequency.** 0 direct exam reports, but every service-troubleshooting task depends on it (research section 3, systemd row, 2 reports). Drill: Q11 (planned).
+**Frequency.** 0 direct exam reports, but every service-troubleshooting task depends on it (research section 3, systemd row, 2 reports). Drill: Q11.
 
 **Commands.**
 ```bash
