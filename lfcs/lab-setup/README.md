@@ -145,7 +145,7 @@ Using `ssh node1` and `ssh node2` from the start builds the exam habit: every ta
 Inside `lfcs-ubuntu`:
 
 ```bash
-git clone -b lfcs https://github.com/SanjeevMurthy/le-kubernetes ~/le-kubernetes
+git clone https://github.com/SanjeevMurthy/le-kubernetes ~/le-kubernetes
 cd ~/le-kubernetes/lfcs/practice-cli
 sudo ./lfcs --env      # what this host can run
 sudo ./lfcs

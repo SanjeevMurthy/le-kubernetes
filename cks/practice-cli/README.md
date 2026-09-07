@@ -38,7 +38,7 @@ cd cks/practice-cli
 On the Killercoda Killer Shell CKS playground, for everything else:
 
 ```bash
-git clone -b cks https://github.com/SanjeevMurthy/le-kubernetes
+git clone https://github.com/SanjeevMurthy/le-kubernetes
 cd le-kubernetes/cks/practice-cli
 sudo bash tools/install-tools.sh all
 ./cks

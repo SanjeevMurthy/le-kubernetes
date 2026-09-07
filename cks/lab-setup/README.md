@@ -87,7 +87,7 @@ The free Killer Shell CKS playground gives a two-node kubeadm cluster with root,
 2. On the control plane:
 
 ```bash
-git clone -b cks https://github.com/SanjeevMurthy/le-kubernetes
+git clone https://github.com/SanjeevMurthy/le-kubernetes
 cd le-kubernetes/cks/practice-cli
 sudo bash tools/install-tools.sh all      # Falco, Trivy, kube-bench, gVisor, kubesec, bom
 ./cks --env                                # confirm which questions are runnable
