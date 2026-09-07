@@ -104,56 +104,60 @@ The KodeKloud CKS course provides in-browser clusters with root, so it covers th
 
 ## Which questions run where
 
+<!-- lab-table -->
+
 `./cks --env` prints the authoritative answer for whatever host you are on, by matching each question's `needs` tags against the environment. In summary, **18 of the 44 questions run on minikube** and the rest need a root shell on a kubeadm node.
 
 | # | Question | Domain | minikube | Killercoda | Also needs |
 |---|---|---|---|---|---|
 | Q1 | NetworkPolicy: Default-Deny + Selective Allow | D1 | yes | yes | Calico |
-| Q2 | CIS Benchmark Remediation with kube-bench | D1 | no | yes | kube-bench |
+| Q2 | CIS Benchmark Remediation with kube-bench | D1 | no | yes | `kube-bench` |
 | Q3 | Ingress TLS Termination | D1 | yes | yes | ingress-nginx |
 | Q4 | RBAC Least-Privilege Role + Binding | D2 | yes | yes | — |
 | Q5 | ServiceAccount Token Hardening | D2 | yes | yes | — |
 | Q6 | Restrict the API Server (apiserver flags) | D2 | no | yes | — |
-| Q7 | AppArmor Profile on a Pod | D3 | no | yes | apparmor_parser |
+| Q7 | AppArmor Profile on a Pod | D3 | no | yes | `apparmor_parser` |
 | Q8 | Seccomp RuntimeDefault + Custom Profile | D3 | no | yes | — |
 | Q9 | Enforce Pod Security Admission (restricted) | D4 | yes | yes | — |
-| Q10 | Encrypt Secrets at Rest (EncryptionConfiguration) | D4 | no | yes | etcdctl |
+| Q10 | Encrypt Secrets at Rest (EncryptionConfiguration) | D4 | no | yes | `etcdctl` |
 | Q11 | Admission Policy with Kyverno/Gatekeeper | D4 | yes | yes | Kyverno |
-| Q12 | Runtime Sandbox with RuntimeClass (gVisor) | D4 | no | yes | runsc |
-| Q13 | Scan Images with Trivy and Remediate | D5 | yes | yes | trivy |
+| Q12 | Runtime Sandbox with RuntimeClass (gVisor) | D4 | no | yes | `runsc` |
+| Q13 | Scan Images with Trivy and Remediate | D5 | yes | yes | `trivy` |
 | Q14 | Restrict Images via ImagePolicyWebhook/Registry | D5 | no | yes | — |
-| Q15 | Static Analysis & Manifest Hardening (kubesec) | D5 | yes | yes | kubesec |
-| Q16 | Detect Threats with Falco Rules | D6 | no | yes | falco |
+| Q15 | Static Analysis & Manifest Hardening (kubesec) | D5 | yes | yes | `kubesec` |
+| Q16 | Detect Threats with Falco Rules | D6 | no | yes | `falco` |
 | Q17 | API Server Audit Logging Policy | D6 | no | yes | — |
 | Q18 | Immutable Containers (readOnlyRootFilesystem) | D6 | yes | yes | — |
-| Q19 | Falco: change the output format and save the alerts | D6 | no | yes | falco |
+| Q19 | Falco: change the output format and save the alerts | D6 | no | yes | `falco` |
 | Q20 | Audit log forensics: who deleted the Secret | D6 | yes | yes | — |
 | Q21 | ImagePolicyWebhook: complete the config and deny unverified images | D5 | no | yes | — |
-| Q22 | kube-bench: fix the kubelet findings | D1 | no | yes | kube-bench |
+| Q22 | kube-bench: fix the kubelet findings | D1 | no | yes | `kube-bench` |
 | Q23 | The API server is down: find and fix the manifest | D2 | no | yes | — |
 | Q24 | Block the cloud metadata endpoint | D1 | yes | yes | Calico |
-| Q25 | Read a Secret straight from etcd | D4 | no | yes | etcdctl |
-| Q26 | Encryption at rest: add a new key and re-encrypt | D4 | no | yes | etcdctl |
+| Q25 | Read a Secret straight from etcd | D4 | no | yes | `etcdctl` |
+| Q26 | Encryption at rest: add a new key and re-encrypt | D4 | no | yes | `etcdctl` |
 | Q27 | Fix two issues in the Dockerfile and two in the manifest | D5 | yes | yes | — |
-| Q28 | Run a Pod under gVisor and capture dmesg | D4 | no | yes | runsc |
+| Q28 | Run a Pod under gVisor and capture dmesg | D4 | no | yes | `runsc` |
 | Q29 | Remove anonymous access and scope the ServiceAccount | D2 | yes | yes | — |
 | Q30 | seccomp: block mkdir with a Localhost profile | D3 | no | yes | — |
-| Q31 | Falco: identify the offending pod and stop it | D6 | no | yes | falco |
+| Q31 | Falco: identify the offending pod and stop it | D6 | no | yes | `falco` |
 | Q32 | Audit: ordered policy and retention flags | D6 | no | yes | — |
 | Q33 | Restrict TLS versions and ciphers | D1 | no | yes | — |
-| Q34 | AppArmor: the profile name is not the file name | D3 | no | yes | apparmor_parser |
+| Q34 | AppArmor: the profile name is not the file name | D3 | no | yes | `apparmor_parser` |
 | Q35 | CiliumNetworkPolicy: allow only GET /health | D4 | yes | playground | Cilium |
 | Q36 | Pod Security: enforce baseline and report violators | D4 | yes | yes | — |
 | Q37 | The API server is down again: a volume is wrong | D2 | no | yes | — |
-| Q38 | Generate an SBOM and count its packages | D5 | yes | yes | bom |
+| Q38 | Generate an SBOM and count its packages | D5 | yes | yes | `bom` |
 | Q39 | Upgrade kubelet and kubectl on the worker to the latest patch | D2 | no | yes | — |
-| Q40 | Issue a client certificate to user jane and bind a Role | D2 | yes | yes | openssl |
+| Q40 | Issue a client certificate to user jane and bind a Role | D2 | yes | yes | `openssl` |
 | Q41 | Host hardening: stop the rogue service and close its port | D3 | no | yes | — |
 | Q42 | Host hardening: users, sudo and kernel modules | D3 | no | yes | — |
-| Q43 | Which pod calls the kill syscall | D6 | no | yes | strace |
+| Q43 | Which pod calls the kill syscall | D6 | no | yes | `strace` |
 | Q44 | Istio: enforce STRICT mTLS in a namespace | D4 | yes | playground | Istio |
 
 Two rows deserve a note. The Cilium and Istio questions need a cluster running that software, so use the Killercoda Cilium playground for the first and read the recipe for the second; there is no free Istio scenario. Everything marked `node-root` is what the Killercoda Killer Shell CKS playground exists for.
+
+<!-- lab-table stop -->
 
 ## Optional: a kubeadm cluster you own
 

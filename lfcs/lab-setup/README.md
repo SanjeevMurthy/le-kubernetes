@@ -163,6 +163,9 @@ Repeat the clone on `lfcs-rocky` for the questions tagged `rocky`.
 | `lfcs-rocky` | The `rocky`-tagged questions: SELinux contexts, ports and booleans, firewalld, nmcli, dnf. |
 | Either, with a peer | NFS, NBD, routing and firewall questions use a network namespace peer created by the CLI, so a second VM is optional. The few questions tagged `host2` want the other VM reachable over SSH. |
 
+<!-- lab-table -->
+<!-- lab-table stop -->
+
 ## Optional: a Kubernetes cluster in the same VM
 
 If you want a kubeadm cluster you own, rather than relying on Killercoda's one-hour sessions, the Ubuntu VM can host a single-node cluster. Raise its RAM to 6 GB first.

@@ -49,6 +49,22 @@ else
   echo "scripts/check-question-refs.py not found - skipped"
 fi
 
+step "lab tables"
+# The "which questions run where" tables are derived from the question metas.
+# A new or retagged question silently invalidates them, so the gate rebuilds
+# them in memory and complains if the checked-in copy differs.
+if [[ -f scripts/build-lab-table.py ]]; then
+  kits=()
+  for t in "${existing[@]}"; do [[ "$t" == cks || "$t" == lfcs ]] && kits+=("$t"); done
+  if [[ ${#kits[@]} -gt 0 ]]; then
+    python3 scripts/build-lab-table.py --check "${kits[@]}" || status=1
+  else
+    echo "no kit in scope - skipped"
+  fi
+else
+  echo "scripts/build-lab-table.py not found - skipped"
+fi
+
 step "links and anchors"
 python3 scripts/check-links.py "${existing[@]}" || status=1
 
