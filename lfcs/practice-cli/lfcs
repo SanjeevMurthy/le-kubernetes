@@ -265,7 +265,7 @@ mock_domain_report() {
 }
 
 run_mock() {
-  local n="$1" action id q pct started left
+  local n="$1" action id q pct started left clock
   [[ -f "$MOCK_DIR/mock-$n.set" ]] || { print_error "No such mock: mock-$n.set"; return 1; }
   MOCK_SKIPPED=""; MOCK_TOTAL=0; MOCK_EARNED=0
   MOCK_RESULTS="$LFCS_STATE_DIR/mock-$n.results"; : > "$MOCK_RESULTS"
@@ -280,9 +280,12 @@ run_mock() {
   started=$(date +%s); echo "$started" > "$TIMER_FILE"
 
   while true; do
+    # Past two hours the exam would have ended, so say so rather than
+    # counting downwards through zero.
     left=$(( (7200 - ($(date +%s) - started)) / 60 ))
+    if [[ $left -ge 0 ]]; then clock="${left} min left"; else clock="time is up"; fi
     clear
-    print_header "${ICON_TARGET} Mock exam $n: ${left} min left"
+    print_header "${ICON_TARGET} Mock exam $n: ${clock}"
     mock_each "$n" mock_list_one
     echo ""
     echo -e "  ${CYAN}[N]${RESET} show a task   ${MAGENTA}[F]${RESET} finish and score   ${RED}[C]${RESET} cleanup all   ${GRAY}[B]${RESET} back"
