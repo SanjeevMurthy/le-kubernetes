@@ -48,11 +48,17 @@ else
 fi
 echo "$PFILE" > "$STATE/pfile"
 
+# The drop exempts loopback on purpose. The scenario is two faults that look
+# alike from the peer, and the candidate tells them apart by curling
+# 127.0.0.1:8082 and getting app-ok while the peer times out. A drop that also
+# ate loopback traffic would hide the bind address entirely, and the question
+# and the solution both promise that loopback answers.
 read -r -d '' NFTBLOCK <<'BLOCKEOF'
 # LFCS Q22 lab rule. This is the drop that has to be found and removed.
 table inet labq22 {
 	chain input {
 		type filter hook input priority 0; policy accept;
+		iifname "lo" accept
 		tcp dport 8082 drop
 	}
 }

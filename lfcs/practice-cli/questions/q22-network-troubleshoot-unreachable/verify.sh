@@ -33,11 +33,32 @@ LIVEBAD=$(nft list ruleset 2>/dev/null | grep -E 'dport[^0-9]*8082' | grep -Ei '
 check_eq "no live rule drops or rejects 8082" "" "$LIVEBAD"
 
 echo "Checking both fixes survive a reboot..."
-check_persisted "the unit binds an address the network can reach" \
-  '\-\-bind[[:space:]]+(0\.0\.0\.0|::|10\.99\.22\.1)' \
-  /etc/systemd/system/labapp.service /etc/systemd/system/labapp.service.d/*.conf
-check_eq "no unit file still passes --bind 127.0.0.1" "" \
-  "$(grep -lE '\-\-bind[[:space:]]+127\.0\.0\.1' /etc/systemd/system/labapp.service /etc/systemd/system/labapp.service.d/*.conf 2>/dev/null | tr '\n' ' ' | sed 's/ *$//')"
+# Grade the configuration systemd will actually use, not one spelling of it in
+# one file. A drop-in that resets ExecStart= and sets it again is exactly as
+# reboot-proof as editing the unit, and deleting --bind is exactly as correct as
+# changing its argument, because python's http.server then listens on every
+# address. So the only thing the unit must not do is bind the socket to
+# loopback; that the socket is reachable is already established above.
+UNITFILES=()
+while read -r p; do
+  [[ "$p" == /* && -f "$p" ]] && UNITFILES+=("$p")
+done < <(systemctl show -p FragmentPath -p DropInPaths --value labapp 2>/dev/null | tr ' ' '\n')
+[[ ${#UNITFILES[@]} -gt 0 ]] || UNITFILES=(/etc/systemd/system/labapp.service)
+check_persisted "the unit systemd loads for labapp is a file on disk that starts the application" \
+  '^[[:space:]]*ExecStart=.*http\.server[[:space:]]+8082' "${UNITFILES[@]}"
+check_eq "the ExecStart systemd would run after a reboot no longer binds loopback" "" \
+  "$(systemctl show -p ExecStart --value labapp 2>/dev/null |
+     grep -Eio '[-]{1,2}b[a-z]*[=[:space:]]+(127(\.[0-9]{1,3}){3}|localhost|::1)' | head -1)"
+# A drop-in under /run is gone at the next boot, so it cannot be where the fix
+# lives, however good the effective configuration looks right now.
+RUNTIME_UNITS=""
+for p in "${UNITFILES[@]}"; do
+  case "$p" in
+    /run/*) grep -Eq '^[[:space:]]*ExecStart=' "$p" && RUNTIME_UNITS="$RUNTIME_UNITS $p" ;;
+  esac
+done
+check_eq "no runtime-only unit file under /run supplies the ExecStart, which a reboot would discard" \
+  "" "${RUNTIME_UNITS# }"
 check_eq "no saved nftables file still drops 8082 at the next boot" "" \
   "$(grep -lE '8082[^0-9]*(drop|reject)|(drop|reject)[^0-9]*8082' \
       /etc/nftables.conf /etc/sysconfig/nftables.conf /etc/iptables/rules.v4 \
