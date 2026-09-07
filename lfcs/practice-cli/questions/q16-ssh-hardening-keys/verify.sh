@@ -40,7 +40,7 @@ check_eq "/home/deploy/.ssh is mode 700" "700" \
 
 echo "Effect test: a real ssh connection as deploy, using the key only..."
 check "ssh -i $KEY deploy@localhost logs in without a password" \
-  ssh -i "$KEY" -o BatchMode=yes -o StrictHostKeyChecking=no \
+  ssh -i "$KEY" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
       -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 deploy@localhost true
 
 echo "Checking the settings survive a reboot..."

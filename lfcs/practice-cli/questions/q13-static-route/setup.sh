@@ -84,8 +84,10 @@ else
   [[ -n "$CON" ]] && nmcli con up "$CON" >/dev/null 2>&1
 fi
 
-while ip route show 10.200.0.0/16 2>/dev/null | grep -q .; do
+n=0
+while ip route show 10.200.0.0/16 2>/dev/null | grep -q . && [[ $n -lt 10 ]]; do
   ip route del 10.200.0.0/16 >/dev/null 2>&1 || break
+  n=$((n + 1))
 done
 
 # Prove the gateway is usable before asking for a route through it.
