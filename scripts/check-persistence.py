@@ -29,6 +29,7 @@ EXEMPT = {
     "36": "the deliverables are archives and links on disk, which a reboot does not touch",
     "37": "the deliverable is an executable script file, which is on disk already",
     "39": "the answers are measurements of the running system written to files",
+    "43": "ACLs and the SGID bit live in filesystem extended attributes and mode bits, which getfacl and stat read directly; there is no configuration file to persist them in",
 }
 
 

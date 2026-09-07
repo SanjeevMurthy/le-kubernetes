@@ -1,0 +1,10 @@
+id=45
+title="Resolve users from an LDAP directory"
+domain="Users and Groups"
+domain_short=D5
+difficulty=Hard
+needs="ubuntu tool:slapd"
+weight=7
+minutes=10
+sources=0
+host=ubuntu

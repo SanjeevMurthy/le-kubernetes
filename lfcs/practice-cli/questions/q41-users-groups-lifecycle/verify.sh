@@ -39,8 +39,20 @@ check_eq "bob's password is locked" "L" "$(passwd -S bob 2>/dev/null | awk '{pri
 check "bob still exists as an account" getent passwd bob
 check_eq "bob's shell is unchanged" "/bin/bash" "$(getent passwd bob 2>/dev/null | cut -d: -f7)"
 
+echo "Checking which file carries each of those across a reboot..."
+check_persisted "ana's UID and primary GID are written in /etc/passwd" \
+  '^ana:[^:]*:2001:3001:' /etc/passwd
+check_persisted "the devs group and its GID are written in /etc/group" \
+  '^devs:[^:]*:3001:' /etc/group
+check_persisted "qa is listed as a supplementary group for ana in /etc/group" \
+  '^qa:[^:]*:3002:([^:]*,)?ana(,|$)' /etc/group
+check_persisted "ana's account expiry is written in the expire field of /etc/shadow" \
+  '^ana:([^:]*:){6}[0-9]+:' /etc/shadow
+check_persisted "bob's password is locked in /etc/shadow" \
+  '^bob:!' /etc/shadow
+
 echo ""
-echo "Note: accounts persist by themselves. /etc/passwd, /etc/shadow and /etc/group"
-echo "are the files that carry every check above across a reboot."
+echo "Note: nothing here needs a service restart. /etc/passwd, /etc/shadow and"
+echo "/etc/group are the whole persistence story for this domain."
 
 summary
