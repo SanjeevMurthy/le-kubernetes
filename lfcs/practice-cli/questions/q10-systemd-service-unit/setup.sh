@@ -10,6 +10,19 @@ rm -rf /etc/systemd/system/inventory.service.d
 rm -f /etc/systemd/system/multi-user.target.wants/inventory.service
 systemctl daemon-reload
 
+# Record whether the account and its directory were already here, so cleanup
+# deletes only what this question made. A host with a real inventory service
+# keeps it. Written once, so a second setup run does not overwrite the answer.
+STATE="$LFCS_STATE_DIR/q10"
+mkdir -p "$STATE"
+if [[ ! -f "$STATE/created-user" ]]; then
+  if id inventory >/dev/null 2>&1; then echo no > "$STATE/created-user"
+  else echo yes > "$STATE/created-user"; fi
+fi
+if [[ ! -f "$STATE/created-dir" ]]; then
+  if [[ -d /opt/inventory ]]; then echo no > "$STATE/created-dir"
+  else echo yes > "$STATE/created-dir"; fi
+fi
 id inventory >/dev/null 2>&1 || useradd -r -M -d /opt/inventory -s /usr/sbin/nologin inventory
 
 mkdir -p /opt/inventory
