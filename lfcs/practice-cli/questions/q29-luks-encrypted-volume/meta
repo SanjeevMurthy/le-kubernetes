@@ -1,0 +1,10 @@
+id=29
+title="Encrypted volume unlocked with a key file at boot"
+domain="Storage"
+domain_short=D3
+difficulty=Hard
+needs="disk tool:cryptsetup"
+weight=7
+minutes=8
+sources=0
+host=any

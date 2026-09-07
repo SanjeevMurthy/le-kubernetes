@@ -23,12 +23,18 @@ fstab_drop_target() {   # delete every fstab line whose mount point is $1
   rm -f "$STATE/fstab.tmp"
 }
 
-claimed() { grep -qxF "$1" "$LFCS_STATE_DIR"/q*/devices 2>/dev/null; }
+# Claimed by a *different* question. This question's own record is excluded,
+# so re-running setup keeps the same device instead of quietly dropping to a
+# loop file the second time.
+claimed() {
+  grep -lxF "$1" "$LFCS_STATE_DIR"/q*/devices 2>/dev/null | grep -qv "/q23/devices"
+}
 
 backup_file /etc/fstab q23
 umount /data 2>/dev/null
 fstab_drop_target /data
-rm -rf /data
+# Never delete the directory while something is still mounted on it.
+findmnt -no TARGET /data >/dev/null 2>&1 || rm -rf /data
 
 # A real disk behaves in lsblk exactly as it does in the exam, so prefer one.
 # spare_disk only returns a device with no filesystem, no mount and no
