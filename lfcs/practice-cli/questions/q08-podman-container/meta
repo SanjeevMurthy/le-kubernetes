@@ -1,0 +1,10 @@
+id=08
+title="Run a web container with limits and a restart policy that survives reboot"
+domain="Operations Deployment"
+domain_short=D1
+difficulty=Hard
+needs="tool:podman"
+weight=7
+minutes=8
+sources=4
+host=any

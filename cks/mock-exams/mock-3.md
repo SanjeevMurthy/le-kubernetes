@@ -71,25 +71,109 @@ An audit of this cluster turned up two RBAC findings.
 
 Do not create a ClusterRole or a ClusterRoleBinding for `reporter`.
 
-### Task 4.  (7 points)
+### Task 4. The API server is down again: a volume is wrong (7 points)
 
-**Host:** . **Domain:** . **Time budget:**  min.
-
-
-### Task 5.  (8 points)
-
-**Host:** . **Domain:** . **Time budget:**  min.
+**Host:** control-plane. **Domain:** Cluster Hardening. **Time budget:** 8 min.
 
 
-### Task 6.  (6 points)
+**Host:** the control-plane node, root shell (`sudo -i`).
 
-**Host:** . **Domain:** . **Time budget:**  min.
+Someone edited the `kube-apiserver` static pod and the cluster has been unreachable since. Every command returns:
+
+```
+The connection to the server 127.0.0.1:6443 was refused - did you specify the right host or port?
+```
+
+This one does not look like the last outage. The container never starts at all, so it writes no log of its own: `crictl logs` has nothing to show you. The kubelet is the component that refused it, so the kubelet is where the reason is.
+
+1. Find the reason without `kubectl`:
+
+   ```
+   journalctl -u kubelet -n 60 --no-pager
+   crictl ps -a | grep kube-apiserver
+   ```
+
+2. Fix `/etc/kubernetes/manifests/kube-apiserver.yaml`. Change only what is broken. Every flag, mount and volume that was there before has to still be there afterwards.
+
+3. Wait for the static pod to come back and confirm the cluster works:
+
+   ```
+   crictl ps | grep kube-apiserver
+   kubectl get nodes
+   ```
+
+The kubelet rescans `/etc/kubernetes/manifests/` about every 20 seconds, so give it up to a minute after saving before deciding the fix did not work.
+
+### Task 5. Upgrade kubelet and kubectl on the worker to the latest patch (8 points)
+
+**Host:** worker. **Domain:** Cluster Hardening. **Time budget:** 12 min.
 
 
-### Task 7.  (6 points)
+**Host:** the control-plane node for the `kubectl` steps, and a root shell on the worker node for the package steps.
 
-**Host:** . **Domain:** . **Time budget:**  min.
+The worker runs an older patch release of the kubelet than its package repositories offer. Setup printed the running version and the target version, and also wrote the target to `$CKS_STATE_DIR/q39.target` so you can read it back at any time:
 
+```bash
+cat ~/.cks-practice/q39.target
+```
+
+Upgrade that node, and only that node. The minor version does not change and the control plane is not touched.
+
+1. Take the workload off the node and stop new pods being scheduled onto it.
+
+2. Upgrade the `kubelet` and `kubectl` packages to the target version. On a kubeadm node both packages are pinned by apt, so the pin has to be lifted for the install and put back afterwards.
+
+3. Reload systemd and restart the kubelet.
+
+4. Put the node back into service.
+
+At the end the node must be `Ready`, schedulable, and reporting the target version to the API server.
+
+### Task 6. Host hardening: users, sudo and kernel modules (6 points)
+
+**Host:** worker. **Domain:** System Hardening. **Time budget:** 8 min.
+
+
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+An audit of that worker turned up a leftover contractor account and a kernel module nothing on the node uses.
+
+1. The local account `tempadmin` must stay on the node for the audit trail, but nobody may log in as it any more. Lock its password and set its login shell to `/usr/sbin/nologin`. Do **not** delete the account and do not delete its home directory.
+
+2. `tempadmin` has a sudo drop-in at `/etc/sudoers.d/tempadmin` granting `NOPASSWD:ALL`. Remove it, so `sudo -l -U tempadmin` reports no sudo rights at all.
+
+3. `tempadmin` is a member of the supplementary group `lab-ops`. Take it out of that group. The group itself may stay.
+
+4. The `sctp` kernel module is loaded and nothing on this node needs it. Unload it, and make sure it stays out after a reboot by writing a blacklist to `/etc/modprobe.d/blacklist-sctp.conf`. Use that exact path, so the cleanup can remove it again.
+
+The setup output says whether this kernel has an `sctp` module. If it does not, step 4 is not graded on this lab, and the rest of the question still applies.
+
+### Task 7. Which pod calls the kill syscall (6 points)
+
+**Host:** worker. **Domain:** Monitoring, Logging and Runtime Security. **Time budget:** 8 min.
+
+
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+Namespace `strace-lab` holds two Deployments scheduled on that worker, `worker-a` and `worker-b`. One of them keeps issuing the `kill` system call every second. The other one is idle and is doing nothing wrong. The manifests give nothing away, so find the answer at the syscall level.
+
+1. On the worker, list the running containers with `crictl ps` and map each one to its process id:
+
+   ```
+   crictl inspect --output go-template --template '{{.info.pid}}' <container-id>
+   ```
+
+2. Trace each of those processes for a few seconds and see which one calls `kill`:
+
+   ```
+   strace -p <pid> -f -e trace=kill -o /tmp/trace.log
+   ```
+
+3. Map the container that made the calls back to its Pod, and write that Pod as `<namespace>/<pod-name>` on a single line in `/opt/course/43/pod.txt` (or `$COURSE_DIR/43/pod.txt` on this lab). That file is written on the host you are running the practice CLI from.
+
+4. Stop the offending workload by deleting its **Deployment**. Deleting only the Pod is not enough, because the Deployment creates a replacement.
+
+Leave the innocent Deployment running with its one replica, and leave the namespace in place.
 
 ### Task 8. AppArmor Profile on a Pod (7 points)
 
@@ -125,20 +209,71 @@ Encryption at rest is already working on this cluster. `kube-apiserver` runs wit
 
 Do not delete `key1` from the configuration and do not delete the Secrets.
 
-### Task 10.  (5 points)
+### Task 10. Pod Security: enforce baseline and report violators (5 points)
 
-**Host:** . **Domain:** . **Time budget:**  min.
-
-
-### Task 11.  (6 points)
-
-**Host:** . **Domain:** . **Time budget:**  min.
+**Host:** any. **Domain:** Minimize Microservice Vulnerabilities. **Time budget:** 6 min.
 
 
-### Task 12.  (5 points)
+**Host:** the cluster you are already on. No node access is needed.
 
-**Host:** . **Domain:** . **Time budget:**  min.
+Namespace `psa-lab` already runs three pods and no Pod Security Standard is enforced on it.
 
+1. Label `psa-lab` so that the **baseline** standard is enforced.
+
+2. `enforce` only applies to pods that are created after the label is set. The pods that are already running are never evicted by it, so the cluster is left with workloads that would no longer be admitted. Find out **which of the pods currently in `psa-lab` violate baseline** and write their names to `/opt/course/36/violators.txt` (or `$COURSE_DIR/36/violators.txt` on this lab):
+
+   - one name per line,
+   - the pod name only, with no namespace and no other text,
+   - sorted alphabetically.
+
+Not every pod in the namespace violates the standard. A list of all three is wrong.
+
+3. Leave the three pods running. Do not delete or edit them.
+
+### Task 11. Istio: enforce STRICT mTLS in a namespace (6 points)
+
+**Host:** any. **Domain:** Minimize Microservice Vulnerabilities. **Time budget:** 6 min.
+
+
+**Host:** any host with `kubectl` against a cluster running Istio.
+
+Namespace `mesh-lab` has sidecar injection enabled and runs Deployment and Service `httpbin` on port 80. Namespace `mesh-out` has no injection at all, and the Pod `curl` in it has no sidecar.
+
+Right now the mesh accepts both mutual TLS and plain text, which Istio calls `PERMISSIVE`. That means the Pod in `mesh-out` can reach the service in the mesh over plain HTTP:
+
+```
+kubectl exec -n mesh-out curl -c curl -- curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://httpbin.mesh-lab/get
+200
+```
+
+1. Make every workload in `mesh-lab` accept mutual TLS only. Do it for the whole namespace with a single `PeerAuthentication` in `mesh-lab`, not per workload.
+
+2. After the change, that same request from `mesh-out` must no longer return `200`.
+
+3. Traffic inside the mesh must keep working. The Pod `mesh-client` in `mesh-lab` has a sidecar, and this must still return `200`:
+
+   ```
+   kubectl exec -n mesh-lab mesh-client -c client -- curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://httpbin.mesh-lab/get
+   ```
+
+Do not solve it with a NetworkPolicy, and do not change the `httpbin` Deployment or Service.
+
+### Task 12. Generate an SBOM and count its packages (5 points)
+
+**Host:** linux. **Domain:** Supply Chain Security. **Time budget:** 6 min.
+
+
+**Host:** any Linux host that has `bom` installed. No cluster access is needed, but the host must be able to pull from `registry.k8s.io`.
+
+The supply chain team wants a software bill of materials for the image the cluster runs `kube-proxy` from.
+
+1. Generate an SBOM for `registry.k8s.io/kube-proxy:v1.35.0` and save it to `/opt/course/38/sbom.json` (or `$COURSE_DIR/38/sbom.json` on this lab).
+
+   The file has to be **valid JSON**. `bom` writes SPDX in tag-value form by default, which is not JSON, so the format has to be asked for.
+
+2. Count the packages the SBOM lists and write that number, and nothing else, to `/opt/course/38/count.txt`.
+
+Do not hand-edit the SBOM. It has to be the document `bom` produced.
 
 ### Task 13. Immutable Containers (readOnlyRootFilesystem) (4 points)
 

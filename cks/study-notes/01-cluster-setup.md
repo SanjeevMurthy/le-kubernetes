@@ -26,12 +26,12 @@ Graders score the end state, not the method. Every recipe ends with a command th
 | Task type | Sources | Drill |
 |---|---|---|
 | NetworkPolicy: default deny, selectors, DNS egress | 12 | Q1 |
-| kube-bench and CIS remediation | 12 | Q2, Q22 (planned) |
-| API server and etcd flags, including TLS protocol and ciphers | 9 | Q33 (planned) |
+| kube-bench and CIS remediation | 12 | Q2, Q22 |
+| API server and etcd flags, including TLS protocol and ciphers | 9 | Q33 |
 | Ingress with a TLS secret | 7 | Q3 |
 | Binary verification with sha512sum | 7 | Killercoda "Verify Platform Binaries" |
-| Kubelet config hardening (CIS 4.2.x) | 5 | Q2, Q22 (planned) |
-| Node metadata endpoint protection | 4 | Q24 (planned) |
+| Kubelet config hardening (CIS 4.2.x) | 5 | Q2, Q22 |
+| Node metadata endpoint protection | 4 | Q24 |
 | Kubernetes Dashboard hardening | 2 | none |
 
 Sources are distinct candidate reports counted in the exam research report, section 3. NetworkPolicy and kube-bench sit in the top tier reported by 10 or more sources, so plan on meeting at least one of each. Every task host has `kubectl` with a `k` alias, `yq`, `curl`, `wget` and `man`. There is no `jq`, so no command in this note uses it.
@@ -175,7 +175,7 @@ kubectl run probe-deny -n prod --rm -i --restart=Never --labels=app=other \
 
 **Goal.** No pod in the namespace reaches 169.254.169.254, while all other egress keeps working.
 
-**Frequency.** 4 candidate sources (research section 3 row 24). Drill: Q24 (planned).
+**Frequency.** 4 candidate sources (research section 3 row 24). Drill: Q24.
 
 **Commands.**
 ```bash
@@ -218,7 +218,7 @@ kubectl run metatest -n prod --rm -i --restart=Never --image=busybox:1.36 \
 
 **Goal.** The named CIS checks move from FAIL to PASS and the control plane still serves requests.
 
-**Frequency.** 12 candidate sources (research section 3 row 4), plus 5 for kubelet config alone (row 30). Drill: Q2, Q22 (planned).
+**Frequency.** 12 candidate sources (research section 3 row 4), plus 5 for kubelet config alone (row 30). Drill: Q2, Q22.
 
 **Commands.**
 ```bash
@@ -277,7 +277,7 @@ kube-bench run --targets node --check 4.2.1,4.2.2   # every line must start with
 
 **Goal.** The API server and etcd refuse older TLS handshakes and offer only the named cipher suites.
 
-**Frequency.** 9 candidate sources (research section 3 row 9). Drill: Q33 (planned).
+**Frequency.** 9 candidate sources (research section 3 row 9). Drill: Q33.
 
 **Commands.**
 ```bash

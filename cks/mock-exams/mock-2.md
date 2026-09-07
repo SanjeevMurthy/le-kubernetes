@@ -128,10 +128,22 @@ The file `/etc/apparmor.d/k8s-lab-deny-write` sits on that worker. It has not be
 
 Do not rename the file, and do not rewrite what it contains. Read it first: everything you need to fix the manifest is in there.
 
-### Task 8.  (5 points)
+### Task 8. Host hardening: stop the rogue service and close its port (5 points)
 
-**Host:** . **Domain:** . **Time budget:**  min.
+**Host:** worker. **Domain:** System Hardening. **Time budget:** 6 min.
 
+
+**Host:** the worker node named in the setup output (root shell: `sudo -i`).
+
+A port scan of that worker found an open TCP port **8888** that nothing in the cluster documentation accounts for. It is served by a systemd unit somebody installed by hand.
+
+1. Find which service is listening on 8888. Start from the socket, not from a guess: `ss -ltnp` names the process, and `systemctl status <pid>` maps that process back to its unit.
+
+2. Write the unit name (for example `foo.service`) on a single line in `/opt/course/41/service.txt` (or `$COURSE_DIR/41/service.txt` on this lab). That file is written on the host you are running the practice CLI from.
+
+3. Stop the service, disable it so it does not come back after a reboot, and delete its unit file from `/etc/systemd/system/`. Reload systemd afterwards so the removed unit disappears from `systemctl list-unit-files`.
+
+When you are done, nothing may listen on 8888 on that node, and the unit must be neither enabled nor present on disk. Leave every other service on the node alone: the kubelet and the container runtime must keep running.
 
 ### Task 9. Admission Policy with Kyverno/Gatekeeper (6 points)
 

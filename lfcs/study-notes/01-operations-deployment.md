@@ -34,14 +34,14 @@ The most expensive mistake in this domain is a change that works in the current 
 | Task type | Sources | Drill |
 |---|---|---|
 | Containers with a memory limit and a restart policy | 4 | Q8 (planned) |
-| libvirt virtual machine imported from a qcow2 image | 3 | Q7 (planned) |
-| cron, at and systemd timers, including jobs for another user | 2 | Q3, Q4 (planned) |
+| libvirt virtual machine imported from a qcow2 image | 3 | Q7 |
+| cron, at and systemd timers, including jobs for another user | 2 | Q3, Q4 |
 | systemd unit creation and diagnosis of a failing service | 2 | Q10, Q11 (planned) |
 | SELinux mode, file contexts, booleans and ports | 1 | Q9 (planned) |
-| Process and disk I/O monitoring, nice and signals | 1 | Q2 (planned) |
-| Software packages and repositories | 0 reports, named curriculum bullet | Q5 (planned) |
-| Kernel parameters with sysctl | 0 reports, named curriculum bullet | Q1 (planned) |
-| Boot targets, GRUB and filesystem recovery | 0 reports, named curriculum bullet | Q6 (planned) |
+| Process and disk I/O monitoring, nice and signals | 1 | Q2 |
+| Software packages and repositories | 0 reports, named curriculum bullet | Q5 |
+| Kernel parameters with sysctl | 0 reports, named curriculum bullet | Q1 |
+| Boot targets, GRUB and filesystem recovery | 0 reports, named curriculum bullet | Q6 |
 | Journal and log configuration | 0 reports, part of service troubleshooting | Q11 (planned) |
 | Kernel modules | 0 reports, supporting skill | none yet |
 
@@ -64,7 +64,7 @@ Sources are distinct candidate exam reports counted in `docs/research/2026-09-06
 
 **Goal.** A kernel tunable that holds the required value in the running kernel and still holds it after the host reboots.
 
-**Frequency.** 0 exam reports, but a named curriculum bullet, "Configure kernel parameters, persistent and non-persistent" (research section 3, sysctl row). Drill: Q1 (planned).
+**Frequency.** 0 exam reports, but a named curriculum bullet, "Configure kernel parameters, persistent and non-persistent" (research section 3, sysctl row). Drill: Q1.
 
 **Commands.**
 ```bash
@@ -102,7 +102,7 @@ sysctl --system 2>&1 | grep -c 90-lab.conf                          # file is re
 
 **Goal.** Identify the process consuming the most CPU or disk I/O, record its PID, and lower its scheduling priority without killing it.
 
-**Frequency.** 1 exam report, process and I/O monitoring (research section 3, process management row; a KodeKloud mock writes the highest-read PID to a file). Drill: Q2 (planned).
+**Frequency.** 1 exam report, process and I/O monitoring (research section 3, process management row; a KodeKloud mock writes the highest-read PID to a file). Drill: Q2.
 
 **Commands.**
 ```bash
@@ -142,7 +142,7 @@ systemctl show inventory.service -p Nice
 
 **Goal.** A recurring job for another user, a recurring job for root, a one-off job, and the systemd timer equivalent, all surviving a reboot.
 
-**Frequency.** 2 exam reports, including a job scheduled for another user with `crontab -u` (research section 3, cron row). Drill: Q3, Q4 (planned).
+**Frequency.** 2 exam reports, including a job scheduled for another user with `crontab -u` (research section 3, cron row). Drill: Q3, Q4.
 
 **Commands.**
 ```bash
@@ -201,7 +201,7 @@ systemctl list-timers --all | grep logsync
 
 **Goal.** Install a package, pin it to a version, prove which package owns a file, and detect a modified file, on either distribution family.
 
-**Frequency.** 0 direct exam reports, but a named curriculum bullet, "Search for, install, validate, and maintain software packages or repositories" (research section 3, package management row). Drill: Q5 (planned).
+**Frequency.** 0 direct exam reports, but a named curriculum bullet, "Search for, install, validate, and maintain software packages or repositories" (research section 3, package management row). Drill: Q5.
 
 **Commands.**
 ```bash
@@ -304,7 +304,7 @@ mount -a && echo fstab-ok                                # live effect of every 
 
 **Goal.** Define a persistent domain from an existing qcow2 disk with a given memory and vCPU count, start it, and make it autostart at boot.
 
-**Frequency.** 3 exam reports, "deploying a VM from an existing qcow2 disk image" (research section 3, libvirt row). Drill: Q7 (planned).
+**Frequency.** 3 exam reports, "deploying a VM from an existing qcow2 disk image" (research section 3, libvirt row). Drill: Q7.
 
 **Commands.**
 ```bash

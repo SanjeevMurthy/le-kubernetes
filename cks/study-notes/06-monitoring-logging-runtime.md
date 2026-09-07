@@ -27,12 +27,12 @@ falco.org/docs is one of the eight documentation sources allowed during the exam
 | Task type | Sources | Drill |
 |---|---|---|
 | Falco: write or modify a rule and read its alerts | 15 | Q16 |
-| Falco: produce alerts in a required output format | 15 | Q19 (planned) |
-| Falco: map an alert to a pod and scale the Deployment to zero | 15 | Q31 (planned) |
-| Audit logging: policy plus the five flags and two volumes | 13 | Q17, Q32 (planned) |
-| Audit forensics: reconstruct a break-in from the log | 13 | Q20 (planned) |
+| Falco: produce alerts in a required output format | 15 | Q19 |
+| Falco: map an alert to a pod and scale the Deployment to zero | 15 | Q31 |
+| Audit logging: policy plus the five flags and two volumes | 13 | Q17, Q32 |
+| Audit forensics: reconstruct a break-in from the log | 13 | Q20 |
 | Container immutability: read-only root filesystem | 6 | Q18 |
-| strace and syscall activity investigation | 5 | Q43 (planned) |
+| strace and syscall activity investigation | 5 | Q43 |
 
 Sources are distinct candidate reports counted in the exam research report, section 3, rows 1, 2, 16 and 20. Falco and audit logging both sit in the top tier reported by 10 or more sources, so plan on meeting at least one of each in a 16-task exam.
 
@@ -121,7 +121,7 @@ journalctl -u falco-modern-bpf -u falco --since "-2 min" --no-pager | grep -i 's
 
 **Goal.** Alerts for the named rule are emitted as `%evt.time,%container.id,%container.name,%user.name` and the matching lines are written to the file the task names.
 
-**Frequency.** 15 candidate sources (research section 3 row 1). Drill: Q19 (planned).
+**Frequency.** 15 candidate sources (research section 3 row 1). Drill: Q19.
 
 **Commands.**
 ```bash
@@ -182,7 +182,7 @@ cat /opt/course/19/falco.log
 
 **Goal.** The pod and namespace behind an alerted container id are identified, and the workload that keeps recreating it is scaled to zero.
 
-**Frequency.** 15 candidate sources (research section 3 row 1). Drill: Q31 (planned).
+**Frequency.** 15 candidate sources (research section 3 row 1). Drill: Q31.
 
 **Commands.**
 ```bash
@@ -233,7 +233,7 @@ journalctl -u falco-modern-bpf -u falco --since "-1 min" --no-pager | tail -3
 
 **Goal.** The API server writes JSON audit events to a file on the control plane node, filtered by a policy whose rules are ordered so the specific ones match first, and the API server still serves requests.
 
-**Frequency.** 13 candidate sources (research section 3 row 2). Drill: Q17, Q32 (planned).
+**Frequency.** 13 candidate sources (research section 3 row 2). Drill: Q17, Q32.
 
 **Commands.**
 ```bash
@@ -327,7 +327,7 @@ grep '"verb":"get"' /var/log/kubernetes/audit/audit.log | wc -l   # expect 0 out
 
 **Goal.** Name the user, the source IP, the verb and the object involved in a described incident, using only the tools present on the exam host.
 
-**Frequency.** 13 candidate sources (research section 3 row 2). Drill: Q20 (planned).
+**Frequency.** 13 candidate sources (research section 3 row 2). Drill: Q20.
 
 **Commands.**
 ```bash
@@ -385,7 +385,7 @@ grep '"resource":"secrets"' audit.log | tail -1 | yq -p json \
 
 **Goal.** Turn a described suspicious behaviour into the right detection signal, and trace what a live process is actually doing on the node.
 
-**Frequency.** 5 candidate sources for the strace variant (research section 3 row 20); the analytic part underpins the Falco and audit tasks above. Drill: Q43 (planned).
+**Frequency.** 5 candidate sources for the strace variant (research section 3 row 20); the analytic part underpins the Falco and audit tasks above. Drill: Q43.
 
 Map the behaviour to the phase, then to the tool that sees it. Rules that target behaviour survive; rules that target one binary name do not.
 

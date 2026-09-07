@@ -25,19 +25,19 @@ Most of the recipes below have no allowed documentation at all. AppArmor, Trivy,
 
 | Task type | Sources | Drill |
 |---|---|---|
-| AppArmor: load a profile on the node, enforce it on a pod | 12 | Q7, Q34 (planned) |
+| AppArmor: load a profile on the node, enforce it on a pod | 12 | Q7, Q34 |
 | Manual static analysis and securityContext fixes on a manifest | 8 | Q15 |
 | Container immutability: read-only root filesystem, no privileged | 6 | Q15 |
-| strace and syscall investigation of a running container | 5 | Q43 (planned) |
-| seccomp: profile on the node, referenced by the pod | 5 | Q8, Q30 (planned) |
-| Linux host hardening: users, groups, services, ports, packages, SSH | 4 | Q41 (planned), Q42 (planned) |
+| strace and syscall investigation of a running container | 5 | Q43 |
+| seccomp: profile on the node, referenced by the pod | 5 | Q8, Q30 |
+| Linux host hardening: users, groups, services, ports, packages, SSH | 4 | Q41, Q42 |
 
 Counts are distinct candidate sources reporting that task type in the exam research table, not a share of the exam. AppArmor at 12 sources sits in the top tier with Falco, audit logging, ImagePolicyWebhook, kube-bench, NetworkPolicy, RBAC and gVisor, so plan on seeing it.
 
 ## Recipe 1: Reduce the host OS footprint
 
 **Goal.** A named service on a worker node is stopped, disabled so it does not return after a reboot, and its listening port is gone.
-**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q41 (planned).
+**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q41.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -78,7 +78,7 @@ ss -tlpn | grep ':8888' || echo "port closed"
 ## Recipe 2: Least-privilege users, sudo and SSH
 
 **Goal.** A named OS user can no longer log in interactively, has lost its privileged group membership and its passwordless sudo rule, and root SSH plus password SSH are off.
-**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q42 (planned).
+**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q42.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -129,7 +129,7 @@ grep -E '^(PermitRootLogin|PasswordAuthentication)' /etc/ssh/sshd_config
 ## Recipe 3: Minimise external access with the host firewall
 
 **Goal.** Only the ports the task lists are reachable on the node, and the control plane ports stay reachable from the cluster network.
-**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q41 (planned).
+**Frequency.** 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q41.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -168,7 +168,7 @@ curl -m 3 -k https://127.0.0.1:6443/readyz          # still ok on the control pl
 ## Recipe 4: Block kernel modules
 
 **Goal.** A named kernel module is not loaded now and cannot be loaded again, including by an explicit `modprobe`.
-**Frequency.** No source reports this as a standalone task. It rides inside the host hardening family, 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md), and the curriculum bullet "minimize host OS footprint" covers it. Drill: Q42 (planned).
+**Frequency.** No source reports this as a standalone task. It rides inside the host hardening family, 4 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md), and the curriculum bullet "minimize host OS footprint" covers it. Drill: Q42.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -207,7 +207,7 @@ modprobe sctp && lsmod | grep sctp   # still nothing loaded
 ## Recipe 5: AppArmor, load the profile on the node and enforce it on a pod
 
 **Goal.** A profile file that is present on a worker node is loaded in enforce mode, and a pod scheduled to that node runs confined by it.
-**Frequency.** 12 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q7, Q34 (planned).
+**Frequency.** 12 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q7, Q34.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -288,7 +288,7 @@ ssh cks-node1 "sudo dmesg | grep -i apparmor | tail -5"
 ## Recipe 6: seccomp profile on the node, referenced by a pod
 
 **Goal.** A JSON seccomp profile exists under `/var/lib/kubelet/seccomp/profiles/` on the node and a pod runs with it, either logging syscalls or denying a named one.
-**Frequency.** 5 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q8, Q30 (planned).
+**Frequency.** 5 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q8, Q30.
 **Commands.**
 ```bash
 ssh cks-node1
@@ -371,7 +371,7 @@ grep Seccomp /proc/$PID/status                      # Seccomp: 2 means filter mo
 ## Recipe 7: Capabilities, securityContext placement, and strace
 
 **Goal.** A workload runs with dropped capabilities, a read-only root filesystem and no privilege escalation, and you can name the syscalls a suspicious container is making.
-**Frequency.** strace investigation is reported by 5 candidate sources, manual static analysis of a manifest by 8, container immutability by 6 (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q15, Q43 (planned).
+**Frequency.** strace investigation is reported by 5 candidate sources, manual static analysis of a manifest by 8, container immutability by 6 (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q15, Q43.
 **Commands.**
 ```bash
 cat <<'EOF' | kubectl apply -f -

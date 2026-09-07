@@ -40,6 +40,15 @@ else
   echo "scripts/test-libs.sh not found - skipped"
 fi
 
+step "question references"
+# Scoped to cks while the lfcs question bank is still being built; widen to all
+# kits once it is complete.
+if [[ -f scripts/check-question-refs.py ]]; then
+  python3 scripts/check-question-refs.py cks || status=1
+else
+  echo "scripts/check-question-refs.py not found - skipped"
+fi
+
 step "links and anchors"
 python3 scripts/check-links.py "${existing[@]}" || status=1
 

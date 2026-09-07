@@ -27,12 +27,12 @@ Recipe 3 is the one to rehearse until the recovery sequence is automatic.
 
 | Task type | Sources | Drill |
 |---|---|---|
-| RBAC least privilege, roles, bindings, `auth can-i` | 10 | Q4, Q29 (planned) |
-| API server flags: anonymous auth, authorization mode, NodeRestriction, NodePort | 9 | Q6, Q23 (planned), Q37 (planned) |
-| kubeadm cluster upgrade, one minor version | 6 | Q39 (planned) |
+| RBAC least privilege, roles, bindings, `auth can-i` | 10 | Q4, Q29 |
+| API server flags: anonymous auth, authorization mode, NodeRestriction, NodePort | 9 | Q6, Q23, Q37 |
+| kubeadm cluster upgrade, one minor version | 6 | Q39 |
 | ServiceAccount hygiene, automount and token projection | 6 | Q5 |
 | kubeconfig contexts and certificate extraction | 4 | Killercoda kubeconfig scenario |
-| CSR and user certificates | 3 | Q40 (planned) |
+| CSR and user certificates | 3 | Q40 |
 
 Source counts come from the exam research table (task types 7, 9, 17, 18, 23, 26). RBAC and
 apiserver flags together are close to a guaranteed appearance. The upgrade task is slow, so
@@ -43,7 +43,7 @@ flag it and come back to it once the cheaper tasks are banked.
 **Goal.** A named subject can do exactly the verbs the task lists on exactly the resources it
 lists, and no binding grants anything to `system:anonymous` or `system:unauthenticated`.
 
-**Frequency.** 10 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q4, Q29 (planned).
+**Frequency.** 10 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q4, Q29.
 
 **Commands.**
 
@@ -155,7 +155,7 @@ k exec app -n dev -- sh -c 'curl -sk https://kubernetes.default/api/v1/namespace
 **Goal.** The API server runs with the required flags and answers `/readyz`, and a broken edit
 is diagnosed and reverted rather than guessed at.
 
-**Frequency.** 9 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q6, Q23 (planned), Q37 (planned).
+**Frequency.** 9 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q6, Q23, Q37.
 
 **Commands.**
 
@@ -270,7 +270,7 @@ k --kubeconfig /etc/kubernetes/kubelet.conf label node <other-node> owner=attack
 **Goal.** The control plane and the named worker run the target version, all nodes are `Ready`,
 and no node is left cordoned.
 
-**Frequency.** 6 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q39 (planned).
+**Frequency.** 6 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q39.
 
 **Commands.**
 
@@ -333,7 +333,7 @@ kubeadm upgrade plan          # reports the cluster is already at the target
 **Goal.** A named user has an approved, signed client certificate, a kubeconfig context that
 uses it, and exactly the permissions the task lists.
 
-**Frequency.** 3 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q40 (planned).
+**Frequency.** 3 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q40.
 
 **Commands.**
 

@@ -1,0 +1,10 @@
+id=06
+title="Default target and GRUB timeout, persistent"
+domain="Operations Deployment"
+domain_short=D1
+difficulty=Medium
+needs=""
+weight=5
+minutes=6
+sources=2
+host=any

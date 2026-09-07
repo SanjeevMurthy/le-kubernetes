@@ -45,9 +45,9 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 - [ ] Run `kube-bench` against the control plane and a node, and read a FAIL block — note 01 recipe 4, Q2
 - [ ] Map a CIS id to the file that fixes it (API server manifest, controller-manager, etcd, kubelet config) — note 01 recipe 4, Q2
-- [ ] Remediate kubelet findings in `/var/lib/kubelet/config.yaml` and restart the kubelet — note 01 recipe 4, Q22 *(planned)*
+- [ ] Remediate kubelet findings in `/var/lib/kubelet/config.yaml` and restart the kubelet — note 01 recipe 4, Q22
 - [ ] Re-run a single check to confirm the fix rather than the whole suite — note 01 recipe 4, Q2
-- [ ] Set TLS minimum version and cipher suites on the API server and etcd — note 01 recipe 5, Q33 *(planned)*
+- [ ] Set TLS minimum version and cipher suites on the API server and etcd — note 01 recipe 5, Q33
 
 **Ingress with TLS**
 
@@ -57,7 +57,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 **Node metadata and endpoints**
 
-- [ ] Block egress to `169.254.169.254/32` with `ipBlock` and `except` — note 01 recipe 3, Q24 *(planned)*
+- [ ] Block egress to `169.254.169.254/32` with `ipBlock` and `except` — note 01 recipe 3, Q24
 - [ ] Reduce Dashboard and GUI exposure — note 01 recipe 8
 
 **Platform binaries**
@@ -75,7 +75,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 - [ ] Create Roles, ClusterRoles and their bindings imperatively, under time pressure — note 02 recipe 1, Q4
 - [ ] Write the ServiceAccount subject form `system:serviceaccount:<ns>:<name>` from memory — note 02 recipe 1, Q4
 - [ ] Verify with `kubectl auth can-i --as`, including the negative cases — note 02 recipe 1, Q4
-- [ ] Find and delete bindings that grant `system:anonymous` or `system:unauthenticated` — note 02 recipe 1, Q29 *(planned)*
+- [ ] Find and delete bindings that grant `system:anonymous` or `system:unauthenticated` — note 02 recipe 1, Q29
 - [ ] Narrow an over-permissive existing Role rather than replacing it — note 02 recipe 1, Q4
 
 **ServiceAccounts**
@@ -87,15 +87,15 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 **Restrict API access**
 
 - [ ] Edit API server flags safely: back up, edit, watch it restart — note 02 recipe 3, Q6
-- [ ] Recover a dead API server using `crictl` and `/var/log/pods` — note 02 recipe 3, Q23 *(planned)*
-- [ ] Diagnose a manifest whose volumeMount has no matching volume — note 02 recipe 3, Q37 *(planned)*
+- [ ] Recover a dead API server using `crictl` and `/var/log/pods` — note 02 recipe 3, Q23
+- [ ] Diagnose a manifest whose volumeMount has no matching volume — note 02 recipe 3, Q37
 - [ ] Enable NodeRestriction and demonstrate what it blocks — note 02 recipe 4, Q6
 - [ ] Turn off anonymous auth and set `--authorization-mode=Node,RBAC` — note 02 recipe 3, Q6
 
 **Upgrades and certificates**
 
-- [ ] Upgrade a kubeadm control plane and then a worker, in the right order — note 02 recipe 5, Q39 *(planned)*
-- [ ] Issue a user certificate through a CertificateSigningRequest and bind a Role to it — note 02 recipe 6, Q40 *(planned)*
+- [ ] Upgrade a kubeadm control plane and then a worker, in the right order — note 02 recipe 5, Q39
+- [ ] Issue a user certificate through a CertificateSigningRequest and bind a Role to it — note 02 recipe 6, Q40
 - [ ] Read contexts and decode the client certificate inside a kubeconfig — note 02 recipe 7
 
 ---
@@ -106,32 +106,32 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 **Host OS footprint**
 
-- [ ] Find what is listening with `ss -tlpn` and trace a port to its unit — note 03, Q41 *(planned)*
-- [ ] Disable, stop and mask a service, and remove a package — note 03, Q41 *(planned)*
-- [ ] Blacklist a kernel module so it cannot be loaded at boot — note 03, Q42 *(planned)*
+- [ ] Find what is listening with `ss -tlpn` and trace a port to its unit — note 03, Q41
+- [ ] Disable, stop and mask a service, and remove a package — note 03, Q41
+- [ ] Blacklist a kernel module so it cannot be loaded at boot — note 03, Q42
 
 **Least-privilege identity**
 
-- [ ] Lock an account, change its shell to nologin, remove it from a group — note 03, Q42 *(planned)*
-- [ ] Remove a sudoers grant and validate the file with `visudo -c` — note 03, Q42 *(planned)*
-- [ ] Harden `sshd_config` and validate with `sshd -t` before restarting — note 03, Q42 *(planned)*
+- [ ] Lock an account, change its shell to nologin, remove it from a group — note 03, Q42
+- [ ] Remove a sudoers grant and validate the file with `visudo -c` — note 03, Q42
+- [ ] Harden `sshd_config` and validate with `sshd -t` before restarting — note 03, Q42
 
 **Minimize external network access**
 
-- [ ] Write host firewall rules that allow only what is needed and survive a reboot — note 03, Q41 *(planned)*
+- [ ] Write host firewall rules that allow only what is needed and survive a reboot — note 03, Q41
 
 **Kernel hardening**
 
 - [ ] Load an AppArmor profile with `apparmor_parser` and confirm with `aa-status` — note 03, Q7
-- [ ] Read the profile **name** from inside the file, which is not the file name — note 03, Q34 *(planned)*
+- [ ] Read the profile **name** from inside the file, which is not the file name — note 03, Q34
 - [ ] Confine a pod with `securityContext.appArmorProfile` (1.30 and later) and with the legacy annotation — note 03, Q7
 - [ ] Schedule the pod onto the node where the profile is loaded — note 03, Q7
 - [ ] Write a seccomp profile under `/var/lib/kubelet/seccomp/profiles/` and reference it — note 03, Q8
 - [ ] Use `RuntimeDefault` and know when `Localhost` is required instead — note 03, Q8
-- [ ] Block a specific syscall with `SCMP_ACT_ERRNO` and prove it fails — note 03, Q30 *(planned)*
+- [ ] Block a specific syscall with `SCMP_ACT_ERRNO` and prove it fails — note 03, Q30
 - [ ] Drop all capabilities and add back only what is needed — note 03, Q15
 - [ ] Recite which securityContext fields are pod-level and which are container-level — note 03, Q15
-- [ ] Trace a container's syscalls with `crictl inspect` and `strace` — note 03, Q43 *(planned)*
+- [ ] Trace a container's syscalls with `crictl inspect` and `strace` — note 03, Q43
 
 ---
 
@@ -144,20 +144,20 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 - [ ] Label a namespace for `enforce`, `audit` and `warn`, with a version — note 04, Q9
 - [ ] Recite the four fields a pod needs to satisfy `restricted` — note 04, Q9
 - [ ] Know that `enforce` blocks new pods only and existing ones keep running — note 04, Q9
-- [ ] Find which existing pods violate a standard and write them to a file — note 04, Q36 *(planned)*
+- [ ] Find which existing pods violate a standard and write them to a file — note 04, Q36
 
 **Secrets**
 
 - [ ] Write an `EncryptionConfiguration` with the providers in the right order — note 04, Q10
 - [ ] Wire `--encryption-provider-config` with its volume and volumeMount — note 04, Q10
-- [ ] Re-encrypt every existing secret after changing the key — note 04, Q26 *(planned)*
-- [ ] Read a secret straight from etcd with `etcdctl` and its three certificate flags — note 04, Q25 *(planned)*
+- [ ] Re-encrypt every existing secret after changing the key — note 04, Q26
+- [ ] Read a secret straight from etcd with `etcdctl` and its three certificate flags — note 04, Q25
 - [ ] Confirm encryption by finding the `k8s:enc:aescbc:v1:` prefix in etcd — note 04, Q10
 
 **Isolation**
 
 - [ ] Configure a RuntimeClass with the `runsc` handler and run a pod under it — note 04, Q12
-- [ ] Prove a pod is sandboxed by reading `dmesg` inside it — note 04, Q28 *(planned)*
+- [ ] Prove a pod is sandboxed by reading `dmesg` inside it — note 04, Q28
 - [ ] Choose the right isolation tool for a stated requirement — note 04 isolation table
 
 **Admission control**
@@ -168,9 +168,9 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 **Pod-to-pod encryption**
 
-- [ ] Write a CiliumNetworkPolicy including an L7 HTTP rule — note 04, Q35 *(planned)*
-- [ ] Enable and verify Cilium transparent encryption — note 04, Q35 *(planned)*
-- [ ] Enforce STRICT mTLS in a namespace with an Istio PeerAuthentication — note 04, Q44 *(planned)*
+- [ ] Write a CiliumNetworkPolicy including an L7 HTTP rule — note 04, Q35
+- [ ] Enable and verify Cilium transparent encryption — note 04, Q35
+- [ ] Enforce STRICT mTLS in a namespace with an Istio PeerAuthentication — note 04, Q44
 
 ---
 
@@ -180,18 +180,18 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 **Base images**
 
-- [ ] Write a multi-stage Dockerfile whose final image is minimal and non-root — note 05, Q27 *(planned)*
-- [ ] Spot the security problems in a given Dockerfile and fix only those — note 05, Q27 *(planned)*
+- [ ] Write a multi-stage Dockerfile whose final image is minimal and non-root — note 05, Q27
+- [ ] Spot the security problems in a given Dockerfile and fix only those — note 05, Q27
 
 **Understand the supply chain**
 
-- [ ] Generate an SBOM with `bom` and read its contents — note 05, Q38 *(planned)*
+- [ ] Generate an SBOM with `bom` and read its contents — note 05, Q38
 - [ ] Pin an image by digest rather than by tag — note 05
 
 **Secure the supply chain**
 
 - [ ] Configure ImagePolicyWebhook: admission config, webhook kubeconfig, API server flags, volume — note 05, Q14
-- [ ] Fix a webhook kubeconfig that is missing its `server:` line — note 05, Q21 *(planned)*
+- [ ] Fix a webhook kubeconfig that is missing its `server:` line — note 05, Q21
 - [ ] Restrict images to permitted registries with an admission policy — note 05, Q14
 - [ ] Verify a signature with `cosign` — note 05
 
@@ -212,11 +212,11 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 - [ ] Read a shipped rule and understand every field — note 06, Q16
 - [ ] Override a shipped rule by re-declaring its name in the local rules file — note 06, Q16
-- [ ] Find output field names with `falco --list` — note 06, Q19 *(planned)*
-- [ ] Rewrite an `output` line to a required format — note 06, Q19 *(planned)*
-- [ ] Reload rules without losing the service, and know which unit name is in use — note 06, Q19 *(planned)*
+- [ ] Find output field names with `falco --list` — note 06, Q19
+- [ ] Rewrite an `output` line to a required format — note 06, Q19
+- [ ] Reload rules without losing the service, and know which unit name is in use — note 06, Q19
 - [ ] Read alerts from the journal and from the log file — note 06, Q16
-- [ ] Map an alert's container id back to its pod with `crictl`, then stop the workload — note 06, Q31 *(planned)*
+- [ ] Map an alert's container id back to its pod with `crictl`, then stop the workload — note 06, Q31
 
 **Audit logs**
 
@@ -224,7 +224,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 - [ ] Use all four levels correctly and set `omitStages` — note 06, Q17
 - [ ] Add the five `--audit-log-*` flags and both hostPath volumes with the right types — note 06, Q17
 - [ ] Confirm the log is actually growing after the API server restarts — note 06, Q17
-- [ ] Mine an audit log without `jq`: who deleted a secret, from which IP, how often — note 06, Q20 *(planned)*
+- [ ] Mine an audit log without `jq`: who deleted a secret, from which IP, how often — note 06, Q20
 
 **Behavioural analytics and attack phases**
 

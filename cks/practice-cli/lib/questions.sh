@@ -37,7 +37,15 @@ QUESTIONS=(
   "33|Restrict TLS versions and ciphers|Cluster Setup|D1|Hard|q33-tls-ciphers-apiserver-etcd|node-root|7|8|12|control-plane"
   "34|AppArmor: the profile name is not the file name|System Hardening|D3|Medium|q34-apparmor-profile-name-trap|node-root tool:apparmor_parser|6|8|12|worker"
   "35|CiliumNetworkPolicy: allow only GET /health|Minimize Microservice Vulnerabilities|D4|Medium|q35-cilium-l7-policy|kubectl cni-cilium|7|8|8|any"
+  "36|Pod Security: enforce baseline and report violators|Minimize Microservice Vulnerabilities|D4|Easy|q36-psa-find-violators|kubectl|5|6|6|any"
+  "37|The API server is down again: a volume is wrong|Cluster Hardening|D2|Medium|q37-apiserver-crash-bad-volume|node-root|7|8|9|control-plane"
+  "38|Generate an SBOM and count its packages|Supply Chain Security|D5|Easy|q38-sbom-with-bom|linux tool:bom|5|6|5|linux"
+  "39|Upgrade kubelet and kubectl on the worker to the latest patch|Cluster Hardening|D2|Hard|q39-kubeadm-upgrade-worker|node-root|8|12|6|worker"
   "40|Issue a client certificate to user jane and bind a Role|Cluster Hardening|D2|Medium|q40-csr-user-certificate|kubectl tool:openssl|6|8|3|any"
+  "41|Host hardening: stop the rogue service and close its port|System Hardening|D3|Easy|q41-node-rogue-service|node-root|5|6|4|worker"
+  "42|Host hardening: users, sudo and kernel modules|System Hardening|D3|Medium|q42-node-users-sudo-modules|node-root|6|8|4|worker"
+  "43|Which pod calls the kill syscall|Monitoring, Logging and Runtime Security|D6|Medium|q43-strace-syscall-investigation|node-root tool:strace|6|8|5|worker"
+  "44|Istio: enforce STRICT mTLS in a namespace|Minimize Microservice Vulnerabilities|D4|Medium|q44-istio-strict-mtls|kubectl istio|6|6|3|any"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

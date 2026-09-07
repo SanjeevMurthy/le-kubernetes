@@ -1,0 +1,10 @@
+id=38
+title="Generate an SBOM and count its packages"
+domain="Supply Chain Security"
+domain_short=D5
+difficulty=Easy
+needs="linux tool:bom"
+weight=5
+minutes=6
+sources=5
+host=linux

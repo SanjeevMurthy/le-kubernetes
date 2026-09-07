@@ -26,11 +26,11 @@ Trivy, kubesec and kube-linter documentation are **not** on the allowed list, so
 
 | Task type | Sources | Drill |
 |---|---|---|
-| ImagePolicyWebhook admission, end to end | 12 | Q14, Q21 (planned) |
+| ImagePolicyWebhook admission, end to end | 12 | Q14, Q21 |
 | Trivy: scan the images used in a namespace, delete or report the vulnerable pods | 9 | Q13 |
-| Dockerfile and manifest static analysis, "find the two issues" | 8 | Q15, Q27 (planned) |
+| Dockerfile and manifest static analysis, "find the two issues" | 8 | Q15, Q27 |
 | Permitted registries with Gatekeeper or Kyverno | 5 | Q11 |
-| SBOM with bom, plus kubesec and kube-linter | 5 | Q15, Q38 (planned) |
+| SBOM with bom, plus kubesec and kube-linter | 5 | Q15, Q38 |
 | Cosign signing and digest pinning | 1 | Killercoda "Image Use Digest" |
 
 Counts are distinct candidate sources reporting that task type in the exam research table, not a share of the exam. ImagePolicyWebhook at 12 sources sits in the top tier alongside Falco, audit logging, kube-bench, AppArmor, NetworkPolicy, RBAC and gVisor. It is also the single most reported way to kill the API server, so Recipe 7 is the one to rehearse until the recovery sequence is automatic.
@@ -38,7 +38,7 @@ Counts are distinct candidate sources reporting that task type in the exam resea
 ## Recipe 1: Build a minimal, non-root image
 
 **Goal.** A Dockerfile produces a small final image that runs as a non-root UID from a pinned base, with no build toolchain, no package manager and no secrets left in the layers.
-**Frequency.** No source reports image building as a standalone task. It rides inside the static analysis family, 8 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md), and Killercoda ships it as "Container Image Footprint User". Drill: Q27 (planned).
+**Frequency.** No source reports image building as a standalone task. It rides inside the static analysis family, 8 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md), and Killercoda ships it as "Container Image Footprint User". Drill: Q27.
 **Commands.** The multi-stage shape the grader wants, where the build stage keeps the compiler and the final stage keeps only the binary:
 
 ```dockerfile
@@ -76,7 +76,7 @@ podman run --rm app:1.0.0 sh                 # distroless: no shell, command fai
 ## Recipe 2: Find the issues in a Dockerfile and a manifest
 
 **Goal.** Exactly the number of issues the task names are fixed in the given files, by changing existing settings, and nothing else in the files has moved.
-**Frequency.** 8 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q15, Q27 (planned).
+**Frequency.** 8 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q15, Q27.
 **Commands.**
 ```bash
 cp -r /opt/course/27/files /opt/course/27/files.bak    # so a wrong edit is reversible
@@ -215,7 +215,7 @@ kube-linter lint /opt/course/15/deployment.yaml                            # No 
 ## Recipe 5: Generate and query an SBOM with bom
 
 **Goal.** An SPDX SBOM for a named image or directory exists at the path the task gives, in the format the task names, and a question about a specific package can be answered from it.
-**Frequency.** 5 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q38 (planned).
+**Frequency.** 5 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q38.
 **Commands.**
 ```bash
 # image SBOM, SPDX tag-value by default, JSON when the task asks for it
@@ -284,7 +284,7 @@ cosign verify --key cosign.pub registry.internal/app:1.0.0 && echo signature-ok
 ## Recipe 7: ImagePolicyWebhook end to end
 
 **Goal.** The API server calls an existing webhook backend for every pod image, fails closed when the backend is unreachable, and a pod using a forbidden image is denied at admission while the cluster stays up.
-**Frequency.** 12 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q14, Q21 (planned).
+**Frequency.** 12 candidate sources (see ../practice-tests/exam-questions/cks-real-exam-questions.md). Drill: Q14, Q21.
 
 There are three moving parts and they point at each other in one chain. Break any link and the API server does not start.
 

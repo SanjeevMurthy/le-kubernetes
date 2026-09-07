@@ -33,12 +33,12 @@ and there is no `jq`, so no command here uses it.
 
 | Task type | Sources | Drill |
 |---|---|---|
-| gVisor RuntimeClass and a sandboxed pod | 10 | Q12, Q28 (planned) |
-| Secrets: encryption at rest, read from etcd, decode and mount | 8 | Q10, Q25 (planned), Q26 (planned) |
-| Cilium: CiliumNetworkPolicy L3 to L7, transparent encryption | 8 | Q35 (planned) |
-| Pod Security Admission via namespace labels | 6 | Q9, Q36 (planned) |
+| gVisor RuntimeClass and a sandboxed pod | 10 | Q12, Q28 |
+| Secrets: encryption at rest, read from etcd, decode and mount | 8 | Q10, Q25, Q26 |
+| Cilium: CiliumNetworkPolicy L3 to L7, transparent encryption | 8 | Q35 |
+| Pod Security Admission via namespace labels | 6 | Q9, Q36 |
 | OPA Gatekeeper constraint and template edits | 5 | Q11 |
-| Istio mTLS with PeerAuthentication STRICT | 3 | Q44 (planned) |
+| Istio mTLS with PeerAuthentication STRICT | 3 | Q44 |
 
 ```mermaid
 flowchart LR
@@ -81,7 +81,7 @@ No row is a boundary by itself. Stack them: a `restricted` namespace, a default-
 **Goal.** The namespace carries the requested `enforce`, `warn` and `audit` labels, new violating
 pods are rejected, and the pods that already violate the standard land in the answer file.
 
-**Frequency.** 6 candidate sources (research section 3 row 15; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q9, Q36 (planned).
+**Frequency.** 6 candidate sources (research section 3 row 15; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q9, Q36.
 
 **Commands.**
 ```bash
@@ -288,7 +288,7 @@ k -n prod create deployment web --image=nginx:1.27.1
 **Goal.** The API server writes Secrets through an `aescbc` provider, every Secret already in the
 cluster has been rewritten, and a raw etcd read shows the `k8s:enc:aescbc:v1:` prefix.
 
-**Frequency.** 8 candidate sources (research section 3 row 12; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q10, Q26 (planned).
+**Frequency.** 8 candidate sources (research section 3 row 12; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q10, Q26.
 
 **Commands.**
 ```bash
@@ -353,7 +353,7 @@ k -n default get secret enc-check -o jsonpath='{.data.password}' | base64 -d; ec
 **Goal.** Recover the plaintext of a Secret directly from etcd, decode it through the API without
 `jq`, and hand it to a pod as a read-only volume rather than an environment variable.
 
-**Frequency.** 8 candidate sources (research section 3 row 12; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q25 (planned).
+**Frequency.** 8 candidate sources (research section 3 row 12; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q25.
 
 **Commands.**
 ```bash
@@ -394,7 +394,7 @@ k -n prod get secret db-creds -o jsonpath='{.immutable}{"\n"}'
 **Goal.** A `RuntimeClass` named `gvisor` points at the `runsc` handler, the pod runs under it on
 the node where runsc is configured, and `dmesg` inside the pod shows the gVisor kernel.
 
-**Frequency.** 10 candidate sources (research section 3 row 8; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q12, Q28 (planned).
+**Frequency.** 10 candidate sources (research section 3 row 8; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q12, Q28.
 
 **Commands.**
 ```bash
@@ -442,7 +442,7 @@ k exec gvisor-test -- dmesg > /opt/course/10/gvisor-test-dmesg
 **Goal.** A `CiliumNetworkPolicy` allows only the named HTTP method and path between two workloads,
 and pod-to-pod traffic on the node network is encrypted with WireGuard.
 
-**Frequency.** 8 candidate sources (research section 3 row 19; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q35 (planned).
+**Frequency.** 8 candidate sources (research section 3 row 19; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q35.
 
 **Commands.**
 ```yaml
@@ -492,7 +492,7 @@ k -n prod exec deploy/frontend -- curl -s -o /dev/null -w '%{http_code}\n' -XPOS
 **Goal.** Workloads accept only mutually authenticated TLS from other sidecars, and a plaintext
 request from a pod without a sidecar fails.
 
-**Frequency.** 3 candidate sources (research section 3 row 27; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q44 (planned).
+**Frequency.** 3 candidate sources (research section 3 row 27; `../practice-tests/exam-questions/cks-real-exam-questions.md`). Drill: Q44.
 
 **Commands.**
 ```yaml
