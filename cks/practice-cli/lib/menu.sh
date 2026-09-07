@@ -19,7 +19,7 @@ show_main_menu() {
 
 show_question_list() {
   print_header "${ICON_BOOK} All CKS Questions"
-  local current_domain="" q id title domain ds diff dc dfc needs mark
+  local current_domain="" q id title short domain ds diff dc dfc needs mark
   for q in "${QUESTIONS[@]}"; do
     id=$(get_question_id "$q")
     title=$(get_question_title "$q")
@@ -37,8 +37,12 @@ show_question_list() {
     fi
     mark=" "
     is_complete "$id" 2>/dev/null && mark="✓"
+    # Keep the columns aligned: a few titles run long, and a ragged list of 44
+    # questions is hard to scan. The full title is always shown on the question
+    # screen and in the guide.
+    if [[ ${#title} -gt 48 ]]; then short="${title:0:47}…"; else short="$title"; fi
     printf "  ${dc}[Q%-2s]${RESET} %s %-48s ${dfc}%-6s${RESET} ${GRAY}%s${RESET}\n" \
-      "$id" "$mark" "$title" "$diff" "$needs"
+      "$id" "$mark" "$short" "$diff" "$needs"
   done
   echo ""
 }

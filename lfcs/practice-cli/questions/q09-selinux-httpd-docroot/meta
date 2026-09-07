@@ -1,0 +1,10 @@
+id=09
+title="Serve a custom document root on a custom port under SELinux enforcing"
+domain="Operations Deployment"
+domain_short=D1
+difficulty=Hard
+needs="rocky tool:semanage"
+weight=7
+minutes=8
+sources=3
+host=rocky

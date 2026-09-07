@@ -40,9 +40,9 @@ fi
 echo "Checking the two reports..."
 check "version.txt exists" test -f "$DIR/version.txt"
 check_eq "version.txt holds the installed openssl version" \
-  "$(printf '%s' "$EXPECT_VER" | norm)" "$(norm < "$DIR/version.txt" 2>/dev/null)"
+  "$(printf '%s' "$EXPECT_VER" | norm)" "$(cat "$DIR/version.txt" 2>/dev/null | norm)"
 check "verify.txt exists" test -f "$DIR/verify.txt"
 check_eq "verify.txt matches the package verification of bash" \
-  "$(printf '%s' "$EXPECT_VFY" | norm)" "$(norm < "$DIR/verify.txt" 2>/dev/null)"
+  "$(printf '%s' "$EXPECT_VFY" | norm)" "$(cat "$DIR/verify.txt" 2>/dev/null | norm)"
 
 summary
