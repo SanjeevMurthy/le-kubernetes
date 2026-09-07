@@ -1,15 +1,5 @@
 # Q31. Filesystem nearly full: recover space and find the hidden consumer (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Confirm which filesystem is full, and by how much.**

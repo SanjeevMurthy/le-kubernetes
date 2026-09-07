@@ -1,15 +1,5 @@
 # Q19. Falco: change the output format and save the alerts (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the worker node, as root.

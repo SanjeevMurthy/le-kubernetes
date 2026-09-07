@@ -1,15 +1,5 @@
 # Q38. A service cannot start because another one owns its port (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Ask the journal what the failure actually was.**

@@ -1,15 +1,5 @@
 # Q16. Harden sshd, key-only login with one password exception (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Read the effective configuration before changing it.**

@@ -30,6 +30,19 @@ fi
 
 slug() { echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 -]//g; s/ /-/g'; }
 
+# Inline a per-question file: drop its H1 title, and demote its headings two
+# levels so they nest under the question's H3 rather than outranking it.
+# Headings inside fenced code blocks are left alone, or a shell comment would be
+# silently rewritten.
+inline() {
+  awk '
+    NR == 1 && /^# / { next }
+    /^```/           { fence = !fence }
+    !fence && /^#{1,4} / { sub(/^#+/, "&##") }
+    { print }
+  ' "$1"
+}
+
 {
   echo '# CKS Exam Question and Answer Guide'
   echo
@@ -70,11 +83,11 @@ slug() { echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 -]//g; s/ /-/g
     )
     echo '**Question**'
     echo
-    sed '1{/^# /d;}' "$d/question.md"
+    inline "$d/question.md"
     echo
     echo '**Solution**'
     echo
-    sed '1{/^# /d;}' "$d/solution.md"
+    inline "$d/solution.md"
   done
 } > "$TMP"
 

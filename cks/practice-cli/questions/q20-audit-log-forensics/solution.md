@@ -1,15 +1,5 @@
 # Q20. Audit log forensics: who deleted the Secret (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Set the log path once. On a real exam host this is `/opt/course/20/audit.log`.

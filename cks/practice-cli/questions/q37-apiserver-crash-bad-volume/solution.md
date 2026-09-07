@@ -1,15 +1,5 @@
 # Q37. The API server is down again: a volume is wrong (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the control-plane node, as root.

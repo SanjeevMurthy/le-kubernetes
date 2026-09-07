@@ -1,15 +1,5 @@
 # Q43. Which pod calls the kill syscall (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything up to the last step happens on the worker node, as root.

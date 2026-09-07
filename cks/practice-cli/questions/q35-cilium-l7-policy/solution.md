@@ -1,15 +1,5 @@
 # Q35. CiliumNetworkPolicy: allow only GET /health (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. See what the client can reach today.**

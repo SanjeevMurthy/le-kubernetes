@@ -1,15 +1,5 @@
 # Q33. Read a certificate and issue a self-signed one (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Read the two fields off the supplied certificate.**

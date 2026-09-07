@@ -1,15 +1,5 @@
 # Q31. Falco: identify the offending pod and stop it (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the worker node, as root.

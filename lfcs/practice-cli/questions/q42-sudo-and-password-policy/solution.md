@@ -1,15 +1,5 @@
 # Q42. Sudo rules and password ageing (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The full sudo rule for ana, in its own drop-in file.**

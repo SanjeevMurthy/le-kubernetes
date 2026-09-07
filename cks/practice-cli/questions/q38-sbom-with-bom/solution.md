@@ -1,15 +1,5 @@
 # Q38. Generate an SBOM and count its packages (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Check the tool and the flags before running anything long.**

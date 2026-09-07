@@ -1,15 +1,5 @@
 # Q02. Find the disk-reading process, record its PID, lower its priority (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Watch per-process disk I/O for a few seconds.**

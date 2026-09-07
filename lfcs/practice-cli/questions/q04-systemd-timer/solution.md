@@ -1,15 +1,5 @@
 # Q04. A timer that runs a script every 15 minutes (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The service that does the work.**

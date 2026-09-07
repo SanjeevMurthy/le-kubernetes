@@ -1,15 +1,5 @@
 # Q17. Allow only ssh, http, https and icmp, persistent, without blocking the exam ports (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Read the ruleset before writing anything.**

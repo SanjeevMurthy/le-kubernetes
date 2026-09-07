@@ -1,15 +1,5 @@
 # Q32. Clone, branch, ignore, commit, push (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Clone the repository.**

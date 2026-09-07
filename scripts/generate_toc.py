@@ -80,15 +80,27 @@ def process(path, check, inject):
     return True
 
 
+def skip_file(path):
+    """Per-question question.md and solution.md get no table of contents.
+
+    They are short, they are read in a terminal through the practice CLI, and
+    the guide builder inlines them, so a TOC there becomes forty-five stray
+    contents blocks in the middle of the generated guide.
+    """
+    parts = path.replace(os.sep, '/').split('/')
+    return 'questions' in parts and 'practice-cli' in parts
+
+
 def md_files(paths):
     for p in paths:
         if os.path.isfile(p):
-            yield p
+            if not skip_file(p):
+                yield p
             continue
         for d, dirs, files in os.walk(p):
             dirs[:] = [x for x in dirs if x not in SKIP_DIRS]
             for f in files:
-                if f.endswith('.md'):
+                if f.endswith('.md') and not skip_file(os.path.join(d, f)):
                     yield os.path.join(d, f)
 
 

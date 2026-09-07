@@ -1,15 +1,5 @@
 # Q33. Restrict TLS versions and ciphers (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the control-plane node, as root.

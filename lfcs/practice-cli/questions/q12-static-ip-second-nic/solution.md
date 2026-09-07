@@ -1,15 +1,5 @@
 # Q12. Static IPv4 on the second NIC, persistent (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find the interface and see what it already has.**

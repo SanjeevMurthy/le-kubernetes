@@ -1,15 +1,5 @@
 # Q05. Install, hold, verify, and report packages (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Run `cat /etc/os-release` first if there is any doubt about which family you are on.

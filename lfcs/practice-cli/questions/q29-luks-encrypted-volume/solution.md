@@ -1,15 +1,5 @@
 # Q29. Encrypted volume unlocked with a key file at boot (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Name the device once, and be sure it is the spare one.**

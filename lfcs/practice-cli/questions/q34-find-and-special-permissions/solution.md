@@ -1,15 +1,5 @@
 # Q34. Locate files by owner and size, list SUID binaries, set SGID and sticky (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find the files first, then act on them.**

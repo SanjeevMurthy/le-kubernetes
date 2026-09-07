@@ -1,15 +1,5 @@
 # Q25. Grow a mounted logical volume after adding a disk (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Look before you type.** Two facts decide everything: how much free space the group has, and what the filesystem is.

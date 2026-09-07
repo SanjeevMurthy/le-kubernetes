@@ -1,15 +1,5 @@
 # Q07. Define a VM from a disk image and set autostart (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Look at what you have been given.**

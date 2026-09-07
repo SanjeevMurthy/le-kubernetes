@@ -1,15 +1,5 @@
 # Q43. Group collaboration directory with ACLs (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The mode bits first, because a later `chmod` rewrites the ACL mask.**

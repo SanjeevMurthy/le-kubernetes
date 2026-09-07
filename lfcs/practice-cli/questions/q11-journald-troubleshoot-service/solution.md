@@ -1,15 +1,5 @@
 # Q11. A service fails to start: find why, fix it, make the journal persistent (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Ask the journal, not the unit file.**

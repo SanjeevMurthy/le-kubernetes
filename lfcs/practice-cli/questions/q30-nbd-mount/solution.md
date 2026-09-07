@@ -1,15 +1,5 @@
 # Q30. Attach a network block device and mount it (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Load the module. Nothing works before this.**

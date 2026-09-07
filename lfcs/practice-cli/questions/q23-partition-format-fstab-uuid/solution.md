@@ -1,15 +1,5 @@
 # Q23. Partition a disk, format it, and mount it by UUID (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find the disk and prove it is the spare one.**

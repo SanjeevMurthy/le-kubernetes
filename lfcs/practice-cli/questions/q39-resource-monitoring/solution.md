@@ -1,15 +1,5 @@
 # Q39. Report CPU hog, load, cores, memory and process count (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find the busiest process.**

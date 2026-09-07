@@ -1,15 +1,5 @@
 # Q41. Create users with exact attributes, a system account, and lock one (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The groups first, because a primary group must exist before the user does.**

@@ -1,15 +1,5 @@
 # Q18. Redirect a port and masquerade a subnet, persistent (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Turn forwarding on, now and for the next boot.**

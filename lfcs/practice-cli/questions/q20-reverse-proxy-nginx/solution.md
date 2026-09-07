@@ -1,15 +1,5 @@
 # Q20. Reverse proxy in front of an application (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Prove the backend works before proxying to it.**

@@ -6,6 +6,57 @@
 > Allowed documentation: kubernetes.io docs and blog, falco.org, the bom CLI reference, etcd.io,
 > the ingress-nginx user guide, docs.cilium.io and istio.io. Nothing else, and there is no `jq`.
 
+<!-- toc -->
+## Table of Contents
+
+- [Question index](#question-index)
+  - [Q1. NetworkPolicy: Default-Deny + Selective Allow](#q1-networkpolicy-default-deny--selective-allow)
+  - [Q2. CIS Benchmark Remediation with kube-bench](#q2-cis-benchmark-remediation-with-kube-bench)
+  - [Q3. Ingress TLS Termination](#q3-ingress-tls-termination)
+  - [Q4. RBAC Least-Privilege Role + Binding](#q4-rbac-least-privilege-role--binding)
+  - [Q5. ServiceAccount Token Hardening](#q5-serviceaccount-token-hardening)
+  - [Q6. Restrict the API Server (apiserver flags)](#q6-restrict-the-api-server-apiserver-flags)
+  - [Q7. AppArmor Profile on a Pod](#q7-apparmor-profile-on-a-pod)
+  - [Q8. Seccomp RuntimeDefault + Custom Profile](#q8-seccomp-runtimedefault--custom-profile)
+  - [Q9. Enforce Pod Security Admission (restricted)](#q9-enforce-pod-security-admission-restricted)
+  - [Q10. Encrypt Secrets at Rest (EncryptionConfiguration)](#q10-encrypt-secrets-at-rest-encryptionconfiguration)
+  - [Q11. Admission Policy with Kyverno/Gatekeeper](#q11-admission-policy-with-kyvernogatekeeper)
+  - [Q12. Runtime Sandbox with RuntimeClass (gVisor)](#q12-runtime-sandbox-with-runtimeclass-gvisor)
+  - [Q13. Scan Images with Trivy and Remediate](#q13-scan-images-with-trivy-and-remediate)
+  - [Q14. Restrict Images via ImagePolicyWebhook/Registry](#q14-restrict-images-via-imagepolicywebhookregistry)
+  - [Q15. Static Analysis & Manifest Hardening (kubesec)](#q15-static-analysis--manifest-hardening-kubesec)
+  - [Q16. Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules)
+  - [Q17. API Server Audit Logging Policy](#q17-api-server-audit-logging-policy)
+  - [Q18. Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem)
+  - [Q19. Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts)
+  - [Q20. Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret)
+  - [Q21. ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images)
+  - [Q22. kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings)
+  - [Q23. The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest)
+  - [Q24. Block the cloud metadata endpoint](#q24-block-the-cloud-metadata-endpoint)
+  - [Q25. Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd)
+  - [Q26. Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt)
+  - [Q27. Fix two issues in the Dockerfile and two in the manifest](#q27-fix-two-issues-in-the-dockerfile-and-two-in-the-manifest)
+  - [Q28. Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg)
+  - [Q29. Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount)
+  - [Q30. seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile)
+  - [Q31. Falco: identify the offending pod and stop it](#q31-falco-identify-the-offending-pod-and-stop-it)
+  - [Q32. Audit: ordered policy and retention flags](#q32-audit-ordered-policy-and-retention-flags)
+  - [Q33. Restrict TLS versions and ciphers](#q33-restrict-tls-versions-and-ciphers)
+  - [Q34. AppArmor: the profile name is not the file name](#q34-apparmor-the-profile-name-is-not-the-file-name)
+  - [Q35. CiliumNetworkPolicy: allow only GET /health](#q35-ciliumnetworkpolicy-allow-only-get-health)
+  - [Q36. Pod Security: enforce baseline and report violators](#q36-pod-security-enforce-baseline-and-report-violators)
+  - [Q37. The API server is down again: a volume is wrong](#q37-the-api-server-is-down-again-a-volume-is-wrong)
+  - [Q38. Generate an SBOM and count its packages](#q38-generate-an-sbom-and-count-its-packages)
+  - [Q39. Upgrade kubelet and kubectl on the worker to the latest patch](#q39-upgrade-kubelet-and-kubectl-on-the-worker-to-the-latest-patch)
+  - [Q40. Issue a client certificate to user jane and bind a Role](#q40-issue-a-client-certificate-to-user-jane-and-bind-a-role)
+  - [Q41. Host hardening: stop the rogue service and close its port](#q41-host-hardening-stop-the-rogue-service-and-close-its-port)
+  - [Q42. Host hardening: users, sudo and kernel modules](#q42-host-hardening-users-sudo-and-kernel-modules)
+  - [Q43. Which pod calls the kill syscall](#q43-which-pod-calls-the-kill-syscall)
+  - [Q44. Istio: enforce STRICT mTLS in a namespace](#q44-istio-enforce-strict-mtls-in-a-namespace)
+
+<!-- toc stop -->
+
 ## Question index
 
 | # | Domain | Question | Reports | Needs |
@@ -1251,17 +1302,7 @@ Falco documentation is one of the few sources allowed in the exam. The field nam
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -1336,7 +1377,7 @@ If file output is enabled in `/etc/falco/falco.yaml`, read `/var/log/falco.log` 
 tail -20 /var/log/falco.log
 ```
 
-## Why
+#### Why
 
 Falco ships its rules in `/etc/falco/falco_rules.yaml` and that file is replaced on upgrade, so any change belongs in `falco_rules.local.yaml`. The local file is loaded last and a rule declared there with an existing name wins outright. That is the whole override mechanism, and it is why the task can be solved without touching the shipped file.
 
@@ -1344,7 +1385,7 @@ The `output` string is a template. Each `%` field is substituted at alert time f
 
 Reloading with `SIGHUP` rather than a restart matters when a task says to keep Falco running: a restart drops events during the gap, and on a slow node the gap can be long enough that the grader sees no alerts.
 
-## Verify
+#### Verify
 
 ```bash
 grep -A3 'rule: Read sensitive file untrusted' /etc/falco/falco_rules.local.yaml
@@ -1353,7 +1394,7 @@ wc -l /opt/course/19/falco.log     # 5 or more
 head -2 /opt/course/19/falco.log   # four comma-separated fields, nothing else
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://falco.org/docs/`. Search "Supported Fields" for the output field names and the rules reference for condition syntax. Falco is one of only eight documentation sources open to you in the exam, so use it rather than guessing field names.
 
@@ -1386,17 +1427,7 @@ Only the deletion of `db-creds` in `finance` counts. Other Secrets were deleted 
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Set the log path once. On a real exam host this is `/opt/course/20/audit.log`.
 
@@ -1455,7 +1486,7 @@ EOF
 
 Substitute the values you actually found; the ones above are from one generated log.
 
-## Why
+#### Why
 
 Audit events are one compact JSON object per line, which is what makes line-oriented tools work at all. Every event carries `user.username`, `sourceIPs`, `verb`, `objectRef` (resource, namespace, name) and `requestReceivedTimestamp`, so a single line answers who, from where, what and when.
 
@@ -1463,14 +1494,14 @@ The reason to filter on four fields rather than one is that a real log is mostly
 
 Reads are counted separately because `get` on a Secret returns its contents. The count tells you how widely the value may have leaked before it was deleted, which is the question an investigator actually cares about.
 
-## Verify
+#### Verify
 
 ```bash
 cat /opt/course/20/answer.txt
 grep '"verb":"delete"' "$LOG" | grep '"name":"db-creds"' | grep -c '"namespace":"finance"'   # 1
 ```
 
-## Docs
+#### Docs
 
 None needed, and none would help. This is a text-processing task under time pressure. What matters is knowing the audit event field names by heart, which is why they are in the `## Memorise` section of `../../study-notes/06-monitoring-logging-runtime.md`.
 
@@ -1505,17 +1536,7 @@ Read the kubeconfig before you wire it in. An API server started against an admi
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -1647,7 +1668,7 @@ The request is refused, and the message names the webhook URL. A namespace still
 kubectl create namespace ipw-control --dry-run=server
 ```
 
-## Why
+#### Why
 
 `ImagePolicyWebhook` is a built-in admission plugin, not a `ValidatingWebhookConfiguration` object. It is configured entirely on the API server through a file, which is why three things have to line up: the plugin has to be enabled, `--admission-control-config-file` has to point at the `AdmissionConfiguration` document, and the directory holding that document has to be visible inside the static pod. The API server runs as a container, so a path that exists on the node means nothing until a `hostPath` volume and a `volumeMount` put it inside.
 
@@ -1655,7 +1676,7 @@ kubectl create namespace ipw-control --dry-run=server
 
 The missing `server` line is the reason this question is on the list of ways candidates lose a cluster. The kubeconfig looks complete, `kubectl` never reads it, and no validation runs until the API server itself parses it during plugin initialisation. At that moment the process exits, the static pod crash-loops, and every diagnostic that relies on `kubectl` is gone. The only tools left are the ones that talk to the container runtime directly, `crictl ps -a` and `crictl logs`, or the kubelet journal. Checking the file first costs ten seconds and skipping the check can cost the whole question.
 
-## Verify
+#### Verify
 
 ```bash
 grep server: /etc/kubernetes/admission-controllers/kubeconfig.yaml
@@ -1666,7 +1687,7 @@ kubectl create namespace ipw-control --dry-run=server   # still admitted
 kubectl run ipw-probe --image=nginx --dry-run=server     # rejected
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/`. The `ImagePolicyWebhook` section carries a complete `AdmissionConfiguration` example and the kubeconfig layout, including the note that the `server` field is where the remote service goes. Search the page for "imagePolicy".
 
@@ -1706,17 +1727,7 @@ Do not edit anything under `/etc/kubernetes/manifests/` for this question. Every
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -1808,7 +1819,7 @@ kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4
 
 All three lines should now start with `[PASS]`.
 
-## Why
+#### Why
 
 The kubelet is a second API surface on every node, and by default it is a weaker one than the API server. Port 10250 carries `exec`, `logs`, `run` and the full pod listing. If anonymous authentication is on, anyone who can reach that port is admitted as `system:anonymous`. If the authorization mode is `AlwaysAllow`, that anonymous caller is then permitted to do anything the kubelet can do, which includes running a command inside any container on the node. The two settings are only dangerous together, and that is why CIS lists them as separate checks.
 
@@ -1818,7 +1829,7 @@ The read-only port on 10255 is different in kind. It serves no writes, but it se
 
 The reason to check the effect rather than the file is that a kubelet reads its configuration once at start. An edited file with no restart passes a `grep` and changes nothing on the node. Checking that 10255 refuses the connection while 10250 still answers proves both halves: the port is really closed, and the kubelet is really running.
 
-## Verify
+#### Verify
 
 ```bash
 grep -A2 anonymous /var/lib/kubelet/config.yaml
@@ -1831,7 +1842,7 @@ kubectl get nodes                                            # the node is Ready
 kube-bench run --targets node --check 4.2.1,4.2.2,4.2.4 | grep -c '\[PASS\]'   # 3
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/` for the exact spelling and nesting of `authentication.anonymous.enabled`, `authorization.mode` and `readOnlyPort`. The kubelet page under `https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/` gives the equivalent command line flags for clusters that do not use a config file.
 
@@ -1880,17 +1891,7 @@ The kubelet rescans `/etc/kubernetes/manifests/` roughly every 20 seconds, so gi
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -1964,7 +1965,7 @@ kubectl -n kube-system get pod -l component=kube-apiserver
 
 If it still does not start, the manifest has a second problem. Read the logs again rather than guessing, and remember that a manifest which is not valid YAML produces no container at all, so `crictl ps -a` shows nothing new and the parse error appears only in the kubelet journal.
 
-## Why
+#### Why
 
 The API server on a kubeadm cluster is a static pod. No controller manages it. The kubelet reads `/etc/kubernetes/manifests/`, and whatever is in there is what runs, which is why a single wrong character in that file takes the entire control plane down and why nothing repairs it automatically.
 
@@ -1974,7 +1975,7 @@ This creates the diagnostic problem the question is really about. Every tool nor
 
 The failure mode itself is worth recognising by shape rather than by content. `unknown flag` means the process started and rejected its arguments, so the fault is in the command line in the manifest. A file-not-found error means a path is wrong or a `hostPath` volume is missing, so the fault is in the mounts. A YAML parse error in the kubelet journal with no container at all means the manifest itself does not load. Those three shapes cover almost every way a control plane is lost during this exam, and the recovery in every case is to read the log before touching the file.
 
-## Verify
+#### Verify
 
 ```bash
 grep -- '--authorization-mode' /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -1984,7 +1985,7 @@ kubectl get nodes
 kubectl -n kube-system get pod -l component=kube-apiserver
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/` lists every API server flag with its exact spelling, which settles `--authorization-mode` against `--authorization-modes` in a few seconds.
 
@@ -2013,17 +2014,7 @@ The `app` pods must stay `Running`, and a pod labelled `app=app` must still be a
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Look at what is there.**
 
@@ -2084,7 +2075,7 @@ kubectl -n metadata-lab run np-check --rm -it --restart=Never \
   podSelector: {}
 ```
 
-## Why
+#### Why
 
 A NetworkPolicy has no deny rule. Selecting a pod and naming a `policyType` denies that whole direction, and the rules listed under it are the only exceptions. That is why this task is written as one broad allow with a hole in it rather than as a block rule. `cidr: 0.0.0.0/0` restores everything the `Egress` policy type just took away, and `except: [169.254.169.254/32]` carves the metadata address back out of that allowance.
 
@@ -2094,7 +2085,7 @@ The order of evaluation is what makes `except` work. Within one `ipBlock`, `exce
 
 One detail that decides whether this works at all: `ipBlock` matches the destination IP after the CNI has done its work, and policies are enforced by the CNI rather than by Kubernetes. A cluster whose CNI does not implement NetworkPolicy accepts this object without complaint and enforces nothing, which is why the question is gated on Calico or Cilium being present.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl -n metadata-lab get networkpolicy metadata-deny \
@@ -2108,7 +2099,7 @@ kubectl -n metadata-lab get networkpolicy metadata-deny \
 kubectl -n metadata-lab get pods
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/concepts/services-networking/network-policies/`. The section headed "Targeting a range of ports" is not the one you want; scroll to the `ipBlock` example, which shows `cidr` with `except` in exactly the shape this answer needs. Copying that block and changing the two addresses is faster than writing it out.
 
@@ -2140,17 +2131,7 @@ The value is generated fresh every time this question is set up, so it cannot be
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -2221,7 +2202,7 @@ e get /registry/secrets/etcd-lab/vault-token | strings | grep -A1 -w token | tai
 
 Check the result before trusting it. Reading the dump is the reliable method under exam conditions.
 
-## Why
+#### Why
 
 A Secret is not encrypted. It is base64-encoded, and base64 is an encoding, not a cipher. Unless the API server runs with `--encryption-provider-config`, every Secret sits in etcd exactly as it was written, which is why the raw bytes in step 3 are readable text.
 
@@ -2231,7 +2212,7 @@ The contrast between the two halves of this task is the lesson. Through the API 
 
 `/registry/<resource>/<namespace>/<name>` is worth memorising. `e get /registry --prefix --keys-only` lists everything etcd holds, which is a fast way to find the path when the resource name is not obvious.
 
-## Verify
+#### Verify
 
 ```bash
 cat /opt/course/25/etcd.txt
@@ -2241,7 +2222,7 @@ kubectl -n etcd-lab get secret vault-token -o jsonpath='{.data.token}' | base64 
 
 All three print the same 16 characters.
 
-## Docs
+#### Docs
 
 **Allowed:** `https://etcd.io/docs/` for `etcdctl get` and the transport security flags, and `https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/` for the fix, which is Q10 and Q26.
 
@@ -2275,17 +2256,7 @@ Do not delete `key1` from the configuration and do not delete the Secrets.
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -2370,7 +2341,7 @@ ETCDCTL_API=3 etcdctl \
 
 The value starts `k8s:enc:aescbc:v1:key2:`. If it still says `key1`, step 5 did not run or the API server had not restarted when it did.
 
-## Why
+#### Why
 
 An `EncryptionConfiguration` is an ordered list twice over. The provider list decides which provider writes, and inside a provider the key list decides which key writes. Both lists are searched top to bottom on read, so anything still readable stays readable as long as its key remains somewhere in the list. That is what makes rotation safe: add the new key above the old one, rotate the data, and only then remove the old key in a second edit.
 
@@ -2380,7 +2351,7 @@ The restart matters for the same reason. Without `--encryption-provider-config-a
 
 Keeping `identity` last means Secrets that predate encryption still decrypt. Putting `identity` first would silently write everything in plain text, which is the classic way this configuration is got wrong.
 
-## Verify
+#### Verify
 
 ```bash
 grep -n 'name: key' /etc/kubernetes/enc/enc.yaml     # key2 above key1
@@ -2396,7 +2367,7 @@ done
 
 Each line begins `k8s:enc:aescbc:v1:key2`.
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/`. The page has the full provider list, the key-order rules and the exact `get ... | replace -f -` command under "Rotating a decryption key".
 
@@ -2429,17 +2400,7 @@ Nothing is applied to a cluster. Both files are graded as text.
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Read both files first.** Four lines change in total, so find them before typing anything.
 
@@ -2495,7 +2456,7 @@ grep -n 'privileged\|runAsUser' deploy.yaml
 wc -l Dockerfile deploy.yaml
 ```
 
-## Why
+#### Why
 
 Two of these are build-time settings and two are run-time settings, and they fail independently. An image with a perfect `USER` still runs as root if the Pod sets `runAsUser: 0`, because the manifest wins. A manifest with a perfect `securityContext` still ships the CVEs of an end-of-life base image, because no run-time setting patches a library. Supply chain questions test both halves for exactly that reason.
 
@@ -2503,7 +2464,7 @@ The instruction to change only what is asked is not decoration. Graders diff the
 
 `allowPrivilegeEscalation: false` and `readOnlyRootFilesystem: true` were already in the manifest. Leaving them untouched is part of the answer.
 
-## Verify
+#### Verify
 
 ```bash
 head -1 /opt/course/27/Dockerfile                       # not ubuntu:16.04
@@ -2515,7 +2476,7 @@ wc -l /opt/course/27/Dockerfile /opt/course/27/deploy.yaml
 
 The line counts must stay within 2 of what setup printed.
 
-## Docs
+#### Docs
 
 **Memorise.** Nothing here needs a lookup, and opening a browser for it costs more time than the task is worth.
 
@@ -2543,17 +2504,7 @@ A Pod that merely names the RuntimeClass is not enough. The deliverable has to s
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Confirm the handler exists before writing anything.** A `RuntimeClass` naming a handler containerd does not know produces a Pod stuck in `ContainerCreating` with `RunContainerError`, and the cause is on the node, not in the manifest.
 
@@ -2618,7 +2569,7 @@ The first lines read:
 [    0.000000] Starting gVisor...
 ```
 
-## Why
+#### Why
 
 `dmesg` is the whole point of the task. A Pod spec can name any `runtimeClassName` and still be scheduled somewhere that silently runs it on the host runtime, or the field can be quietly dropped by a mutating webhook. The Pod's YAML therefore proves intent, never effect.
 
@@ -2628,7 +2579,7 @@ Inside a normal container `dmesg` reads the host's kernel ring buffer, so it eit
 
 The node pinning matters because a `RuntimeClass` says nothing about where the handler exists. In production you attach `scheduling.nodeSelector` to the RuntimeClass so the scheduler only places sandboxed Pods on nodes that have `runsc`; in the exam, `nodeName` is quicker.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get runtimeclass gvisor -o jsonpath='{.handler}'; echo      # runsc
@@ -2638,7 +2589,7 @@ kubectl exec -n gvisor-lab gvisor-test -- dmesg | head -3
 grep -i gvisor /opt/course/28/dmesg.txt
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/concepts/containers/runtime-class/` has the RuntimeClass manifest and the `runtimeClassName` field, which is all you need to copy.
 
@@ -2669,17 +2620,7 @@ Do not create a ClusterRole or a ClusterRoleBinding for `reporter`.
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Find every ClusterRoleBinding that names `system:anonymous`.** Do not guess the binding's name. There is no `jq`, so use a go-template.
 
@@ -2726,7 +2667,7 @@ kubectl auth can-i get    nodes    --as=$SA               # no
 kubectl auth can-i list   pods     --as=$SA -n kube-system # no
 ```
 
-## Why
+#### Why
 
 `system:anonymous` is the identity the API server assigns to any request that carries no credentials, and it is a member of the `system:unauthenticated` group. Binding it to `view` turns "unauthenticated" into "reads everything", which is worse than it looks: `view` covers ConfigMaps, and ConfigMaps are where people leave connection strings. Deleting the binding is the fix; `--anonymous-auth=false` on the API server is the other half, and that is Q6.
 
@@ -2736,7 +2677,7 @@ For the ServiceAccount, a Role plus RoleBinding confines the grant to one namesp
 
 `kubectl auth can-i --as=` asks the API server's authorizer the same question the authorizer will answer at request time, so it accounts for every binding that applies, including ones you did not know about. Checking only the permissions that must exist is half a test. Least privilege is defined by what is refused.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get clusterrolebinding anon-viewer     # NotFound
@@ -2749,7 +2690,7 @@ kubectl auth can-i delete pods --as=$SA -n rbac-lab   # no
 kubectl auth can-i get nodes   --as=$SA               # no
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/access-authn-authz/rbac/` for the subject kinds and the binding rules, and `https://kubernetes.io/docs/concepts/security/rbac-good-practices/` for why anonymous binding is called out.
 
@@ -2777,17 +2718,7 @@ The kubelet seccomp root on the worker node is `/var/lib/kubelet/seccomp`, and `
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Write the profile on the worker node.** `localhostProfile` is resolved by the kubelet on the node that runs the Pod, so the file has to exist there, not on the control plane.
 
@@ -2860,7 +2791,7 @@ cat /opt/course/30/result.txt
 mkdir: can't create directory '/tmp/blocked': Operation not permitted
 ```
 
-## Why
+#### Why
 
 A seccomp profile is a default plus a list of exceptions, and which way round they go changes everything. `SCMP_ACT_ALLOW` as the default with a short deny list is a blocklist: easy to write, easy to keep a workload running, and easy to bypass because anything not named is permitted. `SCMP_ACT_ERRNO` as the default with an allow list is what `RuntimeDefault` and the Docker profile actually do, and it is far stronger, but it takes a full syscall trace of the workload to build. The task asks for the first shape because it isolates one syscall.
 
@@ -2870,7 +2801,7 @@ The filter is installed by the container runtime at container start and is inher
 
 The relative path trips people up. `/var/lib/kubelet/seccomp` is the kubelet's seccomp root (its `--root-dir` plus `seccomp`), and `localhostProfile` is always relative to it. An absolute path is rejected by the API server.
 
-## Verify
+#### Verify
 
 ```bash
 cat /var/lib/kubelet/seccomp/profiles/no-mkdir.json          # on the worker
@@ -2882,7 +2813,7 @@ kubectl exec -n seccomp-lab sandboxed -- mkdir /tmp/blocked  # Operation not per
 cat /opt/course/30/result.txt
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tutorials/security/seccomp/` has a copyable profile and the `securityContext.seccompProfile` block, and `https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context` has the field reference.
 
@@ -2914,17 +2845,7 @@ Scaling both Deployments to zero is not a solution. The graded facts are that yo
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -2989,7 +2910,7 @@ kubectl get deploy,pods -n falco-hunt
 
 `catalog` must still show `1/1`.
 
-## Why
+#### Why
 
 Falco watches syscalls, so it sees a process inside a container and knows nothing about Deployments or Services. The identity it emits is the container ID from the runtime. Every incident that starts with a Falco alert therefore has the same first move: container ID, then `crictl inspect`, then the Pod, then the controller that owns it.
 
@@ -2999,7 +2920,7 @@ The reason not to touch `catalog` is that a real cluster is a shared cluster. St
 
 Leaving Falco running matters for the same reason. A responder who stops the detector to stop the noise has removed the only evidence that the next attempt is happening.
 
-## Verify
+#### Verify
 
 ```bash
 cat /opt/course/31/offender.txt              # falco-hunt/inventory-<hash>
@@ -3008,7 +2929,7 @@ kubectl get pods -n falco-hunt               # only the catalog pod
 systemctl is-active falco-modern-bpf || systemctl is-active falco
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://falco.org/docs/` for the rule and the output fields.
 
@@ -3056,17 +2977,7 @@ An audit policy is evaluated **first match wins**, so the order of the rules is 
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -3173,7 +3084,7 @@ grep '"resource":"pods"' /var/log/kubernetes/audit/audit.log | grep -c '"verb":"
 
 The secret read appears with `"level":"RequestResponse"` and a full `responseObject`. The pod list does not appear at all.
 
-## Why
+#### Why
 
 Audit rules are evaluated top to bottom and the first rule that matches decides the level for that request. That single sentence explains every part of this task. The `None` rule for `get`, `list` and `watch` is the noisiest thing in the policy: it drops the reads that make up most API traffic. If it were written above the secrets rule, it would also drop every read of every Secret, and the policy would record nothing about the one resource it was written to protect. The order is the control.
 
@@ -3185,7 +3096,7 @@ The four retention flags are what keeps the log from filling the disk on the con
 
 The two `hostPath` types differ because the two objects differ. The policy is a file that must already exist, so `type: File` makes the kubelet refuse to start the Pod if the path is wrong instead of silently mounting an empty directory over it. The log path is a directory the API server writes into, so `type: DirectoryOrCreate` is right there.
 
-## Verify
+#### Verify
 
 ```bash
 grep -n 'level:' /etc/kubernetes/audit/policy.yaml     # RequestResponse, None, None, Metadata in that order
@@ -3198,7 +3109,7 @@ grep '"resource":"pods"' /var/log/kubernetes/audit/audit.log | grep -c '"verb":"
 wc -l /var/log/kubernetes/audit/audit.log
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/`. It carries a complete sample policy that can be copied and cut down, the full list of levels, and the `--audit-log-*` flags with their defaults. Search the page for "Audit policy" and take the example from there rather than typing one from memory.
 
@@ -3235,17 +3146,7 @@ Editing a static Pod manifest restarts the Pod. Give the kubelet up to a minute 
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -3324,7 +3225,7 @@ echo | openssl s_client -connect 127.0.0.1:6443 -tls1_3 2>&1 | grep -E 'Protocol
 
 The first prints an alert such as `tlsv1 alert protocol version` and negotiates `Cipher is (NONE)`. The second prints `Protocol  : TLSv1.3`.
 
-## Why
+#### Why
 
 The API server and etcd both terminate TLS themselves, and both fall back to the Go runtime defaults when no flag says otherwise. Those defaults still allow TLS 1.2 with cipher suites that an auditor will flag, including CBC-mode suites that have a long history of padding oracle attacks. Neither component reads a system-wide crypto policy, so the only place to fix this is the flag on the process.
 
@@ -3334,7 +3235,7 @@ TLS 1.3 removes cipher negotiation as it existed in 1.2. Its three suites are fi
 
 The reason to change one manifest at a time is recovery. Both Pods are static Pods started by the kubelet from the manifest directory. If both are edited at once and the cluster goes dark, there is no `kubectl` left to tell you which file was wrong, and `crictl logs` on two crash-looping containers is a slower path than reverting one known change.
 
-## Verify
+#### Verify
 
 ```bash
 grep tls-min-version /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -3346,7 +3247,7 @@ echo | openssl s_client -connect 127.0.0.1:6443 -tls1_2 2>&1 | grep -i 'alert\|C
 echo | openssl s_client -connect 127.0.0.1:6443 -tls1_3 2>&1 | grep 'Protocol'
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/` for `--tls-min-version` and `--tls-cipher-suites`, including the accepted constant names.
 
@@ -3376,17 +3277,7 @@ Do not rename the file, and do not rewrite what it contains. Read it first: ever
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -3481,7 +3372,7 @@ dmesg | grep -i apparmor | tail -5
 journalctl -k | grep 'apparmor="DENIED"' | tail -5
 ```
 
-## Why
+#### Why
 
 An AppArmor profile has two names that people assume are the same one. The file under `/etc/apparmor.d/` is only a location on disk; the parser reads it and registers whatever comes after the `profile` keyword. `localhostProfile` in a Pod spec is matched against that registered name, so a manifest that names the file fails even though the file exists, is loaded, and is correct. This mismatch is the single most common way this task is failed, and it is worth building the habit of reading the profile's first line rather than the directory listing.
 
@@ -3489,7 +3380,7 @@ Loading is a separate step from writing. A profile file that has never been thro
 
 The failure mode is deliberately quiet. The Pod is accepted by the API server, because the API server does not know what profiles a node has. Only the kubelet on the target node discovers that the profile is missing, so the symptom appears as a Pod that never becomes ready and an event on that node, not as an error from `kubectl apply`.
 
-## Verify
+#### Verify
 
 ```bash
 grep profile /etc/apparmor.d/k8s-lab-deny-write
@@ -3500,7 +3391,7 @@ kubectl exec -n apparmor-trap guarded -- ls /root
 kubectl exec -n apparmor-trap guarded -- touch /root/x    # must fail
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tutorials/security/apparmor/` for the `securityContext.appArmorProfile` fields and the older `container.apparmor.security.beta.kubernetes.io/<container>` annotation, which still appears in older exam clusters.
 
@@ -3542,17 +3433,7 @@ The first must print `200` and the second must print `403`.
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. See what the client can reach today.**
 
@@ -3617,7 +3498,7 @@ If the second one hangs and finally prints `000`, the request never reached the 
 
 If the second one returns `404`, the L7 block was not parsed as an HTTP rule and everything is being allowed at L4. Check the indentation of `rules:` under the port.
 
-## Why
+#### Why
 
 A core `NetworkPolicy` can only reason about addresses and ports. It has no idea what an HTTP request is, so "allow this client to call one endpoint of this service" cannot be expressed in it at all. Cilium adds `rules.http` inside `toPorts`, and when a policy carries one, Cilium redirects that traffic through an Envoy proxy running in the datapath. The proxy parses the request, matches it against the rules, and forwards or refuses it.
 
@@ -3627,7 +3508,7 @@ The visible consequence is the status code. An L3 or L4 denial happens in the ke
 
 One general rule carries over from core NetworkPolicy: as soon as any ingress rule selects an endpoint, that endpoint is default-deny for ingress. So this single policy both opens `GET /health` for `client` and closes everything else to everyone, without a separate deny rule.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get cnp -n cilium-lab -o yaml | head -40
@@ -3637,7 +3518,7 @@ kubectl exec -n cilium-lab deploy/client -- curl -s -o /dev/null -w '%{http_code
 
 On a node, `cilium monitor --type drop` and `cilium policy get` show the same story from the datapath side, but they are not needed to answer the question.
 
-## Docs
+#### Docs
 
 **Allowed:** `https://docs.cilium.io/en/stable` and, inside it, Policy then Layer 7 Examples. That page carries a complete `CiliumNetworkPolicy` with an `http` rule that can be copied and edited, which is the fastest route under exam time.
 
@@ -3671,17 +3552,7 @@ Not every pod in the namespace violates the standard. A list of all three is wro
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Look at what is running.**
 
@@ -3754,7 +3625,7 @@ kubectl get pods -n psa-lab -o jsonpath='{range .items[*]}{.metadata.name}{"  ho
 
 `priv` runs a privileged container and `hostpid` shares the host PID namespace. Both are forbidden by baseline. `clean` sets nothing, and baseline still allows running as root, so it passes.
 
-## Why
+#### Why
 
 Pod Security Admission has three modes on a namespace, and the exam trades on the difference between them. `enforce` rejects a pod at admission time. `audit` records a violation in the audit log. `warn` returns a warning to the client. Each takes a level, `privileged`, `baseline` or `restricted`, and optionally a `-version` label to pin the level to a Kubernetes release.
 
@@ -3768,7 +3639,7 @@ kubectl label --dry-run=server --overwrite ns psa-lab pod-security.kubernetes.io
 
 Baseline blocks the things that break the boundary between the container and the node: privileged containers, host namespaces (`hostPID`, `hostIPC`, `hostNetwork`), host ports, host path volumes, added capabilities beyond a small list, and unconfined AppArmor or seccomp. It deliberately does not require a non-root user, a read-only root filesystem or a seccomp profile. Those belong to `restricted`, which is why a plain busybox pod passes baseline and fails restricted.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get ns psa-lab -o jsonpath='{.metadata.labels.pod-security\.kubernetes\.io/enforce}{"\n"}'
@@ -3776,7 +3647,7 @@ cat /opt/course/36/violators.txt
 kubectl get pods -n psa-lab
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/concepts/security/pod-security-standards/` for what each level forbids, and `https://kubernetes.io/docs/tasks/configure-pod-security-admission/` for the label syntax and the dry-run example.
 
@@ -3822,17 +3693,7 @@ The kubelet rescans `/etc/kubernetes/manifests/` about every 20 seconds, so give
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the control-plane node, as root.
 
@@ -3910,7 +3771,7 @@ kubectl get pods -n kube-system
 
 Save, then wait. The kubelet rescans the directory about every 20 seconds and the container takes a few seconds more to become ready. If it is still down after a minute, read the journal again: a YAML indentation mistake made while deleting the block produces a different error, `failed to parse manifest`, and the pod is not even attempted.
 
-## Why
+#### Why
 
 A static pod is not admitted by the API server. The kubelet reads the file, validates it itself, and runs it. That is what makes this class of outage recoverable at all, and it is also why the error never appears in any Kubernetes object: there is no event, no pod status, no `kubectl describe`, because there is no API server to hold them.
 
@@ -3920,7 +3781,7 @@ So the diagnosis order for a dead control plane is fixed and worth memorising. `
 
 The four failures that account for nearly all of these are a misspelled flag, a mount with no matching volume, a `hostPath` that does not exist on the node, and a certificate or kubeconfig path that points somewhere wrong. All four look identical from the outside, and all four are one line in the journal.
 
-## Verify
+#### Verify
 
 ```bash
 grep -c audit-typo /etc/kubernetes/manifests/kube-apiserver.yaml   # 0
@@ -3929,7 +3790,7 @@ curl -sk https://127.0.0.1:6443/readyz
 kubectl get nodes
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/` for the pairing of `volumes` and `volumeMounts`, and `https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/` for how the kubelet picks a manifest up.
 
@@ -3959,17 +3820,7 @@ Do not hand-edit the SBOM. It has to be the document `bom` produced.
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Check the tool and the flags before running anything long.**
 
@@ -4027,7 +3878,7 @@ cat /opt/course/38/count.txt
 
 A file containing `packages: 42` fails. The task asked for the number.
 
-## Why
+#### Why
 
 An SBOM is the inventory half of supply chain security. A scanner such as Trivy answers "which known vulnerabilities does this image have today", which is a judgement that changes every time the vulnerability database is updated. An SBOM answers "what is actually inside this image", which does not change. When a new vulnerability is published, the question asked across an estate is not "rescan everything" but "which images contain this package", and only a stored SBOM can answer that quickly.
 
@@ -4037,7 +3888,7 @@ The format flag is the trap. SPDX is a specification, not a file format, and it 
 
 The count is the second half because an SBOM you cannot query is just a large file. `bom document outline` renders the document as a tree, and the SPDX JSON itself carries a `packages` array that any parser can measure. Both are legitimate. Reach for the parser when the number has to be exact.
 
-## Verify
+#### Verify
 
 ```bash
 python3 -c 'import json; d=json.load(open("/opt/course/38/sbom.json")); print(d["spdxVersion"], len(d["packages"]))'
@@ -4045,7 +3896,7 @@ grep -c kube-proxy /opt/course/38/sbom.json
 cat /opt/course/38/count.txt
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes-sigs.github.io/bom/cli-reference/` is one of the eight sources open in the exam, and it is the reference for `bom generate` and `bom document`. Every flag used above is on that page, so this task can be solved from documentation alone if the flag names have slipped.
 
@@ -4083,17 +3934,7 @@ At the end the node must be `Ready`, schedulable, and reporting the target versi
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Read the target and the node name.**
 
@@ -4156,7 +3997,7 @@ kubectl get nodes -o wide
 
 `kubectl get nodes` shows the new version in the VERSION column once the kubelet has re-registered, which takes a few seconds.
 
-## Why
+#### Why
 
 A kubeadm node is upgraded in two halves and it is worth keeping them apart in your head. `kubeadm upgrade` rewrites what the cluster holds: static pod manifests, certificates, the kubelet ConfigMap. The package manager replaces the binaries. Neither does the other's work, so a node whose packages were upgraded without a restart still runs the old kubelet, and a `kubeadm upgrade node` without new packages changes nothing about the binary.
 
@@ -4168,7 +4009,7 @@ Draining first is about the workload, not the kubelet. Restarting a kubelet does
 
 One honest caveat about the order used here. The skew rules say the kubelet must not be newer than the API server, so a real upgrade does the control plane first and the workers after. This task isolates the worker deliberately, and a patch-level difference in that direction is harmless in practice, but on an exam task that asks for both, upgrade the control plane first.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get nodes -o wide
@@ -4178,7 +4019,7 @@ ssh <worker> kubelet --version
 ssh <worker> apt-mark showhold
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/` is the page for this exact task and it can be followed line by line. Its neighbour, `https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/`, covers the control plane.
 
@@ -4214,17 +4055,7 @@ Afterwards `jane` must be able to list Pods in `csr-lab`, and must **not** be ab
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. Key and request.** The subject common name becomes the username, so it has to be exactly `jane`.
 
@@ -4290,7 +4121,7 @@ kubectl --context jane get pods -n csr-lab      # works
 kubectl --context jane get secrets -n csr-lab   # Forbidden
 ```
 
-## Why
+#### Why
 
 The API server has no user database. Every human identity in a kubeadm cluster is either an OIDC token or an x509 client certificate, and for a certificate the API server reads the common name as the username and each organisation as a group. That is the whole of the identity: there is no User object to create, and a certificate with `CN=jane` is `jane` the moment the cluster CA signs it, whether or not any RoleBinding mentions her.
 
@@ -4300,7 +4131,7 @@ Approval and issuance are two separate conditions. `kubectl certificate approve`
 
 The last part is the security point. Authentication and authorisation are independent. A signed certificate proves who the caller is and grants nothing at all, so an unbound `jane` can reach the API server and be refused everywhere. Binding a Role rather than a ClusterRole keeps that refusal in place outside `csr-lab`, and binding to Pods only keeps it in place for Secrets inside it. Revocation is the weak spot: Kubernetes has no certificate revocation list, so a leaked client certificate stays valid until it expires. That is why `expirationSeconds` belongs on a request for a human, and why the recovery from a leak is to delete the bindings rather than the certificate.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl get csr jane -o jsonpath='{.status.conditions[*].type}'   # Approved
@@ -4313,7 +4144,7 @@ kubectl auth can-i get  secrets -n csr-lab --as jane    # no
 kubectl auth can-i list pods    -n kube-system --as jane # no
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/` carries a complete example of the CertificateSigningRequest object, including the `openssl` lines and the `base64 -w0` trick, and it is the page to open in the exam. `https://kubernetes.io/docs/reference/access-authn-authz/rbac/` covers the `--user` subject on a RoleBinding.
 
@@ -4343,17 +4174,7 @@ When you are done, nothing may listen on 8888 on that node, and the unit must be
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -4407,7 +4228,7 @@ systemctl is-enabled lab-fileshare.service   # Failed to get unit file state
 systemctl is-active kubelet   # active, so the node was not damaged
 ```
 
-## Why
+#### Why
 
 A worker node is part of the cluster's attack surface, and anything listening on it is reachable from every Pod on that node and from anywhere the node's network allows. This particular service is the textbook case: an unauthenticated HTTP server, running as root, serving a directory. Nothing in Kubernetes sees it. NetworkPolicies govern Pod traffic, not host sockets, and a PodSecurity standard cannot constrain a process that was never in a container.
 
@@ -4415,7 +4236,7 @@ Three things have to be true before the finding is closed, and each of them is a
 
 Reading the socket table first, rather than guessing at unit names, is the habit that transfers to the exam. `ss -ltnp` is the ground truth for what is reachable: it names the port, the bind address and the owning process. Binding to `0.0.0.0` rather than `127.0.0.1` is what turns a local convenience into a remote exposure, and that column is worth reading on every finding. From the pid, systemd closes the loop back to a unit, so the chain socket, process, unit, file never depends on knowing what to look for in advance.
 
-## Verify
+#### Verify
 
 ```bash
 ss -H -ltn | awk '{print $4}' | grep 8888      # no output
@@ -4426,7 +4247,7 @@ cat /opt/course/41/service.txt                 # lab-fileshare.service
 systemctl is-active kubelet && kubectl get nodes
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** the Kubernetes documentation has nothing on systemd, and none is needed. `man ss`, `man systemctl` and `systemctl --help` are on the node and cover every command here. The one Kubernetes page worth knowing nearby is `https://kubernetes.io/docs/reference/networking/ports-and-protocols/`, which lists the ports that are supposed to be open on a control plane and on a worker, so that a scan can be read against a baseline.
 
@@ -4458,17 +4279,7 @@ The setup output says whether this kernel has an `sctp` module. If it does not, 
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything happens on the worker node, as root.
 
@@ -4531,7 +4342,7 @@ modprobe sctp && lsmod | grep sctp  # still no output
 
 If `modprobe -r` reports the module is in use, find the user with `lsmod | grep sctp` (the third column counts references) before forcing anything.
 
-## Why
+#### Why
 
 Three of the four steps close the same kind of hole: a local identity on a node that can become root. A node is where the kubelet's credentials, the container runtime socket and every mounted Secret live, so root on a worker is a path to everything scheduled there. A contractor account with `NOPASSWD:ALL` needs no password and no exploit; a password that can be guessed or reused is enough, and the sudo drop-in does the rest.
 
@@ -4541,7 +4352,7 @@ The sudoers drop-in matters more than the group membership, but the group is the
 
 The module is a different kind of surface. Every loaded module is kernel code reachable from an unprivileged process, and rarely used network protocol modules such as `sctp` and `dccp` are a recurring source of kernel vulnerabilities. Unloading is only half the fix: any process that opens a socket of that family triggers an automatic load through the module alias. `blacklist sctp` suppresses that alias-driven load, but it does not stop an explicit `modprobe sctp`, which is why `install sctp /bin/true` is added next to it. That line tells modprobe to run `/bin/true` instead of loading, so both paths end in nothing being loaded.
 
-## Verify
+#### Verify
 
 ```bash
 passwd -S tempadmin | awk '{print $2}'          # L
@@ -4553,7 +4364,7 @@ lsmod | awk '{print $1}' | grep -x sctp         # no output
 modprobe --showconfig | grep -E 'blacklist sctp|install sctp'
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** the exam allows the man pages on the node itself, which is where this question is answered: `man usermod` for `-L` and `-s`, `man 5 sudoers` and `man sudo` for `-l -U`, `man gpasswd`, and `man 5 modprobe.d` for the difference between `blacklist` and `install`. There is no Kubernetes documentation page for any of it.
 
@@ -4593,17 +4404,7 @@ Leave the innocent Deployment running with its one replica, and leave the namesp
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 Everything up to the last step happens on the worker node, as root.
 
@@ -4669,7 +4470,7 @@ kubectl get pods -n strace-lab       # only worker-b is left
 
 Deleting the Pod alone puts a new one back within seconds, because the ReplicaSet behind the Deployment is still asking for one replica.
 
-## Why
+#### Why
 
 Runtime detection ends with a process, and a process is not an answer anybody can act on. The chain that closes the gap is always the same: syscall, pid, container, Pod, controller. `strace` gives the first two, `crictl inspect` joins pid to container, `crictl ps` joins container to Pod, and `kubectl` joins Pod to the Deployment that keeps recreating it. Falco automates the same walk and prints the Kubernetes fields directly, which is why it is the tool of choice in production. `strace` is what remains when Falco is not installed, or when the question is about a syscall no rule covers.
 
@@ -4679,7 +4480,7 @@ Runtime detection ends with a process, and a process is not an answer anybody ca
 
 Deleting the Deployment rather than the Pod is the part of the answer that is about Kubernetes and not about Linux. A Pod owned by a ReplicaSet is a symptom. Scaling to zero and deleting the Deployment both stop the workload; deleting the Pod does not, and a verifier that runs a few seconds later sees the replacement.
 
-## Verify
+#### Verify
 
 ```bash
 cat /opt/course/43/pod.txt                  # strace-lab/worker-a-...
@@ -4688,7 +4489,7 @@ kubectl get pods  -n strace-lab             # one Running worker-b pod
 kubectl get deploy worker-b -n strace-lab -o jsonpath='{.status.readyReplicas}'   # 1
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/` is the page to open in the exam. It carries the `crictl ps`, `crictl pods` and `crictl inspect` usage, including the go-template form used here. The Falco documentation at `https://falco.org/docs/` is allowed as well and covers the automated version of the same investigation.
 
@@ -4729,162 +4530,7 @@ Do not solve it with a NetworkPolicy, and do not change the `httpbin` Deployment
 **Solution**
 
 
-<!-- toc -->
-## Table of Contents
-
-- [Question index](#question-index)
-  - [Q1. NetworkPolicy: Default-Deny + Selective Allow](#q1-networkpolicy-default-deny--selective-allow)
-  - [Q2. CIS Benchmark Remediation with kube-bench](#q2-cis-benchmark-remediation-with-kube-bench)
-  - [Q3. Ingress TLS Termination](#q3-ingress-tls-termination)
-  - [Q4. RBAC Least-Privilege Role + Binding](#q4-rbac-least-privilege-role--binding)
-  - [Q5. ServiceAccount Token Hardening](#q5-serviceaccount-token-hardening)
-  - [Q6. Restrict the API Server (apiserver flags)](#q6-restrict-the-api-server-apiserver-flags)
-  - [Q7. AppArmor Profile on a Pod](#q7-apparmor-profile-on-a-pod)
-  - [Q8. Seccomp RuntimeDefault + Custom Profile](#q8-seccomp-runtimedefault--custom-profile)
-  - [Q9. Enforce Pod Security Admission (restricted)](#q9-enforce-pod-security-admission-restricted)
-  - [Q10. Encrypt Secrets at Rest (EncryptionConfiguration)](#q10-encrypt-secrets-at-rest-encryptionconfiguration)
-  - [Q11. Admission Policy with Kyverno/Gatekeeper](#q11-admission-policy-with-kyvernogatekeeper)
-  - [Q12. Runtime Sandbox with RuntimeClass (gVisor)](#q12-runtime-sandbox-with-runtimeclass-gvisor)
-  - [Q13. Scan Images with Trivy and Remediate](#q13-scan-images-with-trivy-and-remediate)
-  - [Q14. Restrict Images via ImagePolicyWebhook/Registry](#q14-restrict-images-via-imagepolicywebhookregistry)
-  - [Q15. Static Analysis & Manifest Hardening (kubesec)](#q15-static-analysis--manifest-hardening-kubesec)
-  - [Q16. Detect Threats with Falco Rules](#q16-detect-threats-with-falco-rules)
-  - [Q17. API Server Audit Logging Policy](#q17-api-server-audit-logging-policy)
-  - [Q18. Immutable Containers (readOnlyRootFilesystem)](#q18-immutable-containers-readonlyrootfilesystem)
-  - [Q19. Falco: change the output format and save the alerts](#q19-falco-change-the-output-format-and-save-the-alerts)
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-  - [Q20. Audit log forensics: who deleted the Secret](#q20-audit-log-forensics-who-deleted-the-secret)
-- [Steps](#steps-1)
-- [Why](#why-1)
-- [Verify](#verify-1)
-- [Docs](#docs-1)
-  - [Q21. ImagePolicyWebhook: complete the config and deny unverified images](#q21-imagepolicywebhook-complete-the-config-and-deny-unverified-images)
-- [Steps](#steps-2)
-- [Why](#why-2)
-- [Verify](#verify-2)
-- [Docs](#docs-2)
-  - [Q22. kube-bench: fix the kubelet findings](#q22-kube-bench-fix-the-kubelet-findings)
-- [Steps](#steps-3)
-- [Why](#why-3)
-- [Verify](#verify-3)
-- [Docs](#docs-3)
-  - [Q23. The API server is down: find and fix the manifest](#q23-the-api-server-is-down-find-and-fix-the-manifest)
-- [Steps](#steps-4)
-- [Why](#why-4)
-- [Verify](#verify-4)
-- [Docs](#docs-4)
-  - [Q24. Block the cloud metadata endpoint](#q24-block-the-cloud-metadata-endpoint)
-- [Steps](#steps-5)
-- [Why](#why-5)
-- [Verify](#verify-5)
-- [Docs](#docs-5)
-  - [Q25. Read a Secret straight from etcd](#q25-read-a-secret-straight-from-etcd)
-- [Steps](#steps-6)
-- [Why](#why-6)
-- [Verify](#verify-6)
-- [Docs](#docs-6)
-  - [Q26. Encryption at rest: add a new key and re-encrypt](#q26-encryption-at-rest-add-a-new-key-and-re-encrypt)
-- [Steps](#steps-7)
-- [Why](#why-7)
-- [Verify](#verify-7)
-- [Docs](#docs-7)
-  - [Q27. Fix two issues in the Dockerfile and two in the manifest](#q27-fix-two-issues-in-the-dockerfile-and-two-in-the-manifest)
-- [Steps](#steps-8)
-- [Why](#why-8)
-- [Verify](#verify-8)
-- [Docs](#docs-8)
-  - [Q28. Run a Pod under gVisor and capture dmesg](#q28-run-a-pod-under-gvisor-and-capture-dmesg)
-- [Steps](#steps-9)
-- [Why](#why-9)
-- [Verify](#verify-9)
-- [Docs](#docs-9)
-  - [Q29. Remove anonymous access and scope the ServiceAccount](#q29-remove-anonymous-access-and-scope-the-serviceaccount)
-- [Steps](#steps-10)
-- [Why](#why-10)
-- [Verify](#verify-10)
-- [Docs](#docs-10)
-  - [Q30. seccomp: block mkdir with a Localhost profile](#q30-seccomp-block-mkdir-with-a-localhost-profile)
-- [Steps](#steps-11)
-- [Why](#why-11)
-- [Verify](#verify-11)
-- [Docs](#docs-11)
-  - [Q31. Falco: identify the offending pod and stop it](#q31-falco-identify-the-offending-pod-and-stop-it)
-- [Steps](#steps-12)
-- [Why](#why-12)
-- [Verify](#verify-12)
-- [Docs](#docs-12)
-  - [Q32. Audit: ordered policy and retention flags](#q32-audit-ordered-policy-and-retention-flags)
-- [Steps](#steps-13)
-- [Why](#why-13)
-- [Verify](#verify-13)
-- [Docs](#docs-13)
-  - [Q33. Restrict TLS versions and ciphers](#q33-restrict-tls-versions-and-ciphers)
-- [Steps](#steps-14)
-- [Why](#why-14)
-- [Verify](#verify-14)
-- [Docs](#docs-14)
-  - [Q34. AppArmor: the profile name is not the file name](#q34-apparmor-the-profile-name-is-not-the-file-name)
-- [Steps](#steps-15)
-- [Why](#why-15)
-- [Verify](#verify-15)
-- [Docs](#docs-15)
-  - [Q35. CiliumNetworkPolicy: allow only GET /health](#q35-ciliumnetworkpolicy-allow-only-get-health)
-- [Steps](#steps-16)
-- [Why](#why-16)
-- [Verify](#verify-16)
-- [Docs](#docs-16)
-  - [Q36. Pod Security: enforce baseline and report violators](#q36-pod-security-enforce-baseline-and-report-violators)
-- [Steps](#steps-17)
-- [Why](#why-17)
-- [Verify](#verify-17)
-- [Docs](#docs-17)
-  - [Q37. The API server is down again: a volume is wrong](#q37-the-api-server-is-down-again-a-volume-is-wrong)
-- [Steps](#steps-18)
-- [Why](#why-18)
-- [Verify](#verify-18)
-- [Docs](#docs-18)
-  - [Q38. Generate an SBOM and count its packages](#q38-generate-an-sbom-and-count-its-packages)
-- [Steps](#steps-19)
-- [Why](#why-19)
-- [Verify](#verify-19)
-- [Docs](#docs-19)
-  - [Q39. Upgrade kubelet and kubectl on the worker to the latest patch](#q39-upgrade-kubelet-and-kubectl-on-the-worker-to-the-latest-patch)
-- [Steps](#steps-20)
-- [Why](#why-20)
-- [Verify](#verify-20)
-- [Docs](#docs-20)
-  - [Q40. Issue a client certificate to user jane and bind a Role](#q40-issue-a-client-certificate-to-user-jane-and-bind-a-role)
-- [Steps](#steps-21)
-- [Why](#why-21)
-- [Verify](#verify-21)
-- [Docs](#docs-21)
-  - [Q41. Host hardening: stop the rogue service and close its port](#q41-host-hardening-stop-the-rogue-service-and-close-its-port)
-- [Steps](#steps-22)
-- [Why](#why-22)
-- [Verify](#verify-22)
-- [Docs](#docs-22)
-  - [Q42. Host hardening: users, sudo and kernel modules](#q42-host-hardening-users-sudo-and-kernel-modules)
-- [Steps](#steps-23)
-- [Why](#why-23)
-- [Verify](#verify-23)
-- [Docs](#docs-23)
-  - [Q43. Which pod calls the kill syscall](#q43-which-pod-calls-the-kill-syscall)
-- [Steps](#steps-24)
-- [Why](#why-24)
-- [Verify](#verify-24)
-- [Docs](#docs-24)
-  - [Q44. Istio: enforce STRICT mTLS in a namespace](#q44-istio-enforce-strict-mtls-in-a-namespace)
-- [Steps](#steps-25)
-- [Why](#why-25)
-- [Verify](#verify-25)
-- [Docs](#docs-25)
-
-<!-- toc stop -->
-
-## Steps
+#### Steps
 
 **1. See the starting state.** A namespace with no PeerAuthentication inherits the mesh default, which is `PERMISSIVE`.
 
@@ -4928,7 +4574,7 @@ kubectl exec -n mesh-out curl -c curl -- \
 
 The out-of-mesh call gives no HTTP status at all, because the connection is dropped during the TLS handshake and never becomes an HTTP exchange.
 
-## Why
+#### Why
 
 Istio's default is `PERMISSIVE` for a migration reason: a sidecar accepts both mutual TLS from other sidecars and plain text from anything else, so a mesh can be rolled out service by service without breaking the callers that have not been enrolled yet. That default is also the hole. Any Pod that can reach the Pod IP, from any namespace and with no identity at all, is served, and the workload behind the sidecar believes the request came from the mesh. `STRICT` closes it by requiring a peer certificate, which only a sidecar has.
 
@@ -4938,7 +4584,7 @@ The scope of the object is the part that is easy to get wrong under time pressur
 
 The test itself has to be built carefully. A `curl` that fails proves nothing on its own, because it fails just as convincingly when the Pod is gone, the image has no `curl`, or DNS is broken. The refusal only means mTLS is enforced once the same request has been shown to succeed from inside the mesh, and once the out-of-mesh Pod has been shown to reach something else. That is why the verifier makes those two calls first.
 
-## Verify
+#### Verify
 
 ```bash
 kubectl -n mesh-lab get peerauthentication -o jsonpath='{.items[*].spec.mtls.mode}'   # STRICT
@@ -4953,7 +4599,7 @@ kubectl exec -n mesh-out curl -c curl -- \
   curl -s -o /dev/null -w '%{http_code}\n' --max-time 5 http://httpbin.mesh-lab/get   # not 200
 ```
 
-## Docs
+#### Docs
 
 **Allowed:** `https://istio.io/latest/docs/` is an allowed source for the CKS exam. The two pages that matter here are the mutual TLS task under `https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/` and the PeerAuthentication reference under `https://istio.io/latest/docs/reference/config/security/peer_authentication/`.
 

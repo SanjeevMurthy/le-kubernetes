@@ -1,15 +1,5 @@
 # Q03. Scheduled jobs for a user, root, and a one-off (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The job for another user.** `crontab -u` is how root edits somebody else's crontab without becoming them.

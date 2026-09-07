@@ -1,15 +1,5 @@
 # Q22. The web app is unreachable from the peer, find and fix two causes (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Confirm the symptom, then work inwards from the host.**

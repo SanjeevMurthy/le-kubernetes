@@ -1,15 +1,5 @@
 # Q44. System-wide environment, skeleton, and per-user limits (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The system-wide environment, in a new file under `/etc/profile.d/`.**

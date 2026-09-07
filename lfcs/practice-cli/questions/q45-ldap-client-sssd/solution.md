@@ -1,15 +1,5 @@
 # Q45. Resolve users from an LDAP directory (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Confirm the directory answers before configuring anything against it.**

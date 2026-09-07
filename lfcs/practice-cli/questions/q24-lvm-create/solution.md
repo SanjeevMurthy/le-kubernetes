@@ -1,15 +1,5 @@
 # Q24. Volume group with a custom extent size and a mounted logical volume (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Name the two devices once.** Use the names the setup printed.

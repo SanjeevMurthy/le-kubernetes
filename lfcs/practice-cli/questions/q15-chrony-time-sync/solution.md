@@ -1,15 +1,5 @@
 # Q15. Time source, NTP serving, timezone (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find the file and the unit for this distribution.**

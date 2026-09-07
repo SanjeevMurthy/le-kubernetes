@@ -1,15 +1,5 @@
 # Q29. Remove anonymous access and scope the ServiceAccount (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Find every ClusterRoleBinding that names `system:anonymous`.** Do not guess the binding's name. There is no `jq`, so use a go-template.

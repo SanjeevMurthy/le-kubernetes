@@ -1,15 +1,5 @@
 # Q36. Pod Security: enforce baseline and report violators (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Look at what is running.**

@@ -1,15 +1,5 @@
 # Q14. Hostname, hosts file, DNS servers and search domain (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Set the hostname.**

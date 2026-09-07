@@ -1,15 +1,5 @@
 # Q39. Upgrade kubelet and kubectl on the worker to the latest patch (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Read the target and the node name.**

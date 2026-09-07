@@ -1,15 +1,5 @@
 # Q41. Host hardening: stop the rogue service and close its port (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the worker node, as root.

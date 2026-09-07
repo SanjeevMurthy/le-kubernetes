@@ -1,15 +1,5 @@
 # Q44. Istio: enforce STRICT mTLS in a namespace (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. See the starting state.** A namespace with no PeerAuthentication inherits the mesh default, which is `PERMISSIVE`.

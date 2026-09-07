@@ -1,15 +1,5 @@
 # Q09. Serve a custom document root on a custom port under SELinux enforcing (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. See what is actually wrong before changing anything.**

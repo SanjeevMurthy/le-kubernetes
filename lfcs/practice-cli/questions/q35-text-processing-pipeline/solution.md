@@ -1,15 +1,5 @@
 # Q35. Reports from a log with grep, sort, uniq, sed and awk (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. The five most frequent client addresses.**

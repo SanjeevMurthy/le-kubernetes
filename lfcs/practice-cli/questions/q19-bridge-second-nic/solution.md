@@ -1,15 +1,5 @@
 # Q19. Put the second NIC into a bridge, persistent (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Write down what the interface has now.**

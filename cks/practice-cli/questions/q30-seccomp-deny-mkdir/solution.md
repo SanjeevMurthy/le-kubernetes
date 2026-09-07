@@ -1,15 +1,5 @@
 # Q30. seccomp: block mkdir with a Localhost profile (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Write the profile on the worker node.** `localhostProfile` is resolved by the kubelet on the node that runs the Pod, so the file has to exist there, not on the control plane.

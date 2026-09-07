@@ -1,15 +1,5 @@
 # Q01. Kernel parameters now and after reboot (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Set both values in the running kernel.**

@@ -1,15 +1,5 @@
 # Q36. Archive with exclusions, extract, symbolic and hard links (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Build the gzip archive without the temporary files.**

@@ -1,15 +1,5 @@
 # Q40. Issue a client certificate to user jane and bind a Role (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Key and request.** The subject common name becomes the username, so it has to be exactly `jane`.

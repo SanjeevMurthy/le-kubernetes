@@ -1,15 +1,5 @@
 # Q28. Mirror two disks with mdadm and mount the array (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Name the devices and confirm they are empty.**

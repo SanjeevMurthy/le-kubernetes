@@ -1,15 +1,5 @@
 # Q34. AppArmor: the profile name is not the file name (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 Everything happens on the worker node, as root.

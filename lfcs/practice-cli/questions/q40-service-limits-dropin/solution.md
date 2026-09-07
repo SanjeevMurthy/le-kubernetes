@@ -1,15 +1,5 @@
 # Q40. A service fails its file-descriptor limit: raise it with a drop-in (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Read what the unit has now and what it is complaining about.**

@@ -1,15 +1,5 @@
 # Q13. Persistent static route (solution)
 
-<!-- toc -->
-## Table of Contents
-
-- [Steps](#steps)
-- [Why](#why)
-- [Verify](#verify)
-- [Docs](#docs)
-
-<!-- toc stop -->
-
 ## Steps
 
 **1. Look at the routing table first, and find the gateway.**
