@@ -33,6 +33,13 @@ else
   echo "shellcheck not installed (brew install shellcheck) - skipped"
 fi
 
+step "library unit tests"
+if [[ -x scripts/test-libs.sh || -f scripts/test-libs.sh ]]; then
+  bash scripts/test-libs.sh | tail -1 || status=1
+else
+  echo "scripts/test-libs.sh not found - skipped"
+fi
+
 step "links and anchors"
 python3 scripts/check-links.py "${existing[@]}" || status=1
 
