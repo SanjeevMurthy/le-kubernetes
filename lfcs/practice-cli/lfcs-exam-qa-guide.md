@@ -21,6 +21,8 @@
 | Q9 | D1 | [Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing) | 3 sources | `rocky tool:semanage` |
 | Q10 | D1 | [Write a service unit for an application](#q10-write-a-service-unit-for-an-application) | 2 sources | `` |
 | Q11 | D1 | [A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent) | 2 sources | `` |
+| Q23 | D3 | [Partition a disk, format it, and mount it by UUID](#q23-partition-a-disk-format-it-and-mount-it-by-uuid) | 2 sources | `disk` |
+| Q24 | D3 | [Volume group with a custom extent size and a mounted logical volume](#q24-volume-group-with-a-custom-extent-size-and-a-mounted-logical-volume) | 4 sources | `disk` |
 
 ---
 
@@ -1143,62 +1145,10 @@ Do not change `ExecStart` and do not rewrite the unit to work around the problem
 <!-- toc -->
 ## Table of Contents
 
-- [Question index](#question-index)
-  - [Q1. Kernel parameters now and after reboot](#q1-kernel-parameters-now-and-after-reboot)
 - [Steps](#steps)
 - [Why](#why)
 - [Verify](#verify)
 - [Docs](#docs)
-  - [Q2. Find the disk-reading process, record its PID, lower its priority](#q2-find-the-disk-reading-process-record-its-pid-lower-its-priority)
-- [Steps](#steps-1)
-- [Why](#why-1)
-- [Verify](#verify-1)
-- [Docs](#docs-1)
-  - [Q3. Scheduled jobs for a user, root, and a one-off](#q3-scheduled-jobs-for-a-user-root-and-a-one-off)
-- [Steps](#steps-2)
-- [Why](#why-2)
-- [Verify](#verify-2)
-- [Docs](#docs-2)
-  - [Q4. A timer that runs a script every 15 minutes](#q4-a-timer-that-runs-a-script-every-15-minutes)
-- [Steps](#steps-3)
-- [Why](#why-3)
-- [Verify](#verify-3)
-- [Docs](#docs-3)
-  - [Q5. Install, hold, verify, and report packages](#q5-install-hold-verify-and-report-packages)
-- [Steps](#steps-4)
-- [Why](#why-4)
-- [Verify](#verify-4)
-- [Docs](#docs-4)
-  - [Q6. Default target and GRUB timeout, persistent](#q6-default-target-and-grub-timeout-persistent)
-- [Steps](#steps-5)
-- [Why](#why-5)
-- [Verify](#verify-5)
-- [Docs](#docs-5)
-  - [Q7. Define a VM from a disk image and set autostart](#q7-define-a-vm-from-a-disk-image-and-set-autostart)
-- [Steps](#steps-6)
-- [Why](#why-6)
-- [Verify](#verify-6)
-- [Docs](#docs-6)
-  - [Q8. Run a web container with limits and a restart policy that survives reboot](#q8-run-a-web-container-with-limits-and-a-restart-policy-that-survives-reboot)
-- [Steps](#steps-7)
-- [Why](#why-7)
-- [Verify](#verify-7)
-- [Docs](#docs-7)
-  - [Q9. Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing)
-- [Steps](#steps-8)
-- [Why](#why-8)
-- [Verify](#verify-8)
-- [Docs](#docs-8)
-  - [Q10. Write a service unit for an application](#q10-write-a-service-unit-for-an-application)
-- [Steps](#steps-9)
-- [Why](#why-9)
-- [Verify](#verify-9)
-- [Docs](#docs-9)
-  - [Q11. A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent)
-- [Steps](#steps-10)
-- [Why](#why-10)
-- [Verify](#verify-10)
-- [Docs](#docs-10)
 
 <!-- toc stop -->
 
@@ -1282,3 +1232,308 @@ journalctl -u billing.service -b --no-pager | tail -3
 - `man 5 systemd.exec`, section "Process Exit Codes", for what 203/EXEC means
 - `man 5 systemd.service` for `ExecStart` and `Restart`
 - `man 8 logrotate` and `man 5 logrotate.conf` for application log files, which the journal does not manage
+
+---
+
+### Q23. Partition a disk, format it, and mount it by UUID
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `disk`.
+
+**Question**
+
+
+A spare block device has been handed to this host. The setup printed its name, and `lsblk -f` shows it with no filesystem, no partitions and no mount point.
+
+Prepare it for use:
+
+- Put a GPT label on it and create **one** partition that spans the whole disk.
+- Format that partition **ext4** with the filesystem label `data`.
+- Mount it at `/data` with the `noatime` option.
+- Make the mount permanent, and write the `/etc/fstab` line so that it refers to the filesystem by **UUID**, not by device name.
+
+Do not touch any other disk. Only the device the setup named is spare.
+
+The grader reads `blkid`, `findmnt` and `/etc/fstab` separately. A filesystem that is mounted but missing from `/etc/fstab` scores nothing, and neither does an `/etc/fstab` line that names `/dev/sdb1` instead of its UUID. The grader also runs `findmnt --verify`, so an fstab line that does not parse fails the question even if the mount is up.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Find the disk and prove it is the spare one.**
+
+```bash
+lsblk -f
+```
+
+The spare device has no `FSTYPE`, no `MOUNTPOINT` and no children. The setup printed its name; treat that name as the only device you may touch. Set it once so the rest of the commands cannot go to the wrong place:
+
+```bash
+DISK=/dev/sdb          # use the device the setup printed
+```
+
+**2. Label the disk and create one partition across all of it.**
+
+```bash
+parted -s "$DISK" mklabel gpt
+parted -s "$DISK" mkpart primary ext4 1MiB 100%
+partprobe "$DISK"
+lsblk "$DISK"
+```
+
+The partition is `${DISK}1` on a normal disk and `${DISK}p1` on a loop device, so read the name from `lsblk` rather than assuming:
+
+```bash
+PART=$(lsblk -lnpo NAME,TYPE "$DISK" | awk '$2=="part" {print $1}')
+echo "$PART"
+```
+
+**3. Make the filesystem with the label the task asked for.**
+
+```bash
+mkfs.ext4 -L data "$PART"
+```
+
+**4. Mount it and read the UUID.**
+
+```bash
+mkdir -p /data
+blkid -s UUID -o value "$PART"
+```
+
+**5. Write the fstab line, then let fstab do the mounting.**
+
+```bash
+UUID=$(blkid -s UUID -o value "$PART")
+echo "UUID=$UUID  /data  ext4  defaults,noatime  0  2" >> /etc/fstab
+
+findmnt --verify
+mount -a
+findmnt -no SOURCE,TARGET,FSTYPE,OPTIONS /data
+```
+
+Mounting with `mount -a` rather than `mount /dev/sdb1 /data` is deliberate. It proves the line you just wrote is the line that works.
+
+## Why
+
+The fstab line is the answer to this task. A `mount` command that worked in front of the grader is gone after the reboot, and the exam is explicit that changes must persist.
+
+The UUID matters for the same reason. Device names come from the order in which the kernel finds disks. Add a controller, move a cable, or attach one more virtual disk, and yesterday's `/dev/sdb` is today's `/dev/sdc`. The filesystem UUID is written inside the filesystem itself, so it follows the data. `blkid -s UUID -o value` prints the bare value with nothing to trim, which is why it is better here than plain `blkid`.
+
+`noatime` goes in the fourth field with the other options. It stops the kernel writing an access timestamp on every read, and this is one of the standard options a task names to check you know where options live. `defaults` on its own is `rw,suid,dev,exec,auto,nouser,async`, so `defaults,noatime` keeps all of those and adds one.
+
+The last two fields are the dump flag and the fsck pass. Use `0 2` for a data filesystem: never dumped, checked after the root filesystem. Pass `1` belongs to root alone.
+
+`findmnt --verify` parses `/etc/fstab` and reports lines that cannot work: an unknown filesystem type, a missing mount point, a target that is not a directory. Run it before you walk away. A broken fstab line does not fail quietly, it stops the next boot, and repairing that from a rescue prompt costs far more time than the check.
+
+## Verify
+
+```bash
+lsblk -f "$DISK"
+blkid -s TYPE -o value "$PART"      # ext4
+blkid -s LABEL -o value "$PART"     # data
+findmnt -no SOURCE,TARGET,FSTYPE,OPTIONS /data
+grep /data /etc/fstab
+findmnt --verify
+```
+
+To be certain the persistence really works, unmount and let fstab remount:
+
+```bash
+umount /data && mount -a && findmnt -no TARGET /data
+```
+
+## Docs
+
+- `man 5 fstab` for the six fields and the option list
+- `man 8 parted` for `mklabel`, `mkpart` and the `1MiB` alignment convention
+- `man 8 mkfs.ext4` for `-L` and the other filesystem options
+- `man 8 blkid` for `-s` and `-o value`
+- `man 8 findmnt` for `--verify` and the output columns
+- `man 8 lsblk` for `-f`, `-p` and the column list
+
+---
+
+### Q24. Volume group with a custom extent size and a mounted logical volume
+
+**Domain:** Storage. **Difficulty:** Medium. **Weight:** 7. **Target:** 8 min. **Host:** any. **Needs:** `disk`.
+
+**Question**
+
+
+Two spare block devices have been handed to this host. The setup printed both names. Neither carries a partition table, a filesystem or LVM metadata.
+
+Build LVM storage on them:
+
+- Make both devices physical volumes.
+- Create a volume group named `vg_data` that spans **both** devices, with a physical extent size of **16 MB**.
+- Create a logical volume named `lv_app` of exactly **1.5 GB** in that group.
+- Format it ext4 and mount it at `/app`.
+- Make the mount permanent.
+
+Neither device alone is large enough for the logical volume, so the volume group has to cover both.
+
+The grader reads `vgs`, `lvs`, `findmnt` and `/etc/fstab` separately, and runs `findmnt --verify`. The extent size and the volume size are read as exact values: `16.00m` and `1.50g`.
+
+**Solution**
+
+
+<!-- toc -->
+## Table of Contents
+
+- [Question index](#question-index)
+  - [Q1. Kernel parameters now and after reboot](#q1-kernel-parameters-now-and-after-reboot)
+- [Steps](#steps)
+- [Why](#why)
+- [Verify](#verify)
+- [Docs](#docs)
+  - [Q2. Find the disk-reading process, record its PID, lower its priority](#q2-find-the-disk-reading-process-record-its-pid-lower-its-priority)
+- [Steps](#steps-1)
+- [Why](#why-1)
+- [Verify](#verify-1)
+- [Docs](#docs-1)
+  - [Q3. Scheduled jobs for a user, root, and a one-off](#q3-scheduled-jobs-for-a-user-root-and-a-one-off)
+- [Steps](#steps-2)
+- [Why](#why-2)
+- [Verify](#verify-2)
+- [Docs](#docs-2)
+  - [Q4. A timer that runs a script every 15 minutes](#q4-a-timer-that-runs-a-script-every-15-minutes)
+- [Steps](#steps-3)
+- [Why](#why-3)
+- [Verify](#verify-3)
+- [Docs](#docs-3)
+  - [Q5. Install, hold, verify, and report packages](#q5-install-hold-verify-and-report-packages)
+- [Steps](#steps-4)
+- [Why](#why-4)
+- [Verify](#verify-4)
+- [Docs](#docs-4)
+  - [Q6. Default target and GRUB timeout, persistent](#q6-default-target-and-grub-timeout-persistent)
+- [Steps](#steps-5)
+- [Why](#why-5)
+- [Verify](#verify-5)
+- [Docs](#docs-5)
+  - [Q7. Define a VM from a disk image and set autostart](#q7-define-a-vm-from-a-disk-image-and-set-autostart)
+- [Steps](#steps-6)
+- [Why](#why-6)
+- [Verify](#verify-6)
+- [Docs](#docs-6)
+  - [Q8. Run a web container with limits and a restart policy that survives reboot](#q8-run-a-web-container-with-limits-and-a-restart-policy-that-survives-reboot)
+- [Steps](#steps-7)
+- [Why](#why-7)
+- [Verify](#verify-7)
+- [Docs](#docs-7)
+  - [Q9. Serve a custom document root on a custom port under SELinux enforcing](#q9-serve-a-custom-document-root-on-a-custom-port-under-selinux-enforcing)
+- [Steps](#steps-8)
+- [Why](#why-8)
+- [Verify](#verify-8)
+- [Docs](#docs-8)
+  - [Q10. Write a service unit for an application](#q10-write-a-service-unit-for-an-application)
+- [Steps](#steps-9)
+- [Why](#why-9)
+- [Verify](#verify-9)
+- [Docs](#docs-9)
+  - [Q11. A service fails to start: find why, fix it, make the journal persistent](#q11-a-service-fails-to-start-find-why-fix-it-make-the-journal-persistent)
+- [Steps](#steps-10)
+- [Why](#why-10)
+- [Verify](#verify-10)
+- [Docs](#docs-10)
+  - [Q23. Partition a disk, format it, and mount it by UUID](#q23-partition-a-disk-format-it-and-mount-it-by-uuid)
+- [Steps](#steps-11)
+- [Why](#why-11)
+- [Verify](#verify-11)
+- [Docs](#docs-11)
+  - [Q24. Volume group with a custom extent size and a mounted logical volume](#q24-volume-group-with-a-custom-extent-size-and-a-mounted-logical-volume)
+- [Steps](#steps-12)
+- [Why](#why-12)
+- [Verify](#verify-12)
+- [Docs](#docs-12)
+
+<!-- toc stop -->
+
+## Steps
+
+**1. Name the two devices once.** Use the names the setup printed.
+
+```bash
+A=/dev/loop0
+B=/dev/loop1
+lsblk "$A" "$B"
+```
+
+**2. Make them physical volumes.**
+
+```bash
+pvcreate "$A" "$B"
+pvs
+```
+
+**3. Create the volume group with the extent size the task named.**
+
+```bash
+vgcreate -s 16M vg_data "$A" "$B"
+vgs -o vg_name,vg_extent_size,vg_size,pv_count vg_data
+```
+
+**4. Create the logical volume.**
+
+```bash
+lvcreate -L 1.5G -n lv_app vg_data
+lvs vg_data
+```
+
+**5. Format and mount it.**
+
+```bash
+mkfs.ext4 /dev/vg_data/lv_app
+mkdir -p /app
+```
+
+**6. Persist the mount, then mount from fstab.**
+
+```bash
+echo "/dev/vg_data/lv_app  /app  ext4  defaults  0  2" >> /etc/fstab
+findmnt --verify
+mount -a
+findmnt -no SOURCE,TARGET,FSTYPE /app
+```
+
+## Why
+
+LVM is three layers, and each has its own command. `pvcreate` writes an LVM label onto a device so the layer above can claim it. `vgcreate` pools labelled devices into a group. `lvcreate` carves a volume out of the pool. Skipping a layer is the usual mistake: `vgcreate` on a device that was never `pvcreate`d does work, because it labels the device for you, but a task that names the physical volumes expects to see them.
+
+`-s 16M` sets the physical extent size. An extent is the smallest unit LVM allocates, so every volume in the group is a whole number of extents. The default is 4 MB. A task that names an extent size is testing one flag and nothing else, and the flag is on `vgcreate`, not on `lvcreate`. It cannot be changed later on a group that holds data, so read the task before you type.
+
+`-L` is an absolute size and `-l` is a count of extents or a percentage. `-L 1.5G` gives 1.5 GB. `-l 100%FREE` gives everything left. Reading one when the task said the other is the fastest way to lose this mark. With 16 MB extents, 1.5 GB is 96 extents exactly, so the volume comes out at precisely `1.50g` rather than rounded up to the next extent.
+
+Both devices are needed because each holds only about 1008 MB of extents. LVM allocates linearly across the group, so the volume simply spans them. That is the whole point of a volume group: the volume is no longer limited by any one disk.
+
+The volume has two device paths, `/dev/vg_data/lv_app` and `/dev/mapper/vg_data-lv_app`, and both are symlinks to the same device-mapper node. Either works in `/etc/fstab`. Unlike `/dev/sdb1`, these names are stable across reboots because LVM builds them from the group and volume names, so a UUID is not required here.
+
+## Verify
+
+```bash
+pvs -o pv_name,vg_name,pv_size
+vgs --noheadings -o vg_name,vg_extent_size,pv_count vg_data
+lvs --noheadings -o lv_name,lv_size vg_data
+findmnt -no SOURCE,TARGET,FSTYPE /app
+grep /app /etc/fstab
+findmnt --verify
+```
+
+## Docs
+
+- `man 8 lvm` for the whole tool set and the shared options
+- `man 8 pvcreate`, `man 8 vgcreate`, `man 8 lvcreate` for the three creation commands
+- `man 8 vgs`, `man 8 lvs` for the reporting fields such as `vg_extent_size` and `lv_size`
+- `man 5 fstab` for the mount line
+- `man 8 mkfs.ext4` for the filesystem

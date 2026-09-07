@@ -13,6 +13,8 @@ QUESTIONS=(
   "09|Serve a custom document root on a custom port under SELinux enforcing|Operations Deployment|D1|Hard|q09-selinux-httpd-docroot|rocky tool:semanage|7|8|3|rocky"
   "10|Write a service unit for an application|Operations Deployment|D1|Medium|q10-systemd-service-unit||6|8|2|any"
   "11|A service fails to start: find why, fix it, make the journal persistent|Operations Deployment|D1|Medium|q11-journald-troubleshoot-service||6|8|2|any"
+  "23|Partition a disk, format it, and mount it by UUID|Storage|D3|Medium|q23-partition-format-fstab-uuid|disk|6|8|2|any"
+  "24|Volume group with a custom extent size and a mounted logical volume|Storage|D3|Medium|q24-lvm-create|disk|7|8|4|any"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }
