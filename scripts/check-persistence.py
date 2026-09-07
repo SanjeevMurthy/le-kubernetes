@@ -27,6 +27,8 @@ EXEMPT = {
     "34": "the deliverable is file permissions and ownership, which are on-disk state already",
     "35": "the deliverables are report files written from a log, and files are on disk already",
     "36": "the deliverables are archives and links on disk, which a reboot does not touch",
+    "37": "the deliverable is an executable script file, which is on disk already",
+    "39": "the answers are measurements of the running system written to files",
 }
 
 
