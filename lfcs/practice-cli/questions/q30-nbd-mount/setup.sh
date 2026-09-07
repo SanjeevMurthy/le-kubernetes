@@ -58,11 +58,7 @@ backup_file /etc/fstab q30
 
 umount /mnt/nbd 2>/dev/null
 nbd-client -d /dev/nbd0 >/dev/null 2>&1
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/nbd"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /mnt/nbd
 # Its existence also tells cleanup that setup ran, so cleanup never edits the
 # boot module configuration of a host this question was never set up on.
 [[ -f "$STATE/modfiles" ]] || : > "$STATE/modfiles"

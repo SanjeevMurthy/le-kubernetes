@@ -30,11 +30,7 @@ backup_file "$MDCONF" q28
 
 umount /mnt/raid 2>/dev/null
 mdadm --stop /dev/md0 >/dev/null 2>&1
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/raid"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /mnt/raid
 if [[ -f "$MDCONF" ]]; then
   grep -vE '^ARRAY[[:space:]].*(/dev/md/?0)([[:space:]]|$)' "$MDCONF" > "$STATE/mdconf.tmp" &&
     cat "$STATE/mdconf.tmp" > "$MDCONF"

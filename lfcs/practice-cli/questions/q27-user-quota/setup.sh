@@ -27,11 +27,7 @@ claimed() {
 backup_file /etc/fstab q27
 quotaoff -u /quota 2>/dev/null
 umount /quota 2>/dev/null
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/quota"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /quota
 
 DEV=$(spare_disk 2>/dev/null)
 if [[ -z "$DEV" ]] || claimed "$DEV"; then

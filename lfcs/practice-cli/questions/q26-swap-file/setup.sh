@@ -13,11 +13,7 @@ mkdir -p "$STATE"
 backup_file /etc/fstab q26
 swapoff /swapfile2 2>/dev/null
 rm -f /swapfile2
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $1 != "/swapfile2"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /swapfile2
 
 echo "Setup complete."
 echo "  /swapfile2 does not exist and /etc/fstab does not mention it."

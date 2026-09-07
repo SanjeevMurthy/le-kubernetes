@@ -13,11 +13,7 @@ mkdir -p "$STATE"
 
 backup_file /etc/fstab q24
 umount /app 2>/dev/null
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/app"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /app
 
 DEV_A=$(make_loop_disk d24a 1024)
 DEV_B=$(make_loop_disk d24b 1024)

@@ -29,11 +29,7 @@ backup_file /etc/crypttab q29
 umount /mnt/secret 2>/dev/null
 cryptsetup close secret 2>/dev/null
 rm -f /root/secret.key
-if [[ -f /etc/fstab ]]; then
-  awk '$1 ~ /^#/ || $2 != "/mnt/secret"' /etc/fstab > "$STATE/fstab.tmp" &&
-    cat "$STATE/fstab.tmp" > /etc/fstab
-  rm -f "$STATE/fstab.tmp"
-fi
+fstab_drop_target /mnt/secret
 if [[ -f /etc/crypttab ]]; then
   awk '$1 ~ /^#/ || $1 != "secret"' /etc/crypttab > "$STATE/crypttab.tmp" &&
     cat "$STATE/crypttab.tmp" > /etc/crypttab
