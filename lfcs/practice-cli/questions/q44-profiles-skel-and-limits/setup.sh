@@ -5,12 +5,27 @@
 source "$(dirname "$0")/../../lib/env.sh"
 require_root "$@"
 
+STATE="$LFCS_STATE_DIR/q44"
+mkdir -p "$STATE"
+
 backup_file /etc/pam.d/su q44
+
+# Record what the host already had, once and before anything is created or
+# removed, so cleanup deletes only what exists because of this question. ana is
+# shared with Q41, Q42 and Q43, so in a mock exam she is often already there and
+# is not ours to remove. The records are written once: a second setup run keeps
+# the first answer.
+for u in ana newbie; do
+  f="$STATE/created-user-$u"
+  [[ -f "$f" ]] && continue
+  if id "$u" >/dev/null 2>&1; then echo no > "$f"; else echo yes > "$f"; fi
+done
 
 id ana >/dev/null 2>&1 || useradd -m -s /bin/bash -c 'Ana Diaz' ana
 usermod -s /bin/bash ana
 echo 'ana:Lfcs2026Pass' | chpasswd
 
+# The task is to create newbie from the skeleton, so setup still clears it.
 userdel -r newbie >/dev/null 2>&1
 rm -rf /home/newbie
 rm -rf /etc/skel/bin
@@ -37,5 +52,9 @@ fi
 echo "Setup complete."
 echo "  Account:  ana, shell /bin/bash, home /home/ana"
 echo "  Removed:  /etc/profile.d/lab.sh, /etc/skel/bin, the newbie account, any limits file naming ana"
+if [[ "$(cat "$STATE/created-user-newbie" 2>/dev/null)" == no ]]; then
+  echo "  Note: newbie already existed on this host and was removed so the skeleton can be"
+  echo "  proven. Cleanup will leave the account you create in place."
+fi
 echo "  pam_limits is enabled in /etc/pam.d/su, so 'su - ana' reports the limits you set."
 echo "  Current values for ana: EDITOR='$(su - ana -c 'echo "$EDITOR"' 2>/dev/null)' HISTSIZE='$(su - ana -c 'echo "$HISTSIZE"' 2>/dev/null)'"

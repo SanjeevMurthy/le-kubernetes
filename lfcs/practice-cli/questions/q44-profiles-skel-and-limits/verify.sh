@@ -37,8 +37,11 @@ check_persisted "ana's soft nproc limit is written under /etc/security" \
 check_persisted "ana's hard nproc limit is written under /etc/security" \
   '^[[:space:]]*ana[[:space:]]+hard[[:space:]]+nproc[[:space:]]+200[[:space:]]*$' \
   /etc/security/limits.d/*.conf /etc/security/limits.conf
-check_persisted "ana's soft nofile limit is written under /etc/security" \
-  '^[[:space:]]*ana[[:space:]]+soft[[:space:]]+nofile[[:space:]]+4096[[:space:]]*$' \
+# "soft" and "-" both give the session a starting limit of 4096; "-" sets the
+# hard limit to the same value as well, which the task allows. A line that sets
+# only the hard limit does not change what the session starts with, so it fails.
+check_persisted "ana's nofile limit is written under /etc/security as soft or -" \
+  '^[[:space:]]*ana[[:space:]]+(soft|-)[[:space:]]+nofile[[:space:]]+4096[[:space:]]*$' \
   /etc/security/limits.d/*.conf /etc/security/limits.conf
 
 summary

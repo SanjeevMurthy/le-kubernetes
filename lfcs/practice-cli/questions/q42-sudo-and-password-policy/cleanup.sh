@@ -13,10 +13,17 @@ restore_file /etc/login.defs q42
 restore_file /etc/security/pwquality.conf q42
 restore_file /etc/sudoers q42
 
-userdel -r ana >/dev/null 2>&1
-userdel -r opsman >/dev/null 2>&1
-groupdel ops >/dev/null 2>&1
+# Only what setup created. ana is shared with Q41, Q43 and Q44: if the host
+# already had her when setup ran, she belongs to another question and removing
+# her here would take her home directory and her group memberships with it.
+STATE="$LFCS_STATE_DIR/q42"
+[[ "$(cat "$STATE/created-user-ana" 2>/dev/null)" == yes ]] && userdel -r ana >/dev/null 2>&1
+[[ "$(cat "$STATE/created-user-opsman" 2>/dev/null)" == yes ]] && userdel -r opsman >/dev/null 2>&1
+[[ "$(cat "$STATE/created-group-ops" 2>/dev/null)" == yes ]] && groupdel ops >/dev/null 2>&1
 
-echo "Cleanup complete. The ana and opsman accounts, the ops group and every"
-echo "/etc/sudoers.d file carrying an ana or %ops rule are gone, and login.defs,"
-echo "pwquality.conf and sudoers are restored from the backups setup took."
+rm -rf "${LFCS_STATE_DIR:?}/q42"
+
+echo "Cleanup complete. Every /etc/sudoers.d file carrying an ana or %ops rule is"
+echo "gone, login.defs, pwquality.conf and sudoers are restored from the backups"
+echo "setup took, and the ana and opsman accounts and the ops group were removed"
+echo "only if this question created them."

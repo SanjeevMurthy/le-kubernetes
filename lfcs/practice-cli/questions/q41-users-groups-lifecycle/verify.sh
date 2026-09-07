@@ -31,8 +31,15 @@ SVC_UID=$(printf '%s' "$PW_SVC" | cut -d: -f3)
 SYSTEM_UID=no
 [[ "$SVC_UID" =~ ^[0-9]+$ ]] && (( SVC_UID < 1000 )) && SYSTEM_UID=yes
 check_eq "svc-batch has a system UID below 1000 (read '${SVC_UID:-none}')" "yes" "$SYSTEM_UID"
-check_contains "svc-batch has a shell that refuses logins" "nologin" \
-  "$(printf '%s' "$PW_SVC" | cut -d: -f7)"
+# The task asks for "a shell that refuses logins", and /bin/false refuses one
+# exactly as /usr/sbin/nologin does. Both pass; a real shell does not.
+SVC_SHELL=$(printf '%s' "$PW_SVC" | cut -d: -f7)
+case "$SVC_SHELL" in
+  */nologin|*/false) NOLOGIN=yes ;;
+  *)                 NOLOGIN="no, '${SVC_SHELL:-nothing}' would let the account log in" ;;
+esac
+check_eq "svc-batch has a shell that refuses logins (read '${SVC_SHELL:-none}')" \
+  "yes" "$NOLOGIN"
 
 echo "Checking the locked account..."
 check_eq "bob's password is locked" "L" "$(passwd -S bob 2>/dev/null | awk '{print $2}')"

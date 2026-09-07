@@ -4,9 +4,26 @@
 source "$(dirname "$0")/../../lib/env.sh"
 require_root "$@"
 
+STATE="$LFCS_STATE_DIR/q42"
+mkdir -p "$STATE"
+
 backup_file /etc/sudoers q42
 backup_file /etc/login.defs q42
 backup_file /etc/security/pwquality.conf q42
+
+# Record what the host already had, once and before creating anything, so
+# cleanup deletes only what this question made. ana is shared with Q41, Q43 and
+# Q44, so in a mock exam she is often already there and is not ours to remove.
+# The records are written once: a second setup run keeps the first answer.
+for u in ana opsman; do
+  f="$STATE/created-user-$u"
+  [[ -f "$f" ]] && continue
+  if id "$u" >/dev/null 2>&1; then echo no > "$f"; else echo yes > "$f"; fi
+done
+f="$STATE/created-group-ops"
+if [[ ! -f "$f" ]]; then
+  if getent group ops >/dev/null 2>&1; then echo no > "$f"; else echo yes > "$f"; fi
+fi
 
 getent group ops >/dev/null 2>&1 || groupadd ops
 id ana    >/dev/null 2>&1 || useradd -m -s /bin/bash -c 'Ana Diaz' ana

@@ -10,6 +10,25 @@ if ! command -v setfacl >/dev/null 2>&1 || ! command -v getfacl >/dev/null 2>&1;
   exit 1
 fi
 
+STATE="$LFCS_STATE_DIR/q43"
+mkdir -p "$STATE"
+
+# Record what the host already had, once and before creating anything, so
+# cleanup deletes only what this question made. ana, devs and qa are shared with
+# Q41, Q42 and Q44, so in a mock exam they are often already there and are not
+# ours to remove. The records are written once: a second setup run keeps the
+# first answer.
+for u in ana qauser; do
+  f="$STATE/created-user-$u"
+  [[ -f "$f" ]] && continue
+  if id "$u" >/dev/null 2>&1; then echo no > "$f"; else echo yes > "$f"; fi
+done
+for g in devs qa; do
+  f="$STATE/created-group-$g"
+  [[ -f "$f" ]] && continue
+  if getent group "$g" >/dev/null 2>&1; then echo no > "$f"; else echo yes > "$f"; fi
+done
+
 getent group devs >/dev/null 2>&1 || groupadd devs
 getent group qa   >/dev/null 2>&1 || groupadd qa
 id ana    >/dev/null 2>&1 || useradd -m -s /bin/bash -g devs -c 'Ana Diaz' ana

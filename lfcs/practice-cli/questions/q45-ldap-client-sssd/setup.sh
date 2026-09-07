@@ -26,9 +26,63 @@ command -v sssd >/dev/null 2>&1 || pkg_install sssd sssd-ldap
 systemctl enable --now slapd >/dev/null 2>&1
 sleep 1
 
+LAB_BASE="dc=lab,dc=local"
+
+# Every suffix this host serves, read from the running server and from the
+# configuration on disk so a slapd that is down is still seen.
+slapd_suffixes() {
+  ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b cn=config '(olcSuffix=*)' olcSuffix 2>/dev/null |
+    sed -n 's/^olcSuffix:[[:space:]]*//p'
+  ldapsearch -x -H ldap://localhost -LLL -b '' -s base namingContexts 2>/dev/null |
+    sed -n 's/^namingContexts:[[:space:]]*//p'
+  grep -rhs '^olcSuffix:' /etc/ldap/slapd.d 2>/dev/null |
+    sed -E 's/^olcSuffix:[[:space:]]*//'
+  grep -hsE '^[[:space:]]*suffix[[:space:]]+' /etc/ldap/slapd.conf 2>/dev/null |
+    sed -E 's/^[[:space:]]*suffix[[:space:]]+//; s/^"//; s/"$//'
+}
+
+# True only for the empty database the Debian package writes at install time,
+# which holds nothing but its own root entry and cn=admin. A directory that
+# cannot be read anonymously counts as real, because it cannot be proven empty.
+suffix_is_empty_default() {
+  local s="$1" dns d
+  dns=$(ldapsearch -x -H ldap://localhost -LLL -b "$s" -s sub dn 2>/dev/null) || return 1
+  while IFS= read -r d; do
+    case "$d" in
+      ""|"$s"|"cn=admin,$s") ;;
+      *) return 1 ;;
+    esac
+  done <<< "$(printf '%s\n' "$dns" | sed -n 's/^dn:[[:space:]]*//p')"
+  return 0
+}
+
 # Point the directory at dc=lab,dc=local with a known admin password. Reconfiguring
-# slapd rebuilds its database, which is exactly what a repeatable lab wants.
-if ! ldapsearch -x -H ldap://localhost -b dc=lab,dc=local -s base >/dev/null 2>&1; then
+# slapd rebuilds its database, which is exactly what a repeatable lab wants and is
+# exactly what must never happen to a directory this question did not create:
+# slapd/purge_database deletes whatever database it finds. So before purging,
+# refuse outright if this host already serves any base other than the lab's.
+if ! ldapsearch -x -H ldap://localhost -b "$LAB_BASE" -s base >/dev/null 2>&1; then
+  FOREIGN=""
+  while IFS= read -r s; do
+    [[ -z "$s" ]] && continue
+    case "$(printf '%s' "$s" | tr '[:upper:]' '[:lower:]')" in
+      "$LAB_BASE"|cn=config|cn=monitor) continue ;;
+    esac
+    suffix_is_empty_default "$s" && continue
+    FOREIGN="$FOREIGN    $s"$'\n'
+  done <<< "$(slapd_suffixes | sed '/^$/d' | sort -u)"
+
+  if [[ -n "$FOREIGN" ]]; then
+    echo "This host already serves an OpenLDAP directory that is not this lab's:"
+    printf '%s' "$FOREIGN"
+    echo "Setting this question up rebuilds the slapd database with"
+    echo "'dpkg-reconfigure slapd' and slapd/purge_database, which would delete it."
+    echo "Refusing. Q45 will not run on a host that carries somebody else's directory."
+    echo "Run it on a lab VM with no directory of its own, or move that directory off"
+    echo "this host first. No directory data was changed."
+    exit 1
+  fi
+
   debconf-set-selections <<'SEL'
 slapd slapd/domain string lab.local
 slapd shared/organization string LFCS Lab
@@ -43,7 +97,7 @@ SEL
   sleep 2
 fi
 
-if ! ldapsearch -x -H ldap://localhost -b dc=lab,dc=local -s base >/dev/null 2>&1; then
+if ! ldapsearch -x -H ldap://localhost -b "$LAB_BASE" -s base >/dev/null 2>&1; then
   echo "The local directory did not come up with the base dc=lab,dc=local."
   echo "Check 'systemctl status slapd' and 'journalctl -u slapd -b', then run setup again."
   exit 1

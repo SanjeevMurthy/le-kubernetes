@@ -33,6 +33,8 @@ exportfs -s
 systemctl enable --now nfs-kernel-server      # nfs-server on Rocky
 ```
 
+Setup left the unit running but disabled, so `systemctl enable` is a step that is graded on its own. `--now` covers both halves at once, and `systemctl is-enabled` is what proves the boot half.
+
 **3. Mount it, from the network address.**
 
 ```bash

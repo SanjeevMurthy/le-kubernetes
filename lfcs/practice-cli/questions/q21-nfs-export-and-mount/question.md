@@ -1,12 +1,13 @@
 # Q21. Export a directory and mount it persistently
 
-This host is both the NFS server and the NFS client for this task. Setup has created `/srv/share` with a file called `marker` in it, started the NFS server, and given the host a second address, `10.99.21.1`, with a peer at `10.99.21.2`.
+This host is both the NFS server and the NFS client for this task. Setup has created `/srv/share` with a file called `marker` in it, started the NFS server without enabling it, and given the host a second address, `10.99.21.1`, with a peer at `10.99.21.2`.
 
 **Server side.** Export `/srv/share` to the network `10.0.0.0/8`:
 
 - read-write
 - without squashing root, so a root client keeps root privileges on the share
 - synchronous writes
+- the NFS server unit starts at boot, because it is running now but disabled, so a reboot would leave the export unserved
 
 **Client side.** Mount that export at `/mnt/share`:
 

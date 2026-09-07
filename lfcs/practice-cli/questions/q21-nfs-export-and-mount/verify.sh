@@ -54,7 +54,10 @@ check_persisted "the mount is in /etc/fstab as nfs" \
   '^[^#]*[[:space:]]/mnt/share[[:space:]]+nfs' /etc/fstab
 check_persisted "the fstab line carries _netdev, so a boot cannot hang on it" \
   '^[^#]*[[:space:]]/mnt/share[[:space:]]+nfs[0-9]*[[:space:]]+[^[:space:]]*_netdev' /etc/fstab
-check_eq "$UNIT starts at boot" "enabled" "$(systemctl is-enabled "$UNIT" 2>/dev/null)"
+# Setup starts the unit but leaves it disabled, so this grades the candidate's
+# own systemctl enable and not something setup did for them.
+check_eq "$UNIT is enabled, so the export is served again after a reboot" \
+  "enabled" "$(systemctl is-enabled "$UNIT" 2>/dev/null)"
 
 if [[ "$FSTAB_OK" == yes ]]; then
   check "findmnt --verify reports no problem with /etc/fstab" findmnt --verify
