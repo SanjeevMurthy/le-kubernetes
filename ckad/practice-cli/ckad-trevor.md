@@ -1,6 +1,6 @@
 # CKAD Trevor Poirier Practice Exam — Comparison & Unique Questions Guide
 
-> **Source:** [trevor-poirier/CKAD-Exam-Questions](https://github.com/trevor-poirier/CKAD-Exam-Questions) (16 questions)
+> **Source:** `trevor-poirier/CKAD-Exam-Questions` on GitHub (16 questions). That repository has since been taken down, so the questions below are the only remaining record of it here.
 > **Compared against:** `ckad-exam-qa-guide.md` (22 questions from 12+ candidate reports)
 
 ---
@@ -836,4 +836,4 @@ kubectl get events -n <ns> --field-selector involvedObject.name=<pod> -o wide
 
 ---
 
-*Source: [trevor-poirier/CKAD-Exam-Questions](https://github.com/trevor-poirier/CKAD-Exam-Questions) | Compared against ckad-exam-qa-guide.md (March 2026)*
+*Source: `trevor-poirier/CKAD-Exam-Questions` on GitHub, no longer available. Compared against ckad-exam-qa-guide.md (March 2026)*

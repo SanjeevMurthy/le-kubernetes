@@ -1091,9 +1091,9 @@ tls:
 
 **Official Documentation:**
 
-- Gateway API Concepts: https://gateway-api.sigs.k8s.io/concepts/api-overview/
-- Gateway Resource: https://gateway-api.sigs.k8s.io/api-types/gateway/
-- HTTPRoute: https://gateway-api.sigs.k8s.io/api-types/httproute/
+- Gateway API Concepts: https://gateway-api.sigs.k8s.io/
+- Gateway Resource: https://gateway-api.sigs.k8s.io/guides/
+- HTTPRoute: https://gateway-api.sigs.k8s.io/guides/http-routing/
 - Kubernetes Ingress: https://kubernetes.io/docs/concepts/services-networking/ingress/
 
 ---
@@ -1461,7 +1461,7 @@ kubectl exec data-pod -- df -h /usr/share/nginx/html
 **Official Documentation:**
 
 - Persistent Volumes: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
-- Configure a Pod to Use a PersistentVolume: https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/
+- Configure a Pod to Use a PersistentVolume: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 
 ---
 

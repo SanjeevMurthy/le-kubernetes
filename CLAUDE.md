@@ -47,6 +47,15 @@ It must print `check-docs: ALL OK`. The individual tools are also usable directl
 | `scripts/test-libs.sh` | unit tests for the shared library helpers |
 | `scripts/check-docs.sh` | runs all of the above plus shell syntax checks and shellcheck |
 
+`check-docs.sh` never touches the network, so it works offline and stays fast. External links are checked separately, on demand:
+
+```bash
+python3 scripts/check-external-links.py          # fetch every cited URL
+python3 scripts/check-external-links.py --list   # print them, fetch nothing
+```
+
+It reads prose only, because a URL inside a fenced block is an argument to a command rather than a citation, and it separates dead links from ones it could not verify, such as a site that refuses non-browser clients.
+
 Anything generated is rebuilt by one command:
 
 ```bash

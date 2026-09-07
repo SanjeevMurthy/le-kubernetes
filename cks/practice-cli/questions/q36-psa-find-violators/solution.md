@@ -97,6 +97,6 @@ kubectl get pods -n psa-lab
 
 ## Docs
 
-**Allowed:** `https://kubernetes.io/docs/concepts/security/pod-security-standards/` for what each level forbids, and `https://kubernetes.io/docs/tasks/configure-pod-security-admission/` for the label syntax and the dry-run example.
+**Allowed:** `https://kubernetes.io/docs/concepts/security/pod-security-standards/` for what each level forbids, and `https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/` for the label syntax and the dry-run example.
 
 Memorise the label prefix, `pod-security.kubernetes.io/`, and the three modes. Searching for it costs more time than the whole task is worth.

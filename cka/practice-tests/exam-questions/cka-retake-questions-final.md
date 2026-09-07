@@ -524,7 +524,7 @@ kubectl patch deployment busybox-logger -n priority \
 4. Ensure that CRDs are not installed by configuring the chart accordingly
 5. Save the generated YAML manifest to `/root/argo-helm.yaml`
 
-**Reference Doc:** https://kubernetes.io/docs/tasks/manage-kubernetes-objects/helm/
+**Reference Doc:** https://helm.sh/docs/intro/using_helm/
 
 **Solution Steps:**
 

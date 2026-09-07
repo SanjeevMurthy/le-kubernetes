@@ -211,7 +211,7 @@ helm search repo bitnami/nginx
 - [Helm Search Hub](https://helm.sh/docs/helm/helm_search_hub/)
 - [Helm Repo Add](https://helm.sh/docs/helm/helm_repo_add/)
 - [Artifact Hub](https://artifacthub.io/)
-- [Kubernetes — Managing Kubernetes Objects with Helm](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/managing-kubernetes-objects-using-helm/)
+- [Kubernetes — Managing Kubernetes Objects with Helm](https://helm.sh/docs/intro/using_helm/)
 
 ---
 

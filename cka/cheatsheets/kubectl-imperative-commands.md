@@ -23,7 +23,7 @@
 11. [Ingress](#11-ingress)
 12. [Resource Quotas & LimitRanges](#12-resource-quotas--limitranges)
 13. [PriorityClasses](#13-priorityclasses)
-14. [Taints & Labels](#14-taints--labels--annotations)
+14. [Taints, Labels & Annotations](#14-taints-labels--annotations)
 15. [Scaling & Autoscaling](#15-scaling--autoscaling)
 16. [Expose and Port-Forward](#16-expose-and-port-forward)
 17. [Tokens & Certificates](#17-tokens--certificates)

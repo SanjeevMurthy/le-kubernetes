@@ -6,7 +6,7 @@
 
 - [Kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/)
 - [Kubelet Configuration (v1beta1)](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/)
-- [Configuring the kubelet cgroup driver](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/)
+- [Configuring the kubelet cgroup driver](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
 - [Operating etcd Clusters for Kubernetes](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/)
 - [etcd Official Documentation](https://etcd.io/docs/)
 - [etcd Disaster Recovery](https://etcd.io/docs/current/op-guide/recovery/)
