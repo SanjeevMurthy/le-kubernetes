@@ -165,7 +165,7 @@ Question ids are all marked *(planned)* until the practice CLI is built in Phase
 - [ ] Turn on user quotas and set a soft and hard limit — note 03 recipe 8, Q27
 - [ ] Encrypt a volume with LUKS and unlock it at boot from a key file — note 03 recipe 9, Q29
 - [ ] Diagnose a full filesystem, including inode exhaustion and deleted-but-open files — note 03 recipe 9, Q31
-- [ ] Read storage performance with `iostat` and `vmstat` — note 03 recipe 9
+- [ ] Read storage performance with `iostat` and `vmstat` — note 04 recipe 3
 
 ---
 

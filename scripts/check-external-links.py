@@ -127,6 +127,12 @@ def fetch(url):
                     return "unverified", f"TLS handshake failed: {reason.reason}"
                 if isinstance(reason, TimeoutError):
                     return "unverified", "timed out"
+                if "tunnel connection failed" in str(reason).lower():
+                    # An egress proxy refused the CONNECT. That is this client's
+                    # network talking, not the page, and behind such a proxy no
+                    # URL can be reached, so calling them dead would condemn the
+                    # whole citation list on the strength of a firewall.
+                    return "unverified", "blocked by an egress proxy"
                 return "dead", f"{type(reason).__name__}: {reason}"
         except TimeoutError:
             if method == "GET":
@@ -147,13 +153,15 @@ def main(argv):
         print(f"check-external-links: {len(urls)} URL(s), fetched none")
         return 0
 
-    dead, unverified = [], []
+    dead, unverified, ok = [], [], 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS) as pool:
         for url, (state, note) in zip(urls, pool.map(fetch, urls)):
             if state == "dead":
                 dead.append((url, note, urls[url]))
             elif state == "unverified":
                 unverified.append((url, note))
+            else:
+                ok += 1
 
     def show(rows):
         for url, note, where in sorted(rows):
@@ -169,8 +177,12 @@ def main(argv):
         print("\nCould not verify from here (open these by hand if it matters):")
         for url, note in sorted(unverified):
             print(f"  {url}\n      {note}")
-    print(f"\ncheck-external-links: {len(urls)} URL(s), {len(dead)} dead, "
+    print(f"\ncheck-external-links: {len(urls)} URL(s), {ok} ok, {len(dead)} dead, "
           f"{len(unverified)} unverified")
+    if ok == 0 and urls:
+        print("Nothing was reachable from this host, so this run proves nothing "
+              "about the citations. Re-run it from a machine with direct egress.")
+        return 0
     return 1 if dead else 0
 
 
