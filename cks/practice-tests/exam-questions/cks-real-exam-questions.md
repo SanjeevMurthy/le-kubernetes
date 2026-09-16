@@ -337,8 +337,8 @@ before October 2024 with that in mind, and prefer the curriculum document plus p
 Twenty-eight candidate write-ups, newest first. Outcomes are as stated by the author, and where an
 entry is a preparation guide rather than an exam report that is said plainly, because a guide is
 still a source for what task types exist but is weaker evidence for what appeared on a given day.
-Eight of the twenty-eight report failing a first attempt, and every one of them passed a later
-attempt, usually within days and usually with a large jump in score, which is worth knowing when
+Eight of the twenty-eight report failing a first attempt, and seven of those eight publish a
+later pass, usually within days and usually with a large jump in score, which is worth knowing when
 reading the gotcha columns above: most of them were written by someone who had just lost marks to
 exactly that gotcha.
 

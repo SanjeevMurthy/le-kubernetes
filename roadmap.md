@@ -35,7 +35,7 @@ Book both now, in one sitting. The dates can be moved later; the simulator acces
 
 ### Retake arithmetic against 3 March
 
-The retake is included with each voucher and, on the evidence, is worth planning for rather than hoping to avoid: eight of the 28 CKS candidate write-ups behind this kit failed a first attempt, and every one of them passed the retake.
+The retake is included with each voucher and, on the evidence, is worth planning for rather than hoping to avoid: eight of the 28 CKS candidate write-ups behind this kit failed a first attempt, and seven of them published a later pass.
 
 | Attempt | Planned date | Days to expiry | Retake Saturdays still available |
 |---|---|---|---|
