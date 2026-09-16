@@ -2,7 +2,15 @@
 
 ## Steps
 
-Everything happens on the control-plane node, as root.
+Everything happens on the control-plane node, as root. Get there first and
+confirm it: an edit made on the wrong host looks like it worked and changes
+nothing.
+
+```bash
+ssh <control-plane>
+sudo -i
+hostname
+```
 
 **1. Back the manifest up outside the manifest directory.** A file left in `/etc/kubernetes/manifests/` with any extension is still read by the kubelet, so a backup written next to it can start a second API server.
 
