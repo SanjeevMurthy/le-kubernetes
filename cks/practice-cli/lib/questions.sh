@@ -46,6 +46,10 @@ QUESTIONS=(
   "42|Host hardening: users, sudo and kernel modules|System Hardening|D3|Medium|q42-node-users-sudo-modules|node-root|6|8|4|worker"
   "43|Which pod calls the kill syscall|Monitoring, Logging and Runtime Security|D6|Medium|q43-strace-syscall-investigation|node-root tool:strace|6|8|5|worker"
   "44|Istio: enforce STRICT mTLS in a namespace|Minimize Microservice Vulnerabilities|D4|Medium|q44-istio-strict-mtls|kubectl istio|6|6|3|any"
+  "45|Verify the release binaries and remove the tampered one|Cluster Setup|D1|Easy|q45-binary-verification-sha512|linux|5|6|7|any"
+  "46|Read the contexts and decode the certificate inside a kubeconfig|Cluster Hardening|D2|Easy|q46-kubeconfig-contexts-and-certs|kubectl tool:openssl|5|6|4|any"
+  "47|Require non-root Pods with a ValidatingAdmissionPolicy|Minimize Microservice Vulnerabilities|D4|Medium|q47-validatingadmissionpolicy|kubectl|6|8|1|any"
+  "48|Gatekeeper: allow images from one registry only|Supply Chain Security|D5|Medium|q48-gatekeeper-allowed-registries|kubectl admission:gatekeeper|6|8|5|any"
 )
 
 get_field() { echo "$1" | cut -d'|' -f"$2"; }

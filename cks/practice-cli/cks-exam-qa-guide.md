@@ -54,6 +54,10 @@
   - [Q42. Host hardening: users, sudo and kernel modules](#q42-host-hardening-users-sudo-and-kernel-modules)
   - [Q43. Which pod calls the kill syscall](#q43-which-pod-calls-the-kill-syscall)
   - [Q44. Istio: enforce STRICT mTLS in a namespace](#q44-istio-enforce-strict-mtls-in-a-namespace)
+  - [Q45. Verify the release binaries and remove the tampered one](#q45-verify-the-release-binaries-and-remove-the-tampered-one)
+  - [Q46. Read the contexts and decode the certificate inside a kubeconfig](#q46-read-the-contexts-and-decode-the-certificate-inside-a-kubeconfig)
+  - [Q47. Require non-root Pods with a ValidatingAdmissionPolicy](#q47-require-non-root-pods-with-a-validatingadmissionpolicy)
+  - [Q48. Gatekeeper: allow images from one registry only](#q48-gatekeeper-allow-images-from-one-registry-only)
 
 <!-- toc stop -->
 
@@ -105,6 +109,10 @@
 | Q42 | D3 | [Host hardening: users, sudo and kernel modules](#q42-host-hardening-users-sudo-and-kernel-modules) | 4 sources | `node-root` |
 | Q43 | D6 | [Which pod calls the kill syscall](#q43-which-pod-calls-the-kill-syscall) | 5 sources | `node-root tool:strace` |
 | Q44 | D4 | [Istio: enforce STRICT mTLS in a namespace](#q44-istio-enforce-strict-mtls-in-a-namespace) | 3 sources | `kubectl istio` |
+| Q45 | D1 | [Verify the release binaries and remove the tampered one](#q45-verify-the-release-binaries-and-remove-the-tampered-one) | 7 sources | `linux` |
+| Q46 | D2 | [Read the contexts and decode the certificate inside a kubeconfig](#q46-read-the-contexts-and-decode-the-certificate-inside-a-kubeconfig) | 4 sources | `kubectl tool:openssl` |
+| Q47 | D4 | [Require non-root Pods with a ValidatingAdmissionPolicy](#q47-require-non-root-pods-with-a-validatingadmissionpolicy) | 1 sources | `kubectl` |
+| Q48 | D5 | [Gatekeeper: allow images from one registry only](#q48-gatekeeper-allow-images-from-one-registry-only) | 5 sources | `kubectl admission:gatekeeper` |
 
 ---
 
@@ -4604,3 +4612,511 @@ kubectl exec -n mesh-out curl -c curl -- \
 **Allowed:** `https://istio.io/latest/docs/` is an allowed source for the CKS exam. The two pages that matter here are the mutual TLS task under `https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/` and the PeerAuthentication reference under `https://istio.io/latest/docs/reference/config/security/peer_authentication/`.
 
 Worth memorising: the object shape (`kind: PeerAuthentication`, `spec.mtls.mode`), the three modes `STRICT`, `PERMISSIVE` and `DISABLE`, the three scopes (root namespace, namespace, selector) and their precedence, and the fact that a namespace-wide policy is the one without a `selector`.
+
+---
+
+### Q45. Verify the release binaries and remove the tampered one
+
+**Domain:** Cluster Setup. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `linux`.
+
+**Question**
+
+
+**Host:** any Linux host. Work in `/opt/course/45/` (or `$COURSE_DIR/45/` on this lab).
+
+A set of Kubernetes binaries was copied onto this host from an untrusted mirror. The checksum list that came with the official release is next to them.
+
+`/opt/course/45/binaries/` holds four files and `checksums.txt`. Each line of `checksums.txt` is the published SHA512 of one binary, in the format `sha512sum` itself prints.
+
+1. Check every binary in `binaries/` against its published checksum. Exactly one does not match.
+
+2. Write the **file name only** of the binary that does not match to `/opt/course/45/tampered`. No path, no hash, nothing else on the line.
+
+3. Delete the tampered binary from `binaries/`.
+
+Leave the three binaries that do match exactly as they are. Do not regenerate `checksums.txt`, and do not edit it: it is the published record and the whole point of the check.
+
+**Solution**
+
+
+#### Steps
+
+Everything happens in the working directory, as an ordinary user.
+
+```bash
+cd /opt/course/45/binaries
+```
+
+**1. Let `sha512sum` do the comparison.** It reads the published list and checks every file named in it. This is the whole task in one command, and it is the command to reach for rather than hashing each file by hand and comparing 128 hex characters with your eyes.
+
+```bash
+sha512sum --check checksums.txt
+```
+
+```
+kubectl: FAILED
+kubeadm: OK
+kubelet: OK
+kube-proxy: OK
+sha512sum: WARNING: 1 computed checksum did NOT match
+```
+
+The `FAILED` line names the file. Add `--quiet` to print only the failures, which is easier to read when the list is long:
+
+```bash
+sha512sum --check --quiet checksums.txt
+```
+
+**2. Write the deliverable.** The task asked for the file name alone, so do not pipe the whole `FAILED` line into it.
+
+```bash
+sha512sum --check --quiet checksums.txt 2>/dev/null \
+  | awk -F: '/FAILED/ {print $1}' > /opt/course/45/tampered
+cat /opt/course/45/tampered
+```
+
+**3. Delete the tampered binary, and nothing else.**
+
+```bash
+rm -f "/opt/course/45/binaries/$(cat /opt/course/45/tampered)"
+```
+
+**4. Confirm.** Re-running the check now reports the deleted file as missing rather than as a mismatch, and every remaining file passes. Both halves matter: a missing file is the expected state, and any remaining `FAILED` means you deleted the wrong one.
+
+```bash
+sha512sum --check checksums.txt
+```
+
+```
+sha512sum: kubectl: No such file or directory
+kubectl: FAILED open or read
+kubeadm: OK
+kubelet: OK
+kube-proxy: OK
+sha512sum: WARNING: 1 listed file could not be read
+```
+
+#### Doing it by hand
+
+If the list is not in `sha512sum`'s own format, or you are checking a single binary against a hash pasted from a release page, compare them directly:
+
+```bash
+sha512sum kubectl
+echo "<hash-from-the-release-page>  kubectl" | sha512sum --check -
+```
+
+The two spaces between the hash and the file name are part of the format. One space makes `sha512sum --check` reject the line as improperly formatted, which reads like a checksum failure and is not one.
+
+#### Why
+
+An attacker who can replace a binary on a node owns the node, and from the kubelet or kubeadm they own rather more than that. The published checksum is the only thing standing between a mirror you do not control and a control plane you do. The exam bullet is "verify platform binaries before deploying", and the task is always the same shape: some binaries, some published hashes, find the one that lies.
+
+Checking the hash of a binary that is already running is the same idea applied to a process rather than a file:
+
+```bash
+sha512sum /usr/bin/kubelet
+sha512sum /proc/$(pidof kubelet)/exe
+```
+
+`/proc/<pid>/exe` is the image the process was actually started from. If it disagrees with the file on disk, the file was replaced after the service started, and restarting the service is what would arm it.
+
+#### Gotchas
+
+- `sha512sum --check` needs to run in the directory the file names in the list are relative to, or it reports every file as missing. `cd` first.
+- Do not regenerate `checksums.txt`. Running `sha512sum * > checksums.txt` makes every file match, destroys the evidence, and is the one action that turns a passing answer into a failing one.
+- `sha256sum` and `sha512sum` are different commands. Read which one the list is: a SHA256 hash is 64 hex characters, a SHA512 is 128.
+- The exit status is the machine-readable answer. `sha512sum --check --status checksums.txt` prints nothing and exits non-zero on any mismatch, which is what to use inside a script.
+- On macOS the command is `shasum -a 512`. The exam hosts are Linux, so `sha512sum` is the one to have in your fingers.
+
+#### Docs
+
+The CKS exam allows `kubernetes.io/docs`, which covers the release-verification pages, and every host has `man`.
+
+- `man 1 sha512sum`, in particular the `--check`, `--quiet` and `--status` flags
+- https://kubernetes.io/releases/ for where published checksums live
+
+---
+
+### Q46. Read the contexts and decode the certificate inside a kubeconfig
+
+**Domain:** Cluster Hardening. **Difficulty:** Easy. **Weight:** 5. **Target:** 6 min. **Host:** any. **Needs:** `kubectl tool:openssl`.
+
+**Question**
+
+
+**Host:** any host with `kubectl` and `openssl`. Work in `/opt/course/46/` (or `$COURSE_DIR/46/` on this lab).
+
+A kubeconfig for several clusters was handed over during an incident review. It is at `/opt/course/46/kubeconfig`. It is not your own kubeconfig and must not become it: do not copy it over `~/.kube/config` and do not change your current context.
+
+1. Write the name of every context in that file to `/opt/course/46/contexts`, one per line and nothing else on each line.
+
+2. Write the name of the file's own current context to `/opt/course/46/current`.
+
+3. The user `green-restricted` authenticates with a client certificate embedded in the file. Decode it and write:
+
+   - its Common Name to `/opt/course/46/cert-cn`
+   - its Organization to `/opt/course/46/cert-group`
+
+   Each file holds that one value alone, with no `CN=` or `O=` prefix around it.
+
+Every answer is in the file. Nothing here talks to a cluster, and none of these clusters is reachable.
+
+**Solution**
+
+
+#### Steps
+
+Every command below points `kubectl` at the handed-over file with `--kubeconfig`. That flag is the whole trick: it reads that file and leaves your own alone. Exporting `KUBECONFIG` for the shell works too, but it stays set for the next task, which is how people end up solving question 7 against the wrong cluster.
+
+```bash
+cd /opt/course/46
+```
+
+**1. List the context names.** `-o name` prints the names alone. Without it you get the table, with its `CURRENT`, `NAME`, `CLUSTER` and `AUTHINFO` columns and a `*` on the current row, none of which is a context name.
+
+```bash
+kubectl --kubeconfig kubeconfig config get-contexts -o name > contexts
+cat contexts
+```
+
+```
+blue-cluster-admin
+green-cluster-restricted
+orange-cluster-audit
+```
+
+**2. The current context.** This is the file's own `current-context` field, which is not your shell's.
+
+```bash
+kubectl --kubeconfig kubeconfig config current-context > current
+cat current
+```
+
+```
+green-cluster-restricted
+```
+
+**3. Pull the certificate out.** It is stored base64 encoded under the user's `client-certificate-data`. Ask for that one field by jsonpath, decode it, and you have PEM on stdout.
+
+```bash
+kubectl --kubeconfig kubeconfig config view --raw \
+  -o jsonpath='{.users[?(@.name=="green-restricted")].user.client-certificate-data}' \
+  | base64 -d > /tmp/green.crt
+```
+
+`--raw` is not optional. Without it `kubectl config view` redacts every credential and prints `DATA+OMITTED` where the certificate should be, and `base64 -d` then fails on something that was never base64.
+
+**4. Read its subject.**
+
+```bash
+openssl x509 -in /tmp/green.crt -noout -subject
+```
+
+```
+subject=CN = restricted-7261, O = incident-reviewers
+```
+
+**5. Write the two deliverables.** The task asked for the values alone, so strip the `CN =` and `O =` labels.
+
+```bash
+openssl x509 -in /tmp/green.crt -noout -subject \
+  | sed -n 's/.*CN *= *\([^,]*\).*/\1/p' | tr -d ' ' > cert-cn
+openssl x509 -in /tmp/green.crt -noout -subject \
+  | sed -n 's/.*O *= *\([^,]*\).*/\1/p' | tr -d ' ' > cert-group
+cat cert-cn cert-group
+```
+
+Doing it in one pipeline is fine, but under time pressure it is usually quicker to run the `openssl` line once, read the subject with your eyes, and `echo` the two values into the files.
+
+#### Why the CN and the O matter
+
+This is not a certificate-parsing exercise dressed up as Kubernetes. When a client certificate authenticates to the API server:
+
+- the **Common Name becomes the username**
+- each **Organization becomes a group**
+
+So the certificate above is user `restricted-7261` in group `incident-reviewers`, and every RBAC decision for that client is made against those two strings. Nothing in the cluster records them anywhere else, which is why reading a kubeconfig is how you answer "who is this, and what were they allowed to do" during a review. It is also why you cannot change someone's username by editing the kubeconfig: the name lives inside a signed certificate, and editing it invalidates the signature.
+
+The same reasoning is behind Q40, which issues one of these through a CertificateSigningRequest. Q46 reads one; Q40 writes one.
+
+#### Gotchas
+
+- `config view` redacts by default. `--raw` is what makes it print the real data, and forgetting it is the single most common way this task goes wrong.
+- A user may carry `client-certificate` (a path on disk) instead of `client-certificate-data` (embedded base64). Look at the file before assuming which, and if it is a path, skip the decode and run `openssl x509 -in <path>` directly.
+- `base64 -d` on Linux is `base64 -D` on macOS. The exam hosts are Linux.
+- Do not `export KUBECONFIG` for this. If you do, unset it before the next task.
+- Copying the file to `~/.kube/config` "so kubectl can read it" replaces your own credentials with someone else's. The verifier checks that your context was not switched, because in the exam that mistake costs you the questions that follow, not this one.
+- `jsonpath` with a filter needs the double quotes inside the single-quoted expression exactly as written: `{.users[?(@.name=="green-restricted")]...}`.
+
+#### Docs
+
+`kubernetes.io/docs` is allowed in the exam and covers both pages below. `man openssl-x509` is on every host.
+
+- https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/
+- https://kubernetes.io/docs/reference/access-authn-authz/authentication/#x509-client-certs for the CN-is-the-user and O-is-the-group rule
+- `man 1 openssl-x509`, the `-subject` and `-noout` options
+
+---
+
+### Q47. Require non-root Pods with a ValidatingAdmissionPolicy
+
+**Domain:** Minimize Microservice Vulnerabilities. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `kubectl`.
+
+**Question**
+
+
+**Host:** any host with `kubectl`.
+
+Namespace `vap-lab` must refuse any Pod that does not declare itself non-root. The cluster has no policy engine installed and none may be installed: use the admission policy built into the API server.
+
+1. Create a `ValidatingAdmissionPolicy` named `require-non-root` that matches `CREATE` and `UPDATE` on `pods` in the core API group, and rejects any Pod whose `spec.securityContext.runAsNonRoot` is not `true`. A Pod with no `securityContext` at all must be rejected too, not accepted by accident.
+
+2. Give it the failure message `every Pod must set runAsNonRoot: true`.
+
+3. Create a `ValidatingAdmissionPolicyBinding` named `require-non-root-binding` that binds the policy with `validationActions: ["Deny"]`, and scopes it to namespace `vap-lab` only.
+
+Afterwards a Pod without `runAsNonRoot: true` must be refused in `vap-lab`, a Pod with it must be accepted there, and namespace `vap-other` must be unaffected.
+
+**Solution**
+
+
+#### Steps
+
+Nothing here needs a node. Two objects are created and both are cluster-scoped.
+
+**1. Write the policy.** A `ValidatingAdmissionPolicy` is two things: what it matches, and the CEL expressions that must all be true for the object to be admitted.
+
+```bash
+cat > vap.yaml <<'EOF'
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: require-non-root
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   [""]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["pods"]
+  validations:
+  - expression: >-
+      has(object.spec.securityContext) &&
+      has(object.spec.securityContext.runAsNonRoot) &&
+      object.spec.securityContext.runAsNonRoot == true
+    message: "every Pod must set runAsNonRoot: true"
+EOF
+kubectl apply -f vap.yaml
+```
+
+The two `has()` calls are the whole answer to "a Pod with no securityContext must be rejected too". CEL raises an error on a field that is not there, and under `failurePolicy: Fail` an erroring expression rejects the object, so the naive one-line version happens to behave correctly on this cluster and for the wrong reason. Ask whether the field exists first and the expression returns a plain `false`, which is what the message is for.
+
+Note `apiGroups: [""]` with an empty string. Pods are in the core group, and writing `apiGroups: ["v1"]` is the usual slip: it matches nothing, the policy silently applies to nothing, and everything is admitted.
+
+**2. Bind it, scoped to the one namespace.** A policy on its own does nothing at all. The binding is what turns it on, and `validationActions` is what decides whether a failure denies, warns, or only audits.
+
+```bash
+cat > vapb.yaml <<'EOF'
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: require-non-root-binding
+spec:
+  policyName: require-non-root
+  validationActions: ["Deny"]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: vap-lab
+EOF
+kubectl apply -f vapb.yaml
+```
+
+`kubernetes.io/metadata.name` is a label the API server maintains on every Namespace, set to the namespace's own name. It is the way to scope a binding to one namespace without labelling anything yourself.
+
+**3. Prove it in both directions.** `--dry-run=server` sends the request through admission and throws the result away, so you can test a denial without creating anything and without waiting for an image pull.
+
+```bash
+# must be refused
+kubectl -n vap-lab run probe --image=nginx:1.27 --dry-run=server
+
+# must be accepted
+kubectl -n vap-lab run probe --image=nginx:1.27 --dry-run=server \
+  --overrides='{"spec":{"securityContext":{"runAsNonRoot":true}}}'
+
+# must still be accepted: the binding is scoped to vap-lab
+kubectl -n vap-other run probe --image=nginx:1.27 --dry-run=server
+```
+
+The first should print the message you wrote:
+
+```
+Error from server (Forbidden): pods "probe" is forbidden: ValidatingAdmissionPolicy 'require-non-root' with binding 'require-non-root-binding' denied request: every Pod must set runAsNonRoot: true
+```
+
+#### Why this and not Kyverno or Gatekeeper
+
+`ValidatingAdmissionPolicy` is part of the API server. Nothing to install, nothing to keep running, no webhook that can time out and take admission down with it. That also makes it the one admission mechanism you can rely on being available in an exam cluster, and the only one whose documentation is on `kubernetes.io`, which is an allowed domain. Kyverno's and Gatekeeper's are not.
+
+The trade is expressiveness. CEL evaluates against the object in front of it and cannot look anything else up, so "no two Ingresses may claim the same host" is a Kyverno or Gatekeeper job. "This field must have this value" is exactly what CEL is for, and that is most of what the exam asks. Q11 does the same class of task with Kyverno and Q48 with Gatekeeper; this is the one that needs no installation.
+
+#### Gotchas
+
+- A policy with no binding enforces nothing, and `kubectl get validatingadmissionpolicy` looks perfectly healthy. If a denial is not happening, check the binding first.
+- Leaving `validationActions` out defaults to `["Deny"]` on many builds, but write it: the task asked for it, and `["Audit"]` or `["Warn"]` produces an object that looks right and refuses nothing.
+- `apiGroups: [""]` for core resources. Not `["v1"]`, not `["core"]`.
+- CEL errors on absent fields. Use `has()`, or `object.spec.?securityContext.?runAsNonRoot.orValue(false)` if you prefer optionals. Do not rely on the error path to do your rejecting.
+- The object is `object`; the previous one on an update is `oldObject`. Both are the raw API object, so it is `object.spec.containers`, not a Pod helper of any kind.
+- Existing Pods are never re-evaluated. `legacy-root` keeps running after the policy is in place, exactly as it does under Pod Security Admission. Admission control is about what is being created, and the question of what is already running is Q36's.
+- `spec.securityContext.runAsNonRoot` is the Pod-level field. A container-level `runAsNonRoot` is a different path, and a policy that only checks one of them is easy to slip past.
+
+#### Docs
+
+`kubernetes.io/docs` is allowed in the exam and covers all of this, including a page of ready-made CEL examples worth knowing how to find.
+
+- https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/
+- https://kubernetes.io/docs/reference/using-api/cel/
+- `kubectl explain validatingadmissionpolicy.spec.validations` when the browser is slower than the terminal
+
+---
+
+### Q48. Gatekeeper: allow images from one registry only
+
+**Domain:** Supply Chain Security. **Difficulty:** Medium. **Weight:** 6. **Target:** 8 min. **Host:** any. **Needs:** `kubectl admission:gatekeeper`.
+
+**Question**
+
+
+**Host:** any host with `kubectl`, against a cluster where Gatekeeper is already installed.
+
+OPA Gatekeeper is running. A `ConstraintTemplate` named `k8sallowedrepos` is already defined, and a constraint named `allowed-registries` already uses it against namespace `supply-lab`. As it stands the constraint permits Docker Hub, which is the opposite of what the platform team asked for.
+
+Do **not** install, reinstall or upgrade Gatekeeper, and do not edit the ConstraintTemplate. Change the constraint only.
+
+1. Edit the `K8sAllowedRepos` constraint named `allowed-registries` so that the only permitted image prefix is `registry.k8s.io/`.
+
+2. Leave its scope as it is: namespace `supply-lab`, Pods only.
+
+3. Leave its enforcement as a hard denial, not a warning or an audit.
+
+Afterwards a Pod using a `docker.io/...` or bare `nginx` image must be refused in `supply-lab`, a Pod using `registry.k8s.io/...` must be accepted there, and namespace `supply-other` must be unaffected.
+
+**Solution**
+
+
+#### Steps
+
+Read before you edit. The task names a constraint, and the fastest way to get this wrong is to edit the template instead.
+
+**1. Find what is there.** Gatekeeper's objects are ordinary CRDs, so `kubectl get` finds them.
+
+```bash
+kubectl get constrainttemplates
+kubectl get constraints                     # every constraint, whatever its kind
+kubectl get k8sallowedrepos allowed-registries -o yaml
+```
+
+The interesting part is `spec.parameters.repos`:
+
+```yaml
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+    - apiGroups: [""]
+      kinds: ["Pod"]
+    namespaces: ["supply-lab"]
+  parameters:
+    repos:
+    - "docker.io/"
+    - "registry.k8s.io/"
+```
+
+**2. Remove the entry that should not be there.** The whole change is deleting one list item.
+
+```bash
+kubectl edit k8sallowedrepos allowed-registries
+```
+
+Leaving:
+
+```yaml
+  parameters:
+    repos:
+    - "registry.k8s.io/"
+```
+
+A patch does it without an editor, which is quicker and cannot leave you in vim with a broken document:
+
+```bash
+kubectl patch k8sallowedrepos allowed-registries --type merge \
+  -p '{"spec":{"parameters":{"repos":["registry.k8s.io/"]}}}'
+```
+
+Use `--type merge` here. A strategic merge patch does not apply to custom resources, and a JSON patch would need the exact list index.
+
+**3. Prove it, in both directions.**
+
+```bash
+# must be refused: bare nginx resolves to Docker Hub
+kubectl -n supply-lab run probe --image=nginx:1.27 --dry-run=server
+
+# must be accepted
+kubectl -n supply-lab run probe --image=registry.k8s.io/pause:3.9 --dry-run=server
+
+# must still be accepted: the constraint only matches supply-lab
+kubectl -n supply-other run probe --image=nginx:1.27 --dry-run=server
+```
+
+The refusal quotes the rego's own message, which is how you tell a Gatekeeper denial from any other:
+
+```
+Error from server (Forbidden): admission webhook "validation.gatekeeper.sh" denied the request:
+[allowed-registries] container <probe> has an invalid image repo <nginx:1.27>,
+allowed repos are ["registry.k8s.io/"]
+```
+
+**4. If nothing is being refused,** look at the constraint's own status before doubting the edit. Gatekeeper records what it has actually loaded, and a rego compile error shows up here rather than on the `kubectl edit`:
+
+```bash
+kubectl get k8sallowedrepos allowed-registries -o jsonpath='{.status}' | yq -P
+kubectl get constrainttemplate k8sallowedrepos -o jsonpath='{.status}' | yq -P
+```
+
+`status.byPod[].enforced: true` means every Gatekeeper replica has it.
+
+#### Template and constraint
+
+Two objects, and the split is the thing to have straight before the exam:
+
+- The **ConstraintTemplate** holds the rego. It is the rule's logic, written once, and it generates a new CRD kind, here `K8sAllowedRepos`.
+- The **Constraint** is an instance of that kind. It holds the parameters, what to match, and how hard to enforce. It is the tuning knob.
+
+So "allow only this registry" is a constraint edit, and "check something the rule cannot currently express" is a template edit. The exam nearly always asks for the first, and the reported tasks are consistently phrased as editing an existing policy rather than authoring one. Gatekeeper is never yours to install.
+
+#### Gotchas
+
+- `nginx:1.27` is `docker.io/library/nginx:1.27`. A candidate who removes `docker.io/` and then tests with a bare image name and sees it refused has not found a bug; that is the rule working.
+- `enforcementAction` has three values. `deny` refuses, `warn` admits with a warning, `dryrun` admits silently and only records a violation in `status`. Switching to `dryrun` while testing and forgetting to switch back is a way to pass your own check and fail the exam's.
+- Gatekeeper reloads constraints asynchronously. Give it a couple of seconds after an edit before deciding it did not work.
+- `kubectl get constraints` lists every constraint of every kind, which is the quickest way to see what a cluster is enforcing. There is no `kubectl get constraint <name>` without the kind.
+- Gatekeeper ships an `--exempt-namespace` flag and its webhook usually skips `kube-system`. If a policy seems not to apply somewhere, check the namespace is not exempt before rewriting the rule.
+- The rego field is `input.review.object`, and it only sees `spec.containers`. A rule written this way does not look at `initContainers` or `ephemeralContainers`, which is worth knowing when a question asks why an image got through.
+
+#### Docs
+
+Gatekeeper's own documentation is **not** on the CKS allowed list. Only `kubernetes.io` and the other seven allowed domains are, and none of them documents `ConstraintTemplate`. So this is memorise territory:
+
+- the two object kinds and which one holds the rego
+- `spec.parameters`, `spec.match.kinds`, `spec.match.namespaces`, `spec.enforcementAction`
+- `kubectl get constraints` and `kubectl get constrainttemplate`
+
+What you can still reach in the exam is the cluster itself, and it will tell you the shape of these objects without any documentation at all:
+
+```bash
+kubectl explain k8sallowedrepos.spec.parameters
+kubectl get k8sallowedrepos -o yaml
+```
+
+Q47 does the same job with `ValidatingAdmissionPolicy`, which is in-tree and whose documentation *is* allowed. When a question leaves the mechanism open, that is the one to reach for.
