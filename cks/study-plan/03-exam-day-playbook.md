@@ -138,6 +138,6 @@ Stop starting new work. Instead:
 
 ## Afterwards
 
-Results arrive by email within 24 hours, with no per-question breakdown. If it did not pass, reschedule the free retake immediately while the environment is fresh in your memory. Of the 28 write-ups behind this kit, eight failed on the first attempt and every one of them passed the retake, usually with a large jump: 55 to 90, 44 to 79, 49 to 74.
+Results arrive by email within 24 hours, with no per-question breakdown. If it did not pass, reschedule the free retake immediately while the environment is fresh in your memory. Of the 28 write-ups behind this kit, eight failed on the first attempt and seven of them published a later pass, usually with a large jump: 55 to 90, 44 to 79, 49 to 74.
 
 Passing also extends your CKA under the CARE policy, which protects the Kubestronaut track while LFCS is in progress.

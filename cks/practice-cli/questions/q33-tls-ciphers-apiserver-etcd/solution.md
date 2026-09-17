@@ -2,7 +2,15 @@
 
 ## Steps
 
-Everything happens on the control-plane node, as root.
+Everything happens on the control-plane node, as root. Get there first and
+confirm it: an edit made on the wrong host looks like it worked and changes
+nothing.
+
+```bash
+ssh <control-plane>
+sudo -i
+hostname
+```
 
 **1. Back both manifests up outside `/etc/kubernetes/manifests/`.** The kubelet reads every file in that directory, so a `.bak` left beside the original starts a second copy of the Pod.
 

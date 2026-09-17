@@ -108,7 +108,8 @@ Drawn from the write-ups rather than the curriculum, because these are the thing
 - **One machine per task.** Several reports describe 17 questions across 17 machines. One candidate failed a first attempt partly by completing tasks on the wrong host.
 - **No online manuals at all.** Coming from a Kubernetes exam this is the sharpest adjustment.
 - **Single words in the prompt decide credit.** `ro` and `rw`, or a specific network mask, are graded literally.
-- **Persistence is the quiet failure.** More candidates attribute a failure to a change that did not survive a reboot than to any knowledge gap.
+- **Running out of time is the most-cited cause of failure.** Five write-ups describe leaving tasks unattempted, which outranks every knowledge gap in the reports.
+- **Persistence is the most expensive silent failure.** Fewer candidates name it, but the cost is asymmetric: an unpersisted change scores zero rather than partially, and no per-task feedback ever tells you it happened.
 - **The environment is slower than a local terminal.** One candidate booked a 2 AM slot and found the remote desktop sluggish.
 
 ## How to use this file

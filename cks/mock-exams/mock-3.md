@@ -21,7 +21,7 @@
   - [Task 12. Generate an SBOM and count its packages (5 points)](#task-12-generate-an-sbom-and-count-its-packages-5-points)
   - [Task 13. Immutable Containers (readOnlyRootFilesystem) (4 points)](#task-13-immutable-containers-readonlyrootfilesystem-4-points)
   - [Task 14. Detect Threats with Falco Rules (7 points)](#task-14-detect-threats-with-falco-rules-7-points)
-  - [Task 15. API Server Audit Logging Policy (8 points)](#task-15-api-server-audit-logging-policy-8-points)
+  - [Task 15. Gatekeeper: allow images from one registry only (6 points)](#task-15-gatekeeper-allow-images-from-one-registry-only-6-points)
   - [Task 16. Audit: ordered policy and retention flags (8 points)](#task-16-audit-ordered-policy-and-retention-flags-8-points)
 
 <!-- toc stop -->
@@ -333,28 +333,24 @@ inside its container every five seconds, and nothing reports it.
 3. Confirm the alert fires for `shell-bot`:
    `journalctl -u falco-modern-bpf -u falco -f | grep 'Shell spawned in container'`.
 
-### Task 15. API Server Audit Logging Policy (8 points)
+### Task 15. Gatekeeper: allow images from one registry only (6 points)
 
-**Host:** control-plane. **Domain:** Monitoring, Logging and Runtime Security. **Time budget:** 10 min.
+**Host:** any. **Domain:** Supply Chain Security. **Time budget:** 8 min.
 
 
-**Host:** the control-plane node, as root (`ssh` to the control plane, then `sudo -i`).
+**Host:** any host with `kubectl`, against a cluster where Gatekeeper is already installed.
 
-Auditing is switched off on this cluster. `kube-apiserver` runs with no `--audit-*` flags, and
-the policy file `/etc/kubernetes/audit/policy.yaml` exists but its `rules:` list is empty. The
-log directory `/var/log/kubernetes/audit` has already been created for you.
+OPA Gatekeeper is running. A `ConstraintTemplate` named `k8sallowedrepos` is already defined, and a constraint named `allowed-registries` already uses it against namespace `supply-lab`. As it stands the constraint permits Docker Hub, which is the opposite of what the platform team asked for.
 
-1. Complete `/etc/kubernetes/audit/policy.yaml` so that, evaluated in order, it:
-   - logs access to `secrets` at level `RequestResponse`,
-   - drops read-only noise (`get`, `list`, `watch`) at level `None`,
-   - logs everything else at level `Metadata`.
-2. Wire the policy into `kube-apiserver` in `/etc/kubernetes/manifests/kube-apiserver.yaml`:
-   - `--audit-policy-file=/etc/kubernetes/audit/policy.yaml`
-   - `--audit-log-path=/var/log/kubernetes/audit/audit.log`
-   Add the matching `volumes` and `volumeMounts` for `/etc/kubernetes/audit` (read-only) and
-   `/var/log/kubernetes/audit` (writable), or the API server will not come back up.
-3. Bring the API server back to ready and confirm that `/var/log/kubernetes/audit/audit.log`
-   grows when Secrets are read.
+Do **not** install, reinstall or upgrade Gatekeeper, and do not edit the ConstraintTemplate. Change the constraint only.
+
+1. Edit the `K8sAllowedRepos` constraint named `allowed-registries` so that the only permitted image prefix is `registry.k8s.io/`.
+
+2. Leave its scope as it is: namespace `supply-lab`, Pods only.
+
+3. Leave its enforcement as a hard denial, not a warning or an audit.
+
+Afterwards a Pod using a `docker.io/...` or bare `nginx` image must be refused in `supply-lab`, a Pod using `registry.k8s.io/...` must be accepted there, and namespace `supply-other` must be unaffected.
 
 ### Task 16. Audit: ordered policy and retention flags (8 points)
 
@@ -393,4 +389,4 @@ An audit policy is evaluated **first match wins**, so the order of the rules is 
 
 ---
 
-**Total: 103 points. Pass mark: 70 points.**
+**Total: 101 points. Pass mark: 68 points.**

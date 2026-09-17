@@ -62,7 +62,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 **Platform binaries**
 
-- [ ] Verify a binary against a published `sha512` checksum and act on a mismatch — note 01 recipe 7
+- [ ] Verify a binary against a published `sha512` checksum and act on a mismatch — note 01 recipe 7, Q45
 
 ---
 
@@ -96,7 +96,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 - [ ] Upgrade a kubeadm control plane and then a worker, in the right order — note 02 recipe 5, Q39
 - [ ] Issue a user certificate through a CertificateSigningRequest and bind a Role to it — note 02 recipe 6, Q40
-- [ ] Read contexts and decode the client certificate inside a kubeconfig — note 02 recipe 7
+- [ ] Read contexts and decode the client certificate inside a kubeconfig — note 02 recipe 7, Q46
 
 ---
 
@@ -163,8 +163,9 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 **Admission control**
 
 - [ ] Write a Gatekeeper ConstraintTemplate with its Rego, plus a Constraint — note 04, Q11
+- [ ] Retune an existing Gatekeeper Constraint without touching its template — note 04, Q48
 - [ ] Write a Kyverno ClusterPolicy with `validationFailureAction: Enforce` — note 04, Q11
-- [ ] Recognise a ValidatingAdmissionPolicy and its binding — note 04
+- [ ] Write a ValidatingAdmissionPolicy and its binding, and scope it to one namespace — note 04 recipe 4, Q47
 
 **Pod-to-pod encryption**
 
@@ -192,7 +193,7 @@ Question ids marked *(planned)* are built in Phase 2 of the kit. Until then, dri
 
 - [ ] Configure ImagePolicyWebhook: admission config, webhook kubeconfig, API server flags, volume — note 05, Q14
 - [ ] Fix a webhook kubeconfig that is missing its `server:` line — note 05, Q21
-- [ ] Restrict images to permitted registries with an admission policy — note 05, Q14
+- [ ] Restrict images to permitted registries with an admission policy — note 05, Q14, Q48
 - [ ] Verify a signature with `cosign` — note 05
 
 **Static analysis**

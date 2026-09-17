@@ -213,9 +213,9 @@ Older reference: jeffran (LF Forum, Oct 2017) failed twice amid platform outages
 
 | Resource | Mentions | Sources |
 |---|---|---|
-| KodeKloud LFCS course and/or its mock exams | 10 | #1, #2, #3, #4, #5, #9, #10, #11, #12, #15, #16 |
+| KodeKloud LFCS course and/or its mock exams | 11 | #1, #2, #3, #4, #5, #9, #10, #11, #12, #15, #16 |
 | killer.sh simulator | 6 | #1, #3, #4, #5, #9, #10 |
-| Own multi-VM lab (VirtualBox/KVM/libvirt/cloud) | 7 | #1, #2, #3, #6, #8, #10, #11, #19 |
+| Own multi-VM lab (VirtualBox/KVM/libvirt/cloud) | 8 | #1, #2, #3, #6, #8, #10, #11, #19 |
 | Sander van Vugt (Pearson/O'Reilly/Coursera) | 2 | #2, #6 |
 | LF courses LFS201/LFS207/LFS211 | 4 | #6, #8, #12, #17 |
 | Ghada Atef Udemy practice exams | 1 | #1 |

@@ -106,7 +106,7 @@ The KodeKloud CKS course provides in-browser clusters with root, so it covers th
 
 <!-- lab-table -->
 
-`./cks --env` prints the authoritative answer for whatever host you are on, by matching each question's `needs` tags against the environment. In summary, **18 of the 44 questions run on minikube** and the rest need a root shell on a kubeadm node.
+`./cks --env` prints the authoritative answer for whatever host you are on, by matching each question's `needs` tags against the environment. In summary, **22 of the 48 questions run on minikube** and the rest need a root shell on a kubeadm node.
 
 | # | Question | Domain | minikube | Killercoda | Also needs |
 |---|---|---|---|---|---|
@@ -154,6 +154,10 @@ The KodeKloud CKS course provides in-browser clusters with root, so it covers th
 | Q42 | Host hardening: users, sudo and kernel modules | D3 | no | yes | — |
 | Q43 | Which pod calls the kill syscall | D6 | no | yes | `strace` |
 | Q44 | Istio: enforce STRICT mTLS in a namespace | D4 | yes | playground | Istio |
+| Q45 | Verify the release binaries and remove the tampered one | D1 | yes | yes | — |
+| Q46 | Read the contexts and decode the certificate inside a kubeconfig | D2 | yes | yes | `openssl` |
+| Q47 | Require non-root Pods with a ValidatingAdmissionPolicy | D4 | yes | yes | — |
+| Q48 | Gatekeeper: allow images from one registry only | D5 | yes | yes | Gatekeeper |
 
 Two rows deserve a note. The Cilium and Istio questions need a cluster running that software, so use the Killercoda Cilium playground for the first and read the recipe for the second; there is no free Istio scenario. Everything marked `node-root` is what the Killercoda Killer Shell CKS playground exists for.
 

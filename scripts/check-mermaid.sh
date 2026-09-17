@@ -95,9 +95,17 @@ render_fail=0
 mode=" (lint only)"
 if [[ "${MERMAID_RENDER:-1}" == "1" ]] && command -v npx >/dev/null 2>&1; then
   mode=""
+  # Chromium refuses to start as root unless its sandbox is switched off, which
+  # is how this runs in a container or CI. Only pass the flag when we are root,
+  # so a normal workstation keeps the sandbox.
+  pflags=()
+  if [[ $EUID -eq 0 ]]; then
+    printf '{"args":["--no-sandbox","--disable-setuid-sandbox"]}\n' > "$TMP/puppeteer.json"
+    pflags=(-p "$TMP/puppeteer.json")
+  fi
   for m in "$TMP"/*.mmd; do
     [[ -e "$m" ]] || continue
-    if ! npx -y @mermaid-js/mermaid-cli -q -i "$m" -o "$m.svg" >/dev/null 2>"$m.err"; then
+    if ! npx -y @mermaid-js/mermaid-cli -q "${pflags[@]}" -i "$m" -o "$m.svg" >/dev/null 2>"$m.err"; then
       echo "FAIL (render): $(cat "${m%.mmd}.src")"
       sed 's/^/    /' "$m.err" | head -5
       render_fail=$(( render_fail + 1 ))

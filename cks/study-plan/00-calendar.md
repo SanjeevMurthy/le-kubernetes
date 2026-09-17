@@ -168,7 +168,7 @@ Never do two consecutive questions from the same domain. Interleaving is what te
 ## After the exam
 
 - [ ] Results arrive by email within 24 hours. Passing CKS also extends the CKA under the CARE policy.
-- [ ] If it did not pass: reschedule the free retake immediately, while the environment is fresh. Eight of the 28 candidate write-ups in the research failed once and every one of them passed on the retake, usually with a large jump.
+- [ ] If it did not pass: reschedule the free retake immediately, while the environment is fresh. Eight of the 28 candidate write-ups in the research failed once and seven of them published a later pass, usually with a large jump.
 - [ ] Either way, LFCS study starts Sunday 13 December, on the calendar at `lfcs/study-plan/00-calendar.md`.
 
 ---
